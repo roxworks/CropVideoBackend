@@ -15,8 +15,6 @@ export const createCropVideo = async (req, res) => {
   if (ACTION_KEY !== APP_KEY) return res.status(400).send()
 
   const { clip, cropData } = req.body
-  console.log('-----------')
-  console.log(req.body)
   if (!clip || !cropData) return res.status(400).send('please provide both clip and crop data')
 
   const { download_url: downloadUrl, id } = clip
