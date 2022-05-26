@@ -8,7 +8,6 @@ const currentJobStatus = {}
 
 export const createCropVideo = async (req, res) => {
   if (!req.headers.authorization) return res.status(400).send()
-  console.log(process.env)
   const { APP_KEY } = process.env
   if (!APP_KEY) return res.status(500).send('internal server error')
   const ACTION_KEY = req.headers.authorization.split(' ')[1]
