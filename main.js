@@ -3,6 +3,8 @@ import cors from 'cors'
 import { path } from '@ffmpeg-installer/ffmpeg'
 import ffmpeg from 'fluent-ffmpeg'
 ffmpeg.setFfmpegPath(path)
+import { path as ffprobePath } from '@ffprobe-installer/ffprobe'
+ffmpeg.setFfprobePath(ffprobePath)
 
 import crop from './routes/crop.js'
 
