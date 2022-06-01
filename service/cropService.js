@@ -41,8 +41,8 @@ let roundTo4 = (number, dontConvert) => {
 }
 
 export const makeVideoVertical = async (clip, clipSettings, fileName) => {
-  console.log(clip)
-  console.log(clipSettings)
+  // console.log(clip)
+  // console.log(clipSettings)
   const currentClip = clip
   const cropType = clipSettings.cropType
 
@@ -66,8 +66,8 @@ export const makeVideoVertical = async (clip, clipSettings, fileName) => {
   const screenCrop = clipSettings.screenCrop
   const isNormalized = camCrop?.isNormalized || screenCrop?.isNormalized || false
 
-  console.log('Found camcrop: ' + JSON.stringify(camCrop))
-  console.log('Found screenCrop: ' + JSON.stringify(screenCrop))
+  // console.log('Found camcrop: ' + JSON.stringify(camCrop))
+  // console.log('Found screenCrop: ' + JSON.stringify(screenCrop))
 
   //top (cam)
   let CWA = camCrop.width !== undefined ? roundTo4(camCrop.width, isNormalized) : 350
@@ -178,7 +178,7 @@ export const makeVideoVertical = async (clip, clipSettings, fileName) => {
 
   let outputFile = await command
 
-  console.log(outputFile)
+  // console.log(outputFile)
 
   return outputFile
 }

@@ -16,15 +16,20 @@ export const createCropVideo = async (req, res) => {
   const { clip, cropData } = req.body
   if (!clip || !cropData) return res.status(400).send('please provide both clip and crop data')
 
+  const downStart = performance.now()
   const { download_url: downloadUrl, id } = clip
   let fileStream = got.stream(downloadUrl)
   const fileName = `${Math.random().toString(36).substring(2, 15)}_${id}.mp4`
+
+  const downEnd = performance.now()
+  console.log(`DOWNLOAD call took ${downEnd - downStart} ms`)
 
   currentJobStatus[fileName] = { status: 'processing' }
   res.status(200).send({ id: fileName, ...currentJobStatus[fileName] })
 
   //wait for filestream to end
   console.log('streaming')
+  const streamStart = performance.now()
   await new Promise((resolve, reject) => {
     let file = fs.createWriteStream('./' + fileName)
     fileStream.pipe(file)
@@ -32,15 +37,24 @@ export const createCropVideo = async (req, res) => {
       resolve()
     })
   })
+  const streamEnd = performance.now()
+  console.log(`Stream call took ${streamEnd - streamStart} ms`)
 
+  const verticalStart = performance.now()
   const editVideo = await makeVideoVertical(clip, cropData, fileName)
+  const verticalEnd = performance.now()
+  console.log(`makeVideoVertical call took ${verticalEnd - verticalStart} ms`)
 
   console.log('video edited')
 
   //fileIo
   let form = new FormData()
+  const fileStart = performance.now()
   form.append('file', fs.createReadStream(`./${editVideo}`))
   let fileIOResponse = await fileioUpload(form)
+
+  const fileEnd = performance.now()
+  console.log(`Fileio upload call took ${fileEnd - fileStart} ms`)
 
   console.log('fileio done')
 
@@ -50,15 +64,10 @@ export const createCropVideo = async (req, res) => {
     status: 'done',
   }
 
-  console.log('----JOB STATUS----')
-  console.log(currentJobStatus[fileName])
-
   // delete local files
   fs.unlinkSync(`./${editVideo}`)
   fs.unlinkSync('./' + fileName)
   console.log('files deleted: ', editVideo, fileName)
-
-  console.log(currentJobStatus)
 }
 
 export const videoStatus = async (req, res) => {
