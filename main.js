@@ -1,23 +1,27 @@
-import express from 'express'
-import cors from 'cors'
-import { path } from '@ffmpeg-installer/ffmpeg'
-import ffmpeg from 'fluent-ffmpeg'
-ffmpeg.setFfmpegPath(path)
-import { path as ffprobePath } from '@ffprobe-installer/ffprobe'
-ffmpeg.setFfprobePath(ffprobePath)
+import express from 'express';
+import cors from 'cors';
+import { path } from '@ffmpeg-installer/ffmpeg';
+import ffmpeg from 'fluent-ffmpeg';
+import scheduledFunctions from './jobs/scheduleUploads.js';
 
-import crop from './routes/crop.js'
+ffmpeg.setFfmpegPath(path);
+import { path as ffprobePath } from '@ffprobe-installer/ffprobe';
+ffmpeg.setFfprobePath(ffprobePath);
 
-import 'dotenv/config'
+import crop from './routes/crop.js';
 
-const app = express()
-const PORT = process.env.PORT || 5000
+import 'dotenv/config';
 
-app.use(cors())
-app.use(express.json())
+const app = express();
+const PORT = process.env.PORT || 5000;
 
-app.use('/', crop)
+scheduledFunctions();
+
+app.use(cors());
+app.use(express.json());
+
+app.use('/', crop);
 
 app.listen(PORT, () => {
-  console.log(`App listening on port ${PORT}`)
-})
+  console.log(`App listening on port ${PORT}`);
+});
