@@ -12,14 +12,14 @@ import {
 } from './scheduleConstants.js';
 
 export default () => {
-  cron.schedule(EVERY_MINUTE, async () => {
+  cron.schedule(EVERY_10_MINUTES, async () => {
     const clipbotKey = process.env.APP_KEY;
     const res = await axios.get(`${process.env.CLIPBOT_URL}/api/clips/renderScheduledClips`, {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer: ${clipbotKey}` },
     });
     console.log(res.data);
   });
-  cron.schedule(EVERY_MINUTE, async () => {
+  cron.schedule(EVERY_15_MINUTES, async () => {
     const clipbotKey = process.env.APP_KEY;
     const res = await axios.get(`${process.env.CLIPBOT_URL}/api/clips/scheduled`, {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer: ${clipbotKey}` },
