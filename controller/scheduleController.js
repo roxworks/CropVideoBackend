@@ -19,12 +19,19 @@ export const scheduleJobs = async (req, res) => {
   const clips = req?.body?.scheduledClips;
   if (!clips || clips.length === 0) return res.status(200).send('No clips scheduled');
 
+  let count = 0;
+
   // check if clip is already scheduled
   clips.forEach((clip) => {
     const isFound = jobs.some((job) => job.id == clip.id);
-    if (!isFound) jobs.push(clip);
+    if (!isFound) {
+      count++;
+      jobs.push(clip);
+    }
   });
-  renderClips();
+  if (count > 0) {
+    renderClips();
+  }
 
   res.status(200).send('jobs scheduled');
 };
