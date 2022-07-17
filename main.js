@@ -3,7 +3,7 @@ import cors from 'cors';
 import { path } from '@ffmpeg-installer/ffmpeg';
 import ffmpeg from 'fluent-ffmpeg';
 
-// import scheduledFunctions from './jobs/scheduleUploads.js';
+import scheduledFunctions from './jobs/scheduleUploads.js';
 
 ffmpeg.setFfmpegPath(path);
 import { path as ffprobePath } from '@ffprobe-installer/ffprobe';
