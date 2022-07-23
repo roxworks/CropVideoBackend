@@ -1,18 +1,16 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { path } from '@ffmpeg-installer/ffmpeg';
 import ffmpeg from 'fluent-ffmpeg';
 
 import scheduledFunctions from './jobs/scheduleUploads.js';
-
 ffmpeg.setFfmpegPath(path);
 import { path as ffprobePath } from '@ffprobe-installer/ffprobe';
 ffmpeg.setFfprobePath(ffprobePath);
 
 import crop from './routes/crop.js';
 import schedule from './routes/schedule.js';
-
-import 'dotenv/config';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
