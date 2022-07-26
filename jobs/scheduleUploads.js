@@ -38,7 +38,7 @@ export default () => {
   //   }
   // });
 
-  cron.schedule(EVERY_15_MINUTES, async () => {
+  cron.schedule(EVERY_MINUTE, async () => {
     try {
       const clips = await uploadClip();
     } catch (error) {
