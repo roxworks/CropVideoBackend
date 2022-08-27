@@ -70,10 +70,10 @@ export const makeVideoVertical = async (clip, clipSettings, fileName) => {
   // console.log('Found screenCrop: ' + JSON.stringify(screenCrop))
 
   //top (cam)
-  let CWA = camCrop.width !== undefined ? roundTo4(camCrop.width, isNormalized) : 350;
-  let CHA = camCrop.height !== undefined ? roundTo4(camCrop.height, isNormalized) : 263;
-  let CXA = camCrop.x !== undefined ? roundTo4(camCrop.x, isNormalized) : 1600;
-  let CYA = camCrop.y !== undefined ? roundTo4(camCrop.y, isNormalized) : 50;
+  let CWA = camCrop?.width !== undefined ? roundTo4(camCrop.width, isNormalized) : 350;
+  let CHA = camCrop?.height !== undefined ? roundTo4(camCrop.height, isNormalized) : 263;
+  let CXA = camCrop?.x !== undefined ? roundTo4(camCrop.x, isNormalized) : 1600;
+  let CYA = camCrop?.y !== undefined ? roundTo4(camCrop.y, isNormalized) : 50;
   let SWA = OUTPUT_WIDTH; //SHA * CWA / CHA;
   let multiplier = isNormalized ? 9 / 16 : 1;
   let SHA = roundTo4(Math.ceil(((SWA * CHA) / CWA) * multiplier));
@@ -128,7 +128,7 @@ export const makeVideoVertical = async (clip, clipSettings, fileName) => {
         [a][b]vstack`;
         break;
       case 'no-cam':
-        filter = `crop=w=min(ceil(${CWA}*iw/4)*4\\, iw):h=min(ceil(${CHA}*ih/4)*4\\, ih):x=min(ceil(${CXA}*iw/4)*4\\, iw):y=min(ceil(${CYA}*ih/4)*4\\, ih),scale=w=${OUTPUT_WIDTH}:h=${OUTPUT_HEIGHT}`;
+        filter = `crop=w=min(ceil(${CWB}*iw/4)*4\\, iw):h=min(ceil(${CHB}*ih/4)*4\\, ih):x=min(ceil(${CXB}*iw/4)*4\\, iw):y=min(ceil(${CYB}*ih/4)*4\\, ih),scale=w=${OUTPUT_WIDTH}:h=${OUTPUT_HEIGHT}`;
         break;
       case 'freeform':
         filter = `crop=w=min(ceil(${CWA}*iw/4)*4\\, iw):h=min(ceil(${CHA}*ih/4)*4\\, ih):x=min(ceil(${CXA}*iw/4)*4\\, iw):y=min(ceil(${CYA}*ih/4)*4\\, ih),scale=w=${SWA}:h=${SHA},pad=w=${OUTPUT_WIDTH}:h=${OUTPUT_HEIGHT}:x=(ow-iw)/2:y=(oh-ih)/2`;
@@ -143,7 +143,7 @@ export const makeVideoVertical = async (clip, clipSettings, fileName) => {
         [c][d]vstack`;
         break;
       case 'no-cam':
-        filter = `crop=${CWA}:${CHA}:${CXA}:${CYA},scale=w=${OUTPUT_WIDTH}:h=${OUTPUT_HEIGHT}`;
+        filter = `crop=${CWB}:${CHB}:${CXB}:${CYB},scale=w=${OUTPUT_WIDTH}:h=${OUTPUT_HEIGHT}`;
         break;
     }
   }
