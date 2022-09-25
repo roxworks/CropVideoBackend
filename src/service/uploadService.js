@@ -1,12 +1,12 @@
 import { google } from 'googleapis';
 import axios from 'axios';
 
-import { uploadVideoToYoutube } from '../utils/uploadToYoutube.js';
-import { refreshYoutubeToken } from '../utils/youtubeRefresh.js';
+import { uploadVideoToYoutube } from '../../utils/uploadToYoutube.js';
+import { refreshYoutubeToken } from '../../utils/youtubeRefresh.js';
 import { updateAccount } from './Account.js';
 import { getClipsReadyToUploaded, updateClip } from './Clip.js';
 import { getUserByIdWithAccounts } from './User.js';
-import { uploadVideoToTiktok } from '../utils/uploadToTiktok.js';
+import { uploadVideoToTiktok } from '../../utils/uploadToTiktok.js';
 
 var OAuth2 = google.auth.OAuth2;
 const YOUTUBE_SECRETS = JSON.parse(process.env.YOUTUBE_SECRETS || '{}');

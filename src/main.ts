@@ -4,13 +4,14 @@ import cors from 'cors';
 import { path } from '@ffmpeg-installer/ffmpeg';
 import ffmpeg from 'fluent-ffmpeg';
 
-import scheduledFunctions from './jobs/scheduleUploads.js';
+import scheduledFunctions from './jobs/scheduleUploads';
 ffmpeg.setFfmpegPath(path);
+// @ts-ignore
 import { path as ffprobePath } from '@ffprobe-installer/ffprobe';
 ffmpeg.setFfprobePath(ffprobePath);
 
-import crop from './routes/crop.js';
-import schedule from './routes/schedule.js';
+import crop from './routes/crop';
+import schedule from './routes/schedule';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
