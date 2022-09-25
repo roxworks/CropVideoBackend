@@ -131,6 +131,14 @@ const uploadToYoutube = async (clip, accounts) => {
     };
     console.log('refreshing token');
     const refreshToken = await refreshYoutubeToken(youtubeToken);
+
+    if (!refreshToken?.refresh_token || !refreshToken?.access_token) {
+      console.log('token error');
+      clip.youtubeUploaded = false;
+      clip.youtubeStatus = 'FAILED_SCHEDULED_UPLOAD_REFRESH_TOKEN';
+      return { error: true, clip };
+    }
+
     //Update db with new token
     const accountData = {
       type: 'oauth',
@@ -149,7 +157,7 @@ const uploadToYoutube = async (clip, accounts) => {
     if (!updatedAccount?.ok) {
       console.log('token error');
       clip.youtubeUploaded = false;
-      clip.youtubeStatus = 'FAILED_SCHEDULED_UPLOAD_REFRESH_TOKEN';
+      clip.youtubeStatus = 'FAILED_SCHEDULED_UPLOAD_REFRESH_TOKEN_UPDATE';
       return { error: true, clip };
     }
 
@@ -174,7 +182,7 @@ const uploadToYoutube = async (clip, accounts) => {
     } catch (error) {
       console.log(error);
       clip.youtubeUploaded = false;
-      clip.youtubeStatus = 'FAILED_SCHEDULED_UPLOAD';
+      clip.youtubeStatus = 'FAILED_SCHEDULED_UPLOAD_ERROR';
       return { error: true, clip };
     }
   }
@@ -196,7 +204,6 @@ const uploadToTiktok = async (clip, accounts) => {
 
     const res = await axios.post(url_refresh_token);
     const refreshToken = await res.data.data;
-    console.log('tiktokToken', refreshToken);
 
     if (refreshToken.error_code > 0) {
       console.error('ERROR: failed to get tiktok refresh token');

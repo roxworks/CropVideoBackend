@@ -57,6 +57,8 @@ export const createCropVideo = async (req, res) => {
 
   console.log('video edited');
 
+  console.log('editedVid:', editVideo);
+
   //fileIo
   let form = new FormData();
   const fileStart = performance.now();
