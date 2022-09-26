@@ -13,7 +13,8 @@ export const getClipsReadyToUploaded = async () => {
     .find({
       uploaded: false,
       status: 'RENDERED',
-      scheduledUploadTime: { $ne: null, $lte: new Date(new Date().toUTCString()) },
+      scheduledUploadTime: { $ne: null },
+      $and: [{ scheduledUploadTime: { $lte: new Date(new Date().toUTCString()) } }],
     })
     .toArray();
 

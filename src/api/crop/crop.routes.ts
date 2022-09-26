@@ -9,6 +9,7 @@ const router = Router();
 
 router.get('/', async (req, res) => {
   const clip = await getClipsReadyToUploaded();
+  console.log(clip);
   res.status(200).json({ message: 'crop' });
 });
 
