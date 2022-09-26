@@ -1,8 +1,8 @@
 import ffmpeg from 'fluent-ffmpeg';
-
 import axios from 'axios';
+import { Clip, CropData } from './crop.model';
 
-export const fileioUpload = (formData) => {
+export const fileioUpload = (formData: any) => {
   let tempFormData = formData;
   //@ts-ignore
   tempFormData.append('maxDownloads', '10');
@@ -19,7 +19,7 @@ export const fileioUpload = (formData) => {
   });
 };
 
-export const getVideoDetails = (fileName) => {
+export const getVideoDetails = (fileName: string) => {
   return new Promise((resolve, reject) => {
     ffmpeg.ffprobe(fileName, (err, metadata) => {
       if (err) {
@@ -36,11 +36,11 @@ export const getVideoDetails = (fileName) => {
 };
 
 // return a number rounded to the nearest multiple of 4
-let roundTo4 = (number, dontConvert) => {
+let roundTo4 = (number: number, dontConvert?: boolean) => {
   return dontConvert ? number : Math.ceil(number / 4) * 4;
 };
 
-export const makeVideoVertical = async (clip, clipSettings, fileName) => {
+export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, fileName: string) => {
   // console.log(clip)
   console.log(clipSettings);
   const currentClip = clip;
@@ -50,7 +50,7 @@ export const makeVideoVertical = async (clip, clipSettings, fileName) => {
   const outputFilePath = `./rendered_${fileName}`;
 
   const MAX_SIZE = 50000000;
-  const size = await getVideoDetails(inputFilePath);
+  const size = (await getVideoDetails(inputFilePath)) as number;
   let OUTPUT_HEIGHT = 1920;
   let OUTPUT_WIDTH = 1080;
   if (size > 0.6 * MAX_SIZE) {
@@ -58,9 +58,6 @@ export const makeVideoVertical = async (clip, clipSettings, fileName) => {
     OUTPUT_HEIGHT = 1280;
     OUTPUT_WIDTH = 720;
   }
-
-  //TODO: watermark
-  // const watermarkFilePath = './public/assets/videos/watermark.mp4'
 
   const camCrop = clipSettings.camCrop;
   const screenCrop = clipSettings.screenCrop;
@@ -166,12 +163,14 @@ export const makeVideoVertical = async (clip, clipSettings, fileName) => {
       .toFormat('mp4');
 
     if (clipSettings.startTime) {
-      commandToRunInternal = commandToRunInternal.setStartTime(parseInt(clipSettings.startTime));
+      commandToRunInternal = commandToRunInternal.setStartTime(
+        parseInt(String(clipSettings.startTime))
+      );
     }
     if (clipSettings.endTime) {
       commandToRunInternal = commandToRunInternal.setDuration(
-        Math.min(parseInt(clipSettings.endTime || '1000'), maxEndTime) -
-          parseInt(clipSettings.startTime || 0)
+        Math.min(parseInt(String(clipSettings.endTime) || '1000'), maxEndTime) -
+          parseInt(String(clipSettings.startTime) || '0')
       );
     }
 

@@ -1,15 +1,11 @@
 import { MongoClient } from 'mongodb';
 
 const connectToMongoDB = async (uri = '', options = {}) => {
-  if (!process.mongodb) {
-    const mongodb = await MongoClient.connect(uri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      ...options,
-    });
+  if (!global.mongodb) {
+    const mongodb = await MongoClient.connect(uri);
 
-    const db = mongodb.db();
-    process.mongodb = db;
+    const db = await mongodb.db();
+    global.mongodb = db;
 
     return {
       db,
@@ -17,8 +13,6 @@ const connectToMongoDB = async (uri = '', options = {}) => {
       connection: mongodb,
     };
   }
-
-  return null;
 };
 
 export default await connectToMongoDB(process.env.MONGO_URI, {});

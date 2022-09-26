@@ -9,8 +9,8 @@ import {
   EVERY_15_MINUTES,
   EVERY_30_MINUTES,
   EVERY_HOUR,
-} from './scheduleConstants.js';
-import { uploadClip } from '../service/uploadService.js';
+} from './scheduleConstants';
+import { uploadClip } from '../service/uploadService';
 
 export default () => {
   cron.schedule(EVERY_10_MINUTES, async () => {
@@ -22,7 +22,9 @@ export default () => {
       console.log(res.data);
     } catch (error) {
       console.log('Error getting clips to render');
-      console.log(error.message);
+      if (error instanceof Error) {
+        console.log(error.message);
+      }
     }
   });
   // cron.schedule(EVERY_15_MINUTES, async () => {
@@ -43,7 +45,9 @@ export default () => {
       const clips = await uploadClip();
     } catch (error) {
       console.log('Something went wrong - upload cron');
-      console.log(error.message);
+      if (error instanceof Error) {
+        console.log(error.message);
+      }
     }
   });
 };
