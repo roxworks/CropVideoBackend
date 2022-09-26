@@ -1,18 +1,38 @@
+// This approach is taken from https://github.com/vercel/next.js/tree/canary/examples/with-mongodb
 import { MongoClient } from 'mongodb';
 
-const connectToMongoDB = async (uri = '', options = {}) => {
-  if (!global.mongodb) {
-    const mongodb = await MongoClient.connect(uri);
+const uri = process.env.MONGO_URI;
 
-    const db = await mongodb.db();
-    global.mongodb = db;
-
-    return {
-      db,
-      Collection: db.collection.bind(db),
-      connection: mongodb,
-    };
-  }
+const options = {
+  useUnifiedTopology: true,
+  useNewUrlParser: true,
 };
 
-export default await connectToMongoDB(process.env.MONGO_URI, {});
+let client;
+let clientPromise;
+
+if (!process.env.MONGO_URI) {
+  throw new Error('Please add your Mongo URI to .env.local');
+}
+
+if (process.env.NODE_ENV === 'development') {
+  // In development mode, use a global variable so that the value
+  // is preserved across module reloads caused by HMR (Hot Module Replacement).
+
+  //@ts-ignore
+  if (!global._mongoClientPromise) {
+    client = new MongoClient(uri as string, options as any);
+    //@ts-ignore
+    global._mongoClientPromise = client.connect();
+  }
+  //@ts-ignore
+  clientPromise = global._mongoClientPromise;
+} else {
+  // In production mode, it's best to not use a global variable.
+  client = new MongoClient(uri as string, options as any);
+  clientPromise = client.connect();
+}
+
+// Export a module-scoped MongoClient promise. By doing this in a
+// separate module, the client can be shared across functions.
+export default clientPromise as Promise<MongoClient>;

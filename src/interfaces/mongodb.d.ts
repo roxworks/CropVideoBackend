@@ -1,5 +1,5 @@
-import { MongoClient, MongoDBNamespace } from 'mongodb';
+// import { MongoClient, MongoDBNamespace } from 'mongodb';
 
-declare global {
-  var mongodb: any;
-}
+// declare global {
+//   var mongodb: MongoClient;
+// }
