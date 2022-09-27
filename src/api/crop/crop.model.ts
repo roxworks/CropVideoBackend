@@ -75,11 +75,23 @@ export const Clip = z.object({
   instagramUploadTime: z.string().optional().nullable(),
   instagramStatus: z.string().optional().nullable(),
   youtubePrivacy: z.string(YoutubePrivacy).default('Private'),
+  youtubeCategory: z.string().optional().nullable(),
   cropData: CropData,
   caption: z.string().optional().nullable(),
   youtubeTitle: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
   renderedUrl: z.string().optional(),
+});
+
+export const CurrentClip = z.object({
+  title: z.string().optional(),
+  description: z.string().optional(),
+  category: z.string().optional(),
+  privacy: z.string().optional(),
+  youtubePrivacy: z.string().optional(),
+  youtubeCategory: z.string().optional(),
+  youtubeDescription: z.string().optional(),
+  clipURL: z.string().optional(),
 });
 
 export const ClipWithId = Clip.extend({ id: z.string() });
@@ -95,6 +107,7 @@ export const RenderClipReq = z.object({
 
 export type JobId = z.infer<typeof JobId>;
 export type Clip = z.infer<typeof Clip>;
+export type CurrentClip = z.infer<typeof CurrentClip>;
 export type ClipManual = z.infer<typeof ClipManual>;
 export type ClipWithId = z.infer<typeof ClipWithId>;
 export type ClipWithIdMongo = WithId<Clip>;
