@@ -6,8 +6,6 @@ import RequestValidators from './interfaces/RequestValidators';
 
 export function validateRequest(validators: RequestValidators) {
   return async (req: Request, res: Response, next: NextFunction) => {
-    console.log(req.body);
-    console.log(req.body.scheduledClips[0].cropData);
     try {
       if (validators.params) {
         req.params = await validators.params.parseAsync(req.params);
