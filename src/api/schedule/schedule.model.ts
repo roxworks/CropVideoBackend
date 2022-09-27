@@ -58,7 +58,7 @@ export const Clip = z.object({
   caption: z.string().optional().nullable(),
   youtubeTitle: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
-  renderedUrl: z.string().optional(),
+  renderedUrl: z.string().optional().nullable(),
 });
 
 export const ClipWithId = Clip.extend({ id: z.string() });

@@ -7,8 +7,9 @@ import { updateAccount } from './Account';
 import { getClipsReadyToUploaded, updateClip } from './Clip';
 import { getUserByIdWithAccounts } from './User';
 import { uploadVideoToTiktok } from '../utils/uploadToTiktok';
-import { ClipWithId, ClipWithIdMongo } from '../api/crop/crop.model';
+import { Clip, ClipWithId, ClipWithIdMongo } from '../api/crop/crop.model';
 import { TAccount } from '../interfaces/Accounts';
+import { exclude } from '../utils/excludeClipId';
 
 var OAuth2 = google.auth.OAuth2;
 const YOUTUBE_SECRETS = JSON.parse(process.env.YOUTUBE_SECRETS || '{}');
@@ -50,7 +51,7 @@ const uploadClipsQueue = async (clips: ClipWithIdMongo[]) => {
           uploaded: false,
           status: 'FAILED_SCHEDULED_UPLOAD_INVALID_DATA',
         };
-        const updatedClip = await updateClip(job._id.toString(), { ...updateData });
+        const updatedClip = await updateClip(job._id.toString(), exclude(updateData, '_id'));
         failedJobs.push(job);
         continue;
       }
@@ -64,10 +65,9 @@ const uploadClipsQueue = async (clips: ClipWithIdMongo[]) => {
           ...job,
           uploaded: false,
           status: 'FAILED_SCHEDULED_UPLOAD_ACCOUNT_NOT_FOUND',
-          _id: undefined,
         };
 
-        const updatedClip = await updateClip(job._id.toString(), { ...updateData });
+        const updatedClip = await updateClip(job._id.toString(), exclude(updateData, '_id'));
         failedJobs.push(job);
         continue;
       }
@@ -111,9 +111,11 @@ const uploadToPlatforms = async (clip: ClipWithIdMongo, accounts: TAccount[]) =>
       uploaded: true,
       uploadTime: new Date(new Date().toUTCString()),
       status: uploadError ? 'FAILED_SCHEDULED_UPLOAD' : 'SUCCESS_SCHEDULED_UPLOAD',
-      _id: undefined,
     };
-    const updatedClip = await updateClip(clip._id.toString(), { ...updateData });
+
+    console.log('clipdata: ', clip);
+
+    const updatedClip = await updateClip(clip._id.toString(), exclude(updateData, '_id'));
 
     return updatedClip?.value;
   } catch (error) {
