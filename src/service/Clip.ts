@@ -1,4 +1,6 @@
 import clientPromise from '../db/conn';
+import { ObjectId } from 'mongodb';
+import { ClipWithIdMongo } from '../api/crop/crop.model';
 
 // export const getAllClips = async () => {
 //   const clips = await Clips.find().toArray();
@@ -21,13 +23,15 @@ export const getClipsReadyToUploaded = async () => {
   return { count: clips.length, clips };
 };
 
-// export const updateClip = async (clipId: string, clipData: any) => {
-//   if (!clipId) return;
-//   const updatedAccount = await Clips.findOneAndUpdate(
-//     { _id: clipId },
-//     { $set: { ...clipData } },
-//     { returnDocument: 'after' }
-//   );
+export const updateClip = async (clipId: string, clipData: any) => {
+  if (!clipId) return;
+  const client = await clientPromise;
+  const db = client.db().collection<ClipWithIdMongo>('Clip');
+  const updatedAccount = await db.findOneAndUpdate(
+    { _id: new ObjectId(clipId) },
+    { $set: { ...clipData } },
+    { returnDocument: 'after' }
+  );
 
-//   return updatedAccount;
-// };
+  return updatedAccount;
+};

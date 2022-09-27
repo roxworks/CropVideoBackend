@@ -97,6 +97,7 @@ export type JobId = z.infer<typeof JobId>;
 export type Clip = z.infer<typeof Clip>;
 export type ClipManual = z.infer<typeof ClipManual>;
 export type ClipWithId = z.infer<typeof ClipWithId>;
+export type ClipWithIdMongo = WithId<Clip>;
 export type ScheduledClipsArray = z.infer<typeof ScheduledClipsArray>;
 export type CropData = z.infer<typeof CropData>;
 export type RenderClipReq = z.infer<typeof RenderClipReq>;
