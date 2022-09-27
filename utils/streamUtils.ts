@@ -4,7 +4,7 @@ import { Readable, Stream } from 'stream';
  * @param binary Buffer
  * returns readableInstanceStream Readable
  */
-export function bufferToStream(binary) {
+export function bufferToStream(binary: any) {
   const readableInstanceStream = new Readable({
     read() {
       this.push(binary);
@@ -15,7 +15,7 @@ export function bufferToStream(binary) {
   return readableInstanceStream;
 }
 
-export async function stream2buffer(stream) {
+export async function stream2buffer(stream: Stream): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const _buf = Array();
 
