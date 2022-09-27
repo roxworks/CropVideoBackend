@@ -5,7 +5,7 @@ export const TAccount = z.object({
   type: z.string(),
   userId: z.string(),
   provider: z.string(),
-  providerAccountId: z.string(),
+  providerAccountId: z.string().optional(),
   refresh_token: z.string().optional(),
   access_token: z.string(),
   expires_at: z.number(),

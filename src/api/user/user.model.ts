@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { WithId } from 'mongodb';
+import { TAccount } from '../../interfaces/Accounts';
 
 export const TUser = z.object({
   name: z.string().nullable(),
@@ -15,5 +16,10 @@ export const TUser = z.object({
   sub_status: z.string().nullable(),
 });
 
+export const UserWithAccounts = TUser.extend({
+  accounts: z.array(TAccount),
+});
+
 export type TUser = z.TypeOf<typeof TUser>;
 export type UserWithId = WithId<TUser>;
+export type UserWithAccounts = z.TypeOf<typeof UserWithAccounts>;

@@ -1,5 +1,5 @@
 import clientPromise from '../db/conn';
-import { UserWithId } from '../api/user/user.model.js';
+import { UserWithAccounts, UserWithId } from '../api/user/user.model.js';
 import { ObjectId } from 'mongodb';
 
 export const getAllUsers = async () => {
@@ -21,7 +21,7 @@ export const getUserById = async (id: string) => {
 };
 export const getUserByIdWithAccounts = async (id: string) => {
   const client = await clientPromise;
-  const db = client.db().collection<UserWithId>('User');
+  const db = client.db().collection<UserWithId[]>('User');
 
   const user = await db
     .aggregate([
@@ -33,5 +33,5 @@ export const getUserByIdWithAccounts = async (id: string) => {
     ])
     .toArray();
 
-  return user?.[0];
+  return user?.[0] as UserWithAccounts;
 };

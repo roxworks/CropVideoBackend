@@ -20,7 +20,7 @@ export const getClipsReadyToUploaded = async () => {
     })
     .toArray();
 
-  return { count: clips.length, clips };
+  return { count: clips.length, clips } as { count: number; clips: ClipWithIdMongo[] };
 };
 
 export const updateClip = async (clipId: string, clipData: any) => {

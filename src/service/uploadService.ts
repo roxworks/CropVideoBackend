@@ -1,12 +1,14 @@
 import { google } from 'googleapis';
 import axios from 'axios';
 
-import { uploadVideoToYoutube } from '../../utils/uploadToYoutube';
-import { refreshYoutubeToken } from '../../utils/youtubeRefresh';
+import { uploadVideoToYoutube } from '../utils/uploadToYoutube';
+import { refreshYoutubeToken } from '../utils/youtubeRefresh';
 import { updateAccount } from './Account';
 import { getClipsReadyToUploaded, updateClip } from './Clip';
 import { getUserByIdWithAccounts } from './User';
-import { uploadVideoToTiktok } from '../../utils/uploadToTiktok';
+import { uploadVideoToTiktok } from '../utils/uploadToTiktok';
+import { ClipWithId, ClipWithIdMongo } from '../api/crop/crop.model';
+import { TAccount } from '../interfaces/Accounts';
 
 var OAuth2 = google.auth.OAuth2;
 const YOUTUBE_SECRETS = JSON.parse(process.env.YOUTUBE_SECRETS || '{}');
@@ -23,11 +25,13 @@ export const uploadClip = async () => {
     await uploadClipsQueue(data.clips);
   } catch (error) {
     console.log('Error scheduling uploads');
-    console.log(error.message);
+    if (error instanceof Error) {
+      console.log(error.message);
+    }
   }
 };
 
-const uploadClipsQueue = async (clips) => {
+const uploadClipsQueue = async (clips: ClipWithIdMongo[]) => {
   console.log('upload queue');
   console.log(clips.length);
 
@@ -42,12 +46,11 @@ const uploadClipsQueue = async (clips) => {
         console.error('Clip missing data');
         //update status in db
         const updateData = {
-          ...clip,
+          ...job,
           uploaded: false,
           status: 'FAILED_SCHEDULED_UPLOAD_INVALID_DATA',
         };
-        delete updateData._id;
-        const updatedClip = await updateClip(clip._id, { ...updateData });
+        const updatedClip = await updateClip(job._id.toString(), { ...updateData });
         failedJobs.push(job);
         continue;
       }
@@ -58,14 +61,15 @@ const uploadClipsQueue = async (clips) => {
         console.error('users accounts not found');
         //update status in db
         const updateData = {
-          ...clip,
+          ...job,
           uploaded: false,
           status: 'FAILED_SCHEDULED_UPLOAD_ACCOUNT_NOT_FOUND',
+          _id: undefined,
         };
-        delete updateData._id;
-        const updatedClip = await updateClip(clip._id, { ...updateData });
+
+        const updatedClip = await updateClip(job._id.toString(), { ...updateData });
         failedJobs.push(job);
-        contiune;
+        continue;
       }
 
       // upload to each platform
@@ -74,7 +78,9 @@ const uploadClipsQueue = async (clips) => {
 
       successfulJobs.push(job);
     } catch (error) {
-      console.log(error.message);
+      if (error instanceof Error) {
+        console.log(error.message);
+      }
       failedJobs.push(job);
     }
   }
@@ -83,7 +89,7 @@ const uploadClipsQueue = async (clips) => {
   jobs = [];
 };
 
-const uploadToPlatforms = async (clip, accounts) => {
+const uploadToPlatforms = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
   let uploadError = false;
   // upload to youtube
   if (clip.uploadPlatforms.includes('YouTube') && !clip.youtubeUploaded) {
@@ -105,17 +111,17 @@ const uploadToPlatforms = async (clip, accounts) => {
       uploaded: true,
       uploadTime: new Date(new Date().toUTCString()),
       status: uploadError ? 'FAILED_SCHEDULED_UPLOAD' : 'SUCCESS_SCHEDULED_UPLOAD',
+      _id: undefined,
     };
-    delete updateData._id;
-    const updatedClip = await updateClip(clip._id, { ...updateData });
+    const updatedClip = await updateClip(clip._id.toString(), { ...updateData });
 
-    return updatedClip.value;
+    return updatedClip?.value;
   } catch (error) {
     console.log(error);
   }
 };
 
-const uploadToYoutube = async (clip, accounts) => {
+const uploadToYoutube = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
   console.log('Youtube upload');
   const youtubeToken = accounts?.filter((acc) => acc.provider === 'youtube')[0];
   if (!youtubeToken) {
@@ -167,7 +173,7 @@ const uploadToYoutube = async (clip, accounts) => {
     let redirectUrl = YOUTUBE_SECRETS.web.redirect_uris[0];
     let oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
 
-    oauth2Client.credentials = updatedAccount.value;
+    oauth2Client.credentials = updatedAccount.value!;
 
     console.log('uploading to yt...');
     try {
@@ -188,7 +194,7 @@ const uploadToYoutube = async (clip, accounts) => {
   }
 };
 
-const uploadToTiktok = async (clip, accounts) => {
+const uploadToTiktok = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
   console.log('Upload to tiktok start...');
   const tiktokToken = accounts?.filter((acc) => acc.provider === 'tiktok')[0];
   if (!tiktokToken) {
@@ -200,7 +206,7 @@ const uploadToTiktok = async (clip, accounts) => {
     let url_refresh_token = 'https://open-api.tiktok.com/oauth/refresh_token/';
     url_refresh_token += '?client_key=' + process.env.TIKTOK_CLIENT_KEY;
     url_refresh_token += '&grant_type=refresh_token';
-    url_refresh_token += '&refresh_token=' + tiktokToken.refresh_token.replace(/#/g, '%23');
+    url_refresh_token += '&refresh_token=' + tiktokToken.refresh_token!.replace(/#/g, '%23');
 
     const res = await axios.post(url_refresh_token);
     const refreshToken = await res.data.data;
@@ -239,13 +245,13 @@ const uploadToTiktok = async (clip, accounts) => {
     // data for tiktok api
     const tokenData = {
       ...updatedAccount.value,
-      open_id: updatedAccount.providerAccountId,
+      open_id: updatedAccount.value?.providerAccountId,
     };
 
     // upload to tiktok
     console.log('uploading to tiktok...');
     try {
-      let output = await uploadVideoToTiktok(JSON.stringify(tokenData), clip.renderedUrl);
+      let output = await uploadVideoToTiktok(JSON.stringify(tokenData), clip.renderedUrl!);
       // set tiktok fields
       clip.tiktokUploaded = true;
       clip.tiktokUploadTime = new Date(new Date().toUTCString());

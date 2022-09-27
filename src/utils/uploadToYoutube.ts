@@ -1,7 +1,7 @@
 import { google, Auth } from 'googleapis';
 const service = google.youtube('v3');
 import got from 'got';
-import { CurrentClip } from '../src/api/crop/crop.model';
+import { CurrentClip } from '../api/crop/crop.model';
 import { bufferToStream, stream2buffer } from './streamUtils';
 
 const youtubeCategoriesToIds: { [key: string]: number } = {
