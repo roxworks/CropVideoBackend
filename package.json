@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Crop videos for clipbot",
   "main": "src/index.ts",
-
   "scripts": {
     "start": "ts-node  src/index.ts",
     "dev": "nodemon  src/index.ts",
@@ -12,8 +11,10 @@
   "author": "Delvoid",
   "license": "ISC",
   "dependencies": {
+    "@bull-board/express": "^4.3.1",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "axios": "^0.27.2",
+    "bullmq": "^2.1.1",
     "cors": "^2.8.5",
     "dotenv": "^16.0.1",
     "express": "^4.18.1",
