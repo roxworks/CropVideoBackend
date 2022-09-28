@@ -136,9 +136,12 @@ const uploadToYoutube = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
       clipURL: clip.renderedUrl,
       privacy: clip.youtubePrivacy,
       youtubeDescription: clip.description || undefined,
+      youtubeCategory: clip.youtubeCategory || 'Gaming',
     };
     console.log('refreshing token');
     const refreshToken = await refreshYoutubeToken(youtubeToken);
+
+    console.log(refreshToken);
 
     if (!refreshToken?.refresh_token || !refreshToken?.access_token) {
       console.log('token error');
