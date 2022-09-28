@@ -1,8 +1,9 @@
 import { google } from 'googleapis';
+import { YTRefreshToken } from '../interfaces/YouTubeRefreshToken';
 var OAuth2 = google.auth.OAuth2;
 const YOUTUBE_SECRETS = JSON.parse(process.env.YOUTUBE_SECRETS || '{}');
 
-const makeClient = (credentials) => {
+const makeClient = (credentials: Object) => {
   var clientSecret = YOUTUBE_SECRETS.web.client_secret;
   var clientId = YOUTUBE_SECRETS.web.client_id;
   var redirectUrl = YOUTUBE_SECRETS.web.redirect_uris[0];
@@ -11,7 +12,7 @@ const makeClient = (credentials) => {
   return oauth2Client;
 };
 
-export const refreshYoutubeToken = async (credentials) => {
+export const refreshYoutubeToken = async (credentials: Object): Promise<YTRefreshToken> => {
   var oauth2Client = makeClient(credentials);
   let clientToken = new Promise((resolve, reject) => {
     oauth2Client.refreshAccessToken(async function (err, token) {
@@ -43,10 +44,10 @@ export const refreshYoutubeToken = async (credentials) => {
   //@ts-ignore
   if (finalToken.isRejected) {
     console.log('rip token s', finalToken);
-    return finalToken;
+    return finalToken as YTRefreshToken;
   }
 
   console.log('got client tokeN:' + JSON.stringify(finalToken));
 
-  return finalToken;
+  return finalToken as YTRefreshToken;
 };

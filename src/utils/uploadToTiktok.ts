@@ -1,10 +1,10 @@
 import FormData from 'form-data';
 import axios from 'axios';
-import { bufferToStream, stream2buffer } from './streamUtils.js';
+import { bufferToStream, stream2buffer } from './streamUtils';
 import got from 'got';
 import util from 'util';
 
-const IsJsonString = (str) => {
+const IsJsonString = (str: string) => {
   try {
     JSON.parse(str);
   } catch (e) {
@@ -13,7 +13,7 @@ const IsJsonString = (str) => {
   return true;
 };
 
-export const uploadVideoToTiktok = async (tiktokAuth, fileURL) => {
+export const uploadVideoToTiktok = async (tiktokAuth: string, fileURL: string) => {
   console.log('start upload');
   let tiktokSessionId = tiktokAuth;
 

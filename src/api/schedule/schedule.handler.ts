@@ -1,28 +1,35 @@
+import { Response, Request, NextFunction } from 'express';
 import got from 'got';
 import fs from 'fs';
 import FormData from 'form-data';
 import { performance } from 'universal-perf-hooks';
 import axios from 'axios';
 
-import { fileioUpload, makeVideoVertical } from '../service/cropService.js';
+import { fileioUpload, makeVideoVertical } from '../crop/crop.service';
+import { ClipWithId, ScheduledClipsArray } from '../crop/crop.model';
+import MessageResponse from '../../interfaces/MessageResponse';
 
-let jobs = [];
-let currentJobId;
+let jobs: ClipWithId[] = [];
+let currentJobId: string | undefined;
 
-export const scheduleJobs = async (req, res) => {
+export const scheduleJobs = async (
+  req: Request<{}, {}, ScheduledClipsArray>,
+  res: Response<MessageResponse>,
+  next: NextFunction
+) => {
   if (!req.headers.authorization) return res.status(400).send();
   const { APP_KEY } = process.env;
-  if (!APP_KEY) return res.status(500).send('internal server error');
+  if (!APP_KEY) return res.status(500).json({ message: 'internal server error' });
   const ACTION_KEY = req.headers.authorization.split(' ')[1];
   if (ACTION_KEY !== APP_KEY) return res.status(400).send();
 
   const clips = req?.body?.scheduledClips;
-  if (!clips || clips.length === 0) return res.status(200).send('No clips scheduled');
+  if (!clips || clips.length === 0) return res.status(200).json({ message: 'No clips scheduled' });
 
   let count = 0;
 
   // check if clip is already scheduled
-  clips.forEach((clip) => {
+  clips.forEach((clip: ClipWithId) => {
     const isFound = jobs.some((job) => job.id == clip.id);
     if (!isFound) {
       count++;
@@ -33,10 +40,10 @@ export const scheduleJobs = async (req, res) => {
     renderClips();
   }
 
-  res.status(200).send('jobs scheduled');
+  res.status(200).json({ message: 'jobs scheduled' });
 };
 
-export const jobsList = async (req, res) => {
+export const jobsList = async (req: Request, res: Response, next: NextFunction) => {
   res.status(200).json({ count: jobs.length, currentJob: currentJobId, jobs });
 };
 
@@ -49,7 +56,7 @@ const renderClips = async () => {
       currentJobId = clip.videoId;
       const downStart = performance.now();
       const { id } = clip;
-      const downloadUrl = clip.download_url || clip.downloadUrl;
+      const downloadUrl = clip.downloadUrl;
       let fileStream = got.stream(downloadUrl);
       const fileName = `${Math.random().toString(36).substring(2, 15)}_${id}.mp4`;
       const downEnd = performance.now();
@@ -62,7 +69,7 @@ const renderClips = async () => {
         let file = fs.createWriteStream('./' + fileName);
         fileStream.pipe(file);
         file.on('finish', () => {
-          resolve();
+          resolve('stream done -schedule');
         });
         file.on('error', (err) => {
           console.log('GOOFED');
@@ -109,7 +116,9 @@ const renderClips = async () => {
       fs.unlinkSync('./' + fileName);
       console.log('files deleted: ', editVideo, fileName);
     } catch (error) {
-      console.log(error.message);
+      if (error instanceof Error) {
+        console.log(error.message);
+      }
       failedJobs.push(job);
     }
   }

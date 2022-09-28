@@ -1,9 +1,10 @@
 import { google, Auth } from 'googleapis';
 const service = google.youtube('v3');
 import got from 'got';
-import { bufferToStream, stream2buffer } from './streamUtils.js';
+import { CurrentClip } from '../api/crop/crop.model';
+import { bufferToStream, stream2buffer } from './streamUtils';
 
-const youtubeCategoriesToIds = {
+const youtubeCategoriesToIds: { [key: string]: number } = {
   'Film & Animation': 1,
   'Autos & Vehicles': 2,
   Music: 10,
@@ -23,13 +24,13 @@ const youtubeCategoriesToIds = {
   'Nonprofits & Activism': 29,
 };
 
-export const uploadVideoToYoutube = async (auth, currentClip) => {
+export const uploadVideoToYoutube = async (auth: Auth.OAuth2Client, currentClip: CurrentClip) => {
   console.log(currentClip);
-  let privacy = currentClip?.youtubePrivacy || currentClip?.privacy || 'private';
+  let privacy = currentClip?.youtubePrivacy || 'private';
   let adjustedTitle = currentClip?.title || 'ClipbotTV video';
 
-  const category = currentClip?.youtubeCategory || currentClip?.category;
-  const fileStream = got.stream(currentClip?.clipURL);
+  const category = currentClip?.youtubeCategory;
+  const fileStream = got.stream(currentClip?.clipURL!);
   const getBuffer = await stream2buffer(fileStream);
   const finalStream = bufferToStream(getBuffer);
 

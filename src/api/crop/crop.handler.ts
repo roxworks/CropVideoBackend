@@ -1,18 +1,27 @@
+import { Response, Request, NextFunction } from 'express';
 import got from 'got';
 import fs from 'fs';
 import FormData from 'form-data';
 import { performance } from 'universal-perf-hooks';
 
-import { fileioUpload, makeVideoVertical } from '../service/cropService.js';
+import { fileioUpload, makeVideoVertical } from './crop.service';
+import { JobId } from './crop.model';
 
-const currentJobStatus = {};
+type JobStatus = {
+  fileURL?: string;
+  key?: string;
+  status?: string;
+};
+const currentJobStatus: { [key: string]: JobStatus } = {};
 
-export const createCropVideo = async (req, res) => {
+export const createCropVideo = async (req: Request, res: Response, next: NextFunction) => {
   if (!req.headers.authorization) return res.status(400).send();
   const { APP_KEY } = process.env;
   if (!APP_KEY) return res.status(500).send('internal server error');
   const ACTION_KEY = req.headers.authorization.split(' ')[1];
   if (ACTION_KEY !== APP_KEY) return res.status(400).send();
+
+  console.log(req.body);
 
   const { clip, cropData } = req.body;
   console.log('Clip Data');
@@ -26,7 +35,7 @@ export const createCropVideo = async (req, res) => {
   const { id } = clip;
   const downloadUrl = clip.download_url || clip.downloadUrl;
   let fileStream = got.stream(downloadUrl);
-  const fileName = `${Math.random().toString(36).substring(2, 15)}_${id}.mp4`;
+  const fileName: string = `${Math.random().toString(36).substring(2, 15)}_${id}.mp4`;
 
   const downEnd = performance.now();
   console.log(`DOWNLOAD call took ${downEnd - downStart} ms`);
@@ -41,7 +50,7 @@ export const createCropVideo = async (req, res) => {
     let file = fs.createWriteStream('./' + fileName);
     fileStream.pipe(file);
     file.on('finish', () => {
-      resolve();
+      resolve('stream done');
     });
     file.on('error', (err) => {
       console.log('GOOFED');
@@ -82,7 +91,13 @@ export const createCropVideo = async (req, res) => {
   console.log('files deleted: ', editVideo, fileName);
 };
 
-export const videoStatus = async (req, res) => {
+export const videoStatus = async (
+  req: Request<{}, {}, JobId>,
+  res: Response<JobStatus>,
+  next: NextFunction
+) => {
   const jobId = req.query.id;
+  if (typeof jobId !== 'string') return res.status(400);
+
   res.status(200).send(currentJobStatus[jobId]);
 };
