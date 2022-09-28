@@ -36,8 +36,8 @@ const uploadClipsQueue = async (clips: ClipWithIdMongo[]) => {
   console.log('upload queue');
   console.log(clips.length);
 
-  const successfulJobs = [];
-  const failedJobs = [];
+  const successfulJobs: ClipWithIdMongo[] = [];
+  const failedJobs: ClipWithIdMongo[] = [];
   for (let job of clips) {
     console.log(job.videoId);
 
