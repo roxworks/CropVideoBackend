@@ -9,7 +9,7 @@ import {
   EVERY_15_MINUTES,
   EVERY_30_MINUTES,
   EVERY_HOUR,
-} from './scheduleConstants';
+} from './cronConstants';
 import { uploadClip } from '../service/uploadService';
 
 export default () => {

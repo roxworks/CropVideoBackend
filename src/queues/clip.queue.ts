@@ -26,7 +26,7 @@ const myWroker = new Worker('clips-all', clipsProducer, {
 const getAllUsersClips = async (data: any) => {
   try {
     console.log('Adding jobs...');
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 3; i++) {
       await clipQueue.add('my-job', { foo: 'bar' });
     }
     console.log('added clips');

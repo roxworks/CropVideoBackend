@@ -12,7 +12,7 @@ const clipsProducer = async (job: Job) => {
 };
 
 const updateTest = async (id: string) => {
-  await timeout(2000);
+  await timeout(1000);
   console.log('Done', id);
 };
 

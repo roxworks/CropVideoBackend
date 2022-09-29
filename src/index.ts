@@ -12,6 +12,7 @@ import * as middlewares from './middlewares';
 import api from './api';
 
 import scheduledFunctions from './jobs/scheduleUploads';
+import twitchClipsCrons from './jobs/twitchClips';
 ffmpeg.setFfmpegPath(path);
 // @ts-ignore
 import { path as ffprobePath } from '@ffprobe-installer/ffprobe';
@@ -32,6 +33,7 @@ const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
 
 // cron jobs
 scheduledFunctions();
+twitchClipsCrons();
 
 app.use(cors());
 app.use(express.json());
