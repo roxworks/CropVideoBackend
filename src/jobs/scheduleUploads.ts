@@ -27,18 +27,6 @@ export default () => {
       }
     }
   });
-  // cron.schedule(EVERY_15_MINUTES, async () => {
-  //   const clipbotKey = process.env.APP_KEY;
-  //   try {
-  //     const res = await axios.get(`${process.env.CLIPBOT_URL}/api/clips/scheduled`, {
-  //       headers: { 'Content-Type': 'application/json', Authorization: `Bearer: ${clipbotKey}` },
-  //     });
-  //     console.log(res.data);
-  //   } catch (error) {
-  //     console.log('Error getting clips to upload');
-  //     console.log(error.message);
-  //   }
-  // });
 
   cron.schedule(EVERY_15_MINUTES, async () => {
     try {
