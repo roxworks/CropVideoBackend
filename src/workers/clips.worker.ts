@@ -1,12 +1,26 @@
 import { Job } from 'bullmq';
+import { getUserByIdWithAccounts } from '../service/User';
+import { getUsersTwitchAccount } from '../service/Account';
 
 function timeout(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const clipsProducer = async (job: Job) => {
+const clipsProducer = async (job: Job<{ userId: string; providerAccountId: string }, any, any>) => {
   console.log('clip producer: ', job.data);
+  const userId = job.data.userId;
   // throw new Error('whoops');
+  //TODO:: gets users clips - add to clips handler
+  const user = await getUserByIdWithAccounts(userId);
+  if (!user) throw Error(`unable to find user ${userId}`);
+  // get twitch account
+  const twitchProvider = user.accounts?.filter((acc) => acc.provider === 'twitch')[0];
+
+  if (!twitchProvider.providerAccountId && !twitchProvider.access_token)
+    throw Error('missing information');
+  //TODO get twitch clip
+  const twitch = await getUsersTwitchAccount(userId);
+  console.log('getUsersTwitchAccount:', twitch);
 
   await updateTest(job.id!);
 };

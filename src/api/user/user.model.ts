@@ -23,3 +23,4 @@ export const UserWithAccounts = TUser.extend({
 export type TUser = z.TypeOf<typeof TUser>;
 export type UserWithId = WithId<TUser>;
 export type UserWithAccounts = z.TypeOf<typeof UserWithAccounts>;
+export type UserWithAccountsWithId = WithId<UserWithAccounts>;

@@ -14,3 +14,13 @@ export const updateAccount = async (accountData: TAccount) => {
 
   return updatedAccount;
 };
+export const getUsersTwitchAccount = async (userId: string) => {
+  if (!userId) return;
+  const client = await clientPromise;
+  const db = client.db().collection<TAccount>('Account');
+
+  const twitchAccount = await db.findOne({ userId, provider: 'twitch' });
+  if (!twitchAccount) return;
+
+  return twitchAccount;
+};

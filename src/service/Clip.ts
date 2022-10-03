@@ -8,6 +8,7 @@ import { ClipWithIdMongo } from '../api/crop/crop.model';
 //   return clips;
 // };
 
+const test = ' test'
 export const getClipsReadyToUploaded = async () => {
   const client = await clientPromise;
   const db = client.db().collection('Clip');

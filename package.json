@@ -13,6 +13,8 @@
   "dependencies": {
     "@bull-board/express": "^4.3.1",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@twurple/api": "^5.2.4",
+    "@twurple/auth": "^5.2.4",
     "axios": "^0.27.2",
     "bullmq": "^2.1.1",
     "cors": "^2.8.5",
