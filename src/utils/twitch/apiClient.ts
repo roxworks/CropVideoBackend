@@ -12,10 +12,11 @@ if (!clientId || !clientSecret) {
     'Please define TWITCH_CLIENT_ID AND TWITCH_CLIENT_SECRET vairables inside .env.local'
   );
 }
-
+//@ts-ignore
 let api = global.api;
 
 if (!api) {
+  //@ts-ignore
   api = global.api = { conn: null, promise: null };
 }
 async function tokenData(userId: string) {
