@@ -1,14 +1,10 @@
-import clientPromise from "../db/conn";
-import {
-  UserWithAccounts,
-  UserWithAccountsWithId,
-  UserWithId,
-} from "../api/user/user.model.js";
-import { ObjectId } from "mongodb";
+import clientPromise from '../db/conn';
+import { UserWithAccounts, UserWithAccountsWithId, UserWithId } from '../api/user/user.model.js';
+import { ObjectId } from 'mongodb';
 
 export const getAllUsers = async () => {
   const client = await clientPromise;
-  const db = client.db().collection<UserWithId>("User");
+  const db = client.db().collection<UserWithId>('User');
 
   const users = await db.find().toArray();
 
@@ -17,7 +13,7 @@ export const getAllUsers = async () => {
 
 export const getUserById = async (id: string) => {
   const client = await clientPromise;
-  const db = client.db().collection<UserWithId>("User");
+  const db = client.db().collection<UserWithId>('User');
 
   const user = await db.findOne({ _id: new ObjectId(id) });
 
@@ -25,43 +21,43 @@ export const getUserById = async (id: string) => {
 };
 export const getUserByIdWithAccounts = async (id: string) => {
   const client = await clientPromise;
-  const db = client.db().collection<UserWithId[]>("User");
+  const db = client.db().collection<UserWithId[]>('User');
 
   const user = await db
     .aggregate([
       { $match: { _id: new ObjectId(id) } },
-      { $addFields: { userId: { $toString: "$_id" } } },
+      { $addFields: { userId: { $toString: '$_id' } } },
       {
         $lookup: {
-          from: "Account",
-          localField: "userId",
-          foreignField: "userId",
-          as: "accounts",
-        },
-      },
+          from: 'Account',
+          localField: 'userId',
+          foreignField: 'userId',
+          as: 'accounts'
+        }
+      }
     ])
     .toArray();
-  console.log("DBUSER:", user);
+  console.log('DBUSER:', user);
   return user?.[0] as UserWithAccounts;
 };
 
 type UserAccountWithUserId = UserWithAccountsWithId & { userId: string };
 export const getUsersWithoutClips = async () => {
   const client = await clientPromise;
-  const db = client.db().collection<UserWithId>("User");
+  const db = client.db().collection<UserWithId>('User');
 
   const users = (await db
     .aggregate([
       { $match: { defaultClips: { $in: [null, false] } } },
-      { $addFields: { userId: { $toString: "$_id" } } },
+      { $addFields: { userId: { $toString: '$_id' } } },
       {
         $lookup: {
-          from: "Account",
-          localField: "userId",
-          foreignField: "userId",
-          as: "accounts",
-        },
-      },
+          from: 'Account',
+          localField: 'userId',
+          foreignField: 'userId',
+          as: 'accounts'
+        }
+      }
     ])
     .toArray()) as UserAccountWithUserId[];
 
