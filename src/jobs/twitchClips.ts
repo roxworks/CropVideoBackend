@@ -17,7 +17,7 @@ export default () => {
       users.forEach((user) => {
         const twitchProvider = user.accounts?.filter((acc) => acc.provider === 'twitch')[0];
         if (!twitchProvider.providerAccountId) return;
-        addToGetAllClipsQueue(user.userId, twitchProvider.providerAccountId!);
+        addToGetAllClipsQueue(user.userId, twitchProvider.providerAccountId);
       });
     } catch (error) {
       if (error instanceof Error) {

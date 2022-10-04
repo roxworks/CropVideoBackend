@@ -1,5 +1,9 @@
 import clientPromise from '../db/conn';
-import { UserWithAccounts, UserWithAccountsWithId, UserWithId } from '../api/user/user.model.js';
+import {
+  UserWithAccountsWithId,
+  UserWithId,
+  UserWithAccountsAndSettingsWithId
+} from '../api/user/user.model.js';
 import { ObjectId } from 'mongodb';
 
 export const getAllUsers = async () => {
@@ -19,7 +23,7 @@ export const getUserById = async (id: string) => {
 
   return user;
 };
-export const getUserByIdWithAccounts = async (id: string) => {
+export const getUserByIdWithAccountsAndSettings = async (id: string) => {
   const client = await clientPromise;
   const db = client.db().collection<UserWithId[]>('User');
 
@@ -34,11 +38,19 @@ export const getUserByIdWithAccounts = async (id: string) => {
           foreignField: 'userId',
           as: 'accounts'
         }
+      },
+      {
+        $lookup: {
+          from: 'Setting',
+          localField: '_id',
+          foreignField: 'userId',
+          as: 'settings'
+        }
       }
     ])
     .toArray();
   console.log('DBUSER:', user);
-  return user?.[0] as UserWithAccounts;
+  return user?.[0] as UserWithAccountsAndSettingsWithId;
 };
 
 type UserAccountWithUserId = UserWithAccountsWithId & { userId: string };

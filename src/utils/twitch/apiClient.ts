@@ -32,11 +32,15 @@ async function tokenData(userId: string) {
 }
 
 async function authProvider(user?: UserWithAccountsWithId) {
+  console.log('----------TWITCH-------');
+  console.log('clientId', clientId);
+  console.log('clientSecret', clientSecret);
+
   if (user) {
     return new RefreshingAuthProvider(
       {
-        clientId,
-        clientSecret,
+        clientId: clientId!,
+        clientSecret: clientSecret!,
         onRefresh: async (newTokenData) => {
           await updateAccount({
             type: 'bearer',
@@ -53,7 +57,10 @@ async function authProvider(user?: UserWithAccountsWithId) {
       await tokenData(user._id.toString())
     );
   } else {
-    return new ClientCredentialsAuthProvider(clientId, clientSecret);
+    console.log('----------TWITCH-------');
+    console.log('clientId', clientId);
+    console.log('clientSecret', clientSecret);
+    return new ClientCredentialsAuthProvider(clientId!, clientSecret!);
   }
 }
 
