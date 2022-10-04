@@ -1,11 +1,11 @@
 import cron from 'node-cron';
 
-import { EVERY_10_SECONDS } from './cronConstants';
+import { EVERY_MINUTE } from './cronConstants';
 import { addToGetAllClipsQueue } from '../utils/twitch/clips.handler';
 import { getUsersWithoutClips } from '../service/User';
 
 export default () => {
-  cron.schedule(EVERY_10_SECONDS, async () => {
+  cron.schedule(EVERY_MINUTE, async () => {
     try {
       //get all users where defaultClips is false or null
       const users = await getUsersWithoutClips();

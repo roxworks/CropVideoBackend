@@ -1,6 +1,6 @@
 import { Job } from 'bullmq';
 import { getUserByIdWithAccountsAndSettings } from '../service/User';
-import { getUsersTwitchAccount } from '../service/Account';
+import { getClipsStartingAtCertainDateFromTwitchAPI } from '../utils/twitch/clips.handler';
 
 function timeout(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -12,19 +12,19 @@ const clipsProducer = async (job: Job<{ userId: string; providerAccountId: strin
   // throw new Error('whoops');
   //TODO:: gets users clips - add to clips handler
   const user = await getUserByIdWithAccountsAndSettings(userId);
-  console.log('user:', user)
+  console.log('user:', user);
   if (!user) throw Error(`unable to find user ${userId}`);
   // get twitch account
   const twitchProvider = user.accounts?.filter((acc) => acc.provider === 'twitch')[0];
 
-  if (!twitchProvider.providerAccountId && !twitchProvider.access_token)
+  if (!twitchProvider || !twitchProvider.providerAccountId || !twitchProvider.access_token)
     throw Error('missing information');
-  //TODO get twitch clip
-  const twitch = await getUsersTwitchAccount(userId);
-  console.log('getUsersTwitchAccount:', twitch);
-  console.log('----compare---', twitchProvider);
-
-
+  //TODO get titch cli
+  const clips = await getClipsStartingAtCertainDateFromTwitchAPI(
+    twitchProvider.providerAccountId,
+    user
+  );
+  console.log('clips length: ', clips.length);
   await updateTest(job.id!);
 };
 

@@ -114,7 +114,6 @@ export const getClipsStartingAtCertainDateFromTwitchAPI = async (
 ) => {
   user.settings[0].lastUploaded;
   console.log('gettin more clips');
-  // let mostRecentClipPostedCreatedAtTime = new Date(2010, 0, 1).toISOString()  lastUploadCreatedAtDate
   let mostRecentClipPostedCreatedAtTime = date
     ? date
     : user?.settings[0]?.lastUploaded
@@ -129,7 +128,6 @@ export const getClipsStartingAtCertainDateFromTwitchAPI = async (
   let lastEndDateIndex = 0;
   let totalClipsFoundSoFar = 0;
   for (let i = jumpSize; i < daysOfYear.length; i = Math.min(i + jumpSize, daysOfYear.length - 1)) {
-    console.log('i: ' + i);
     let startDate =
       daysOfYear[lastEndDateIndex] > daysOfYear[i - jumpSize + 1]
         ? daysOfYear[lastEndDateIndex]
@@ -150,7 +148,9 @@ export const getClipsStartingAtCertainDateFromTwitchAPI = async (
       console.log('API is undefined, getting no new clips');
       return [];
     }
-    let newClips = await api.clips
+
+    let newClips = [];
+    newClips = await api.clips
       .getClipsForBroadcasterPaginated(broadcasterId, {
         limit: 100000,
         startDate: startDate, //whichever is later in life to avoid overlap
@@ -158,7 +158,6 @@ export const getClipsStartingAtCertainDateFromTwitchAPI = async (
       })
       .getAll();
 
-    console.log('Jump size: ' + jumpSize);
     console.log(
       `Clips from ${startDate.toISOString()} until ${endDate.toISOString()}:` + newClips.length
     );
@@ -174,7 +173,6 @@ export const getClipsStartingAtCertainDateFromTwitchAPI = async (
     }
     clips.push(newClips);
     totalClipsFoundSoFar += newClips.length;
-    console.log('totalCLipsFoundSoFar: ', totalClipsFoundSoFar);
     // updateStatus('LOADING NEW TWITCH CLIPS: ' + totalClipsFoundSoFar)
     console.log(
       'Unique clips in twitch output: ' + new Set(newClips.map((x: TwurpleClip) => x.id)).size
@@ -188,8 +186,6 @@ export const getClipsStartingAtCertainDateFromTwitchAPI = async (
 
   console.log('Checked clips starting at: ' + mostRecentClipPostedCreatedAtTime);
   let recentClips: TwurpleClip[] = clips.flatMap((x) => x); //clips.data.data;
-  console.log('fuck idk: ' + JSON.stringify({ ...recentClips[0] }));
-  console.log('all clips length pre unique: ' + recentClips.length);
 
   if (recentClips.length == 0) {
     return [];
@@ -214,43 +210,3 @@ export const getClipsStartingAtCertainDateFromTwitchAPI = async (
 
   return fixedRecentClips;
 };
-
-export const getRecentClips = async (
-  userId: string,
-  startDate?: string,
-  endDate?: string,
-  user?: UserWithAccountsAndSettingsWithId
-) => {
-  try {
-    const api = await apiClientConnect(user);
-    if (api == undefined) {
-      console.log('API is undefined, getting no new clips');
-      return [];
-    }
-    //32985385 rox
-    let request = await api.clips.getClipsForBroadcasterPaginated(userId, {
-      startDate: startDate ? new Date(startDate).toISOString() : previous14Date(),
-      endDate: endDate ? new Date(endDate).toISOString() : new Date().toISOString()
-    });
-
-    let page: HelixClip[];
-    const result: HelixClip[] = [];
-
-    while ((page = await request.getNext()).length) {
-      result.push(...page);
-    }
-
-    let recentClips: TwurpleClip[] = result.flatMap((x: TwurpleClip) => x);
-    let uniqueIds = new Set(recentClips.map((x) => x.id));
-    recentClips = recentClips.filter((x) => uniqueIds.has(x.id));
-
-    let fixedRecentClips = fixTheFreakingNames(recentClips);
-    fixedRecentClips = sortClipsByCreationDate(fixedRecentClips);
-
-    return fixedRecentClips;
-  } catch (error) {
-    console.log(error);
-    throw Error('error');
-  }
-};
-

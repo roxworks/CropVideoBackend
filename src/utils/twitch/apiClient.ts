@@ -1,7 +1,10 @@
 import { RefreshingAuthProvider } from '@twurple/auth';
 import { ClientCredentialsAuthProvider } from '@twurple/auth';
 import { ApiClient } from '@twurple/api';
-import { UserWithAccountsWithId } from '../../api/user/user.model';
+import {
+  UserWithAccountsAndSettingsWithId,
+  UserWithAccountsWithId
+} from '../../api/user/user.model';
 import { getUsersTwitchAccount, updateAccount } from '../../service/Account';
 
 const clientId = process.env.TWITCH_CLIENT_ID;
@@ -21,7 +24,6 @@ if (!api) {
 }
 async function tokenData(userId: string) {
   const account = await getUsersTwitchAccount(userId);
-
   return {
     accessToken: account?.access_token || undefined,
     refreshToken: account?.refresh_token || null,
@@ -31,8 +33,9 @@ async function tokenData(userId: string) {
   };
 }
 
-async function authProvider(user?: UserWithAccountsWithId) {
+async function authProvider(user: UserWithAccountsAndSettingsWithId) {
   if (user) {
+    console.log('token refresh');
     return new RefreshingAuthProvider(
       {
         clientId: clientId!,
@@ -57,7 +60,7 @@ async function authProvider(user?: UserWithAccountsWithId) {
   }
 }
 
-export async function apiClientConnect(user?: UserWithAccountsWithId) {
+export async function apiClientConnect(user: UserWithAccountsAndSettingsWithId) {
   const provider = await authProvider(user);
   if (api.conn) {
     return api.conn;
