@@ -35,7 +35,6 @@ async function tokenData(userId: string) {
 
 async function authProvider(user: UserWithAccountsAndSettingsWithId) {
   if (user) {
-    console.log('token refresh');
     return new RefreshingAuthProvider(
       {
         clientId: clientId!,
