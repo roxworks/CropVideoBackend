@@ -90,13 +90,13 @@ const fixTheFreakingNames = (clips: TwurpleClip[], userId: string): ClipManualWi
 };
 
 const sortClipsByCreationDate = (clips: ClipManualWithUserId[]) => {
-  return clips.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+  return clips.sort((a, b) => (a.created_at > b.created_at ? 1 : -1));
 };
 
 const filterClipsByCurrentSettings = (clips: ClipManualWithUserId[]) => {
   return (
     clips
-      .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+      .sort((a, b) => (a.created_at > b.created_at ? 1 : -1))
       // .filter((x) => x.created_at > getCurrentState()?.lastUploadCreatedAtDate)
       .filter((x) => x.created_at > new Date(2010, 0, 1).toISOString())
       .map((clipBlob) => {

@@ -25,6 +25,7 @@ export const TSettings = z.object({
   youtubeDescription: z.string().optional().nullable(),
   instagramCaption: z.string().optional().nullable(),
   lastUploaded: z.date().optional().nullable(),
+  lastUploadedId: z.string().optional().nullable(),
   lastUploadTiktok: z.date().optional().nullable(),
   lastUploadYoutube: z.date().optional().nullable(),
   lastUploadInstagram: z.date().optional().nullable(),
