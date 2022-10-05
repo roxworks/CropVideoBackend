@@ -2,7 +2,9 @@ import clientPromise from '../db/conn';
 import {
   UserWithAccountsWithId,
   UserWithId,
-  UserWithAccountsAndSettingsWithId
+  UserWithAccountsAndSettingsWithId,
+  TUser,
+  DefaultClips
 } from '../api/user/user.model.js';
 import { ObjectId } from 'mongodb';
 
@@ -22,6 +24,18 @@ export const getUserById = async (id: string) => {
   const user = await db.findOne({ _id: new ObjectId(id) });
 
   return user;
+};
+
+export const updateUserDefaultClipsById = async (id: string, defaultClip: DefaultClips) => {
+  const client = await clientPromise;
+  const db = client.db().collection<UserWithId>('User');
+
+  const updatedUser = await db.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: { defaultClips: defaultClip } }
+  );
+
+  return updatedUser;
 };
 export const getUserByIdWithAccountsAndSettings = async (id: string) => {
   const client = await clientPromise;
