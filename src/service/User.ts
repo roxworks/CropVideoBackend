@@ -63,7 +63,6 @@ export const getUserByIdWithAccountsAndSettings = async (id: string) => {
       }
     ])
     .toArray();
-  console.log('DBUSER:', user);
   return user?.[0] as UserWithAccountsAndSettingsWithId;
 };
 

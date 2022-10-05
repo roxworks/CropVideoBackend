@@ -10,7 +10,6 @@ const clipsProducer = async (job: Job<{ userId: string; providerAccountId: strin
   //TODO:: gets users clips - add to clips handler
   try {
     const user = await getUserByIdWithAccountsAndSettings(userId);
-    console.log('user:', user);
     if (!user) throw Error(`unable to find user ${userId}`);
     // get twitch account
     const twitchProvider = user.accounts?.filter((acc) => acc.provider === 'twitch')[0];
