@@ -60,7 +60,7 @@ export const getUsersWithoutClips = async () => {
 
   const users = (await db
     .aggregate([
-      { $match: { defaultClips: { $in: [null, false] } } },
+      { $match: { defaultClips: { $in: [null, 'pending'] } } },
       { $addFields: { userId: { $toString: '$_id' } } },
       {
         $lookup: {
