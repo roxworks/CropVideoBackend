@@ -1,13 +1,14 @@
 import { z } from 'zod';
 import { WithId } from 'mongodb';
-import {cropSettingsSchema, platformsSchema} from '../api/crop/crop.model'
+import { cropSettingsSchema, platformsSchema } from '../api/crop/crop.model';
+import { ObjectId } from 'mongodb';
 
 export const TSettings = z.object({
-  userId: z.string(),
+  userId: z.instanceof(ObjectId),
   delay: z.number().optional().default(24),
   minViewCount: z.number().optional().default(10),
   uploadFrequency: z.number().optional().default(12),
-  license: z.string().optional().nullable(),  
+  license: z.string().optional().nullable(),
   camCrop: cropSettingsSchema.optional().nullable(),
   screenCrop: cropSettingsSchema.optional().nullable(),
   cropType: z.string().optional().nullable(),
@@ -19,7 +20,7 @@ export const TSettings = z.object({
   clipsTutorialComplete: z.boolean().optional().default(false),
   youtubeHashtags: z.string().optional().nullable(),
   youtubeTags: z.string().optional().nullable(),
-  youtubePrivacy: z.string().optional().default("private"),
+  youtubePrivacy: z.string().optional().default('private'),
   youtubeAutoCategorization: z.boolean().optional().default(true),
   youtubeDescription: z.string().optional().nullable(),
   instagramCaption: z.string().optional().nullable(),
@@ -35,7 +36,6 @@ export const TSettings = z.object({
   youtubeCount: z.number().optional().default(0),
   tiktokCount: z.number().optional().default(0),
   instagramCount: z.number().optional().default(0)
-
 });
 
 export type TSettings = z.TypeOf<typeof TSettings>;
