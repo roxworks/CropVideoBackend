@@ -3,6 +3,8 @@ import { WithId } from 'mongodb';
 import { TAccount } from '../../interfaces/Accounts';
 import { TSettings } from '../../interfaces/Settings';
 
+export const DefaultClips = z.enum(['pending', 'inqueue', 'complete', 'failed']);
+
 export const TUser = z.object({
   name: z.string().nullable(),
   email: z.string(),
@@ -14,7 +16,8 @@ export const TUser = z.object({
   sub_time_created: z.number().nullable(),
   sub_current_start: z.number().nullable(),
   sub_current_end: z.number().nullable(),
-  sub_status: z.string().nullable()
+  sub_status: z.string().nullable(),
+  defaultClips: z.string(DefaultClips)
 });
 
 export const UserWithAccounts = TUser.extend({
