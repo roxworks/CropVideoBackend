@@ -1,5 +1,5 @@
 import { apiClientConnect } from './apiClient';
-import { ClipManual } from '../../api/crop/crop.model';
+import { ClipManual, ClipManualWithUserId } from '../../api/crop/crop.model';
 import { UserWithAccountsAndSettingsWithId } from '../../api/user/user.model';
 import { HelixClip } from '@twurple/api/lib';
 import { clipQueue } from '../../queues/clip.queue';
@@ -66,10 +66,11 @@ const daysOfYearArray = (mostRecentClipPostedCreatedAtTime: string) => {
   console.log('Day arr length: ' + daysOfYear.length);
   return daysOfYear;
 };
-const fixTheFreakingNames = (clips: TwurpleClip[]): ClipManual[] => {
+const fixTheFreakingNames = (clips: TwurpleClip[], userId: string): ClipManualWithUserId[] => {
   return clips.map((clip) => {
     return {
       id: clip.id,
+      userId: userId,
       broadcaster_name: clip.broadcasterDisplayName,
       broadcaster_id: clip.broadcasterId,
       creator_name: clip.creatorDisplayName,
@@ -88,11 +89,11 @@ const fixTheFreakingNames = (clips: TwurpleClip[]): ClipManual[] => {
   });
 };
 
-const sortClipsByCreationDate = (clips: ClipManual[]) => {
+const sortClipsByCreationDate = (clips: ClipManualWithUserId[]) => {
   return clips.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
 };
 
-const filterClipsByCurrentSettings = (clips: ClipManual[]) => {
+const filterClipsByCurrentSettings = (clips: ClipManualWithUserId[]) => {
   return (
     clips
       .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
@@ -192,7 +193,7 @@ export const getClipsStartingAtCertainDateFromTwitchAPI = async (
   }
   let uniqueIds = new Set(recentClips.map((x) => x.id));
   recentClips = recentClips.filter((x) => uniqueIds.has(x.id));
-  let fixedRecentClips = fixTheFreakingNames(recentClips); // i hate libraries
+  let fixedRecentClips = fixTheFreakingNames(recentClips, user._id.toString()); // i hate libraries
   console.log('all clips length: ' + recentClips.length);
 
   // we mostly do this so we force in the download_url field

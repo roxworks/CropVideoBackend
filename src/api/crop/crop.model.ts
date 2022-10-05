@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { WithId } from 'mongodb';
 
 export const JobId = z.object({
-  id: z.string(),
+  id: z.string()
 });
 
 export const platformsSchema = z.enum(['TikTok', 'YouTube', 'Instagram']);
@@ -15,7 +15,7 @@ export const cropSettingsSchema = z.object({
   height: z.number(),
   scaleX: z.number().optional(),
   scaleY: z.number().optional(),
-  isNormalized: z.boolean().optional(),
+  isNormalized: z.boolean().optional()
 });
 
 export const CropData = z.object({
@@ -23,7 +23,7 @@ export const CropData = z.object({
   screenCrop: cropSettingsSchema,
   cropType: z.enum(['no-cam', 'cam-top', 'cam-freeform', 'freeform']),
   startTime: z.number(),
-  endTime: z.number(),
+  endTime: z.number()
 });
 
 export const ClipManual = z.object({
@@ -41,7 +41,7 @@ export const ClipManual = z.object({
   title: z.string(),
   url: z.string(),
   video_id: z.string().optional(),
-  view_count: z.number(),
+  view_count: z.number()
 });
 
 export const Clip = z.object({
@@ -81,7 +81,7 @@ export const Clip = z.object({
   caption: z.string().optional().nullable(),
   youtubeTitle: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
-  renderedUrl: z.string().optional(),
+  renderedUrl: z.string().optional()
 });
 
 export const CurrentClip = z.object({
@@ -92,18 +92,20 @@ export const CurrentClip = z.object({
   youtubePrivacy: z.string().optional(),
   youtubeCategory: z.string().optional(),
   youtubeDescription: z.string().optional(),
-  clipURL: z.string().optional(),
+  clipURL: z.string().optional()
 });
 
 export const ClipWithId = Clip.extend({ id: z.string() });
 
+export const ClipManualWithUserId = ClipManual.extend({ userId: z.string() });
+
 export const ScheduledClipsArray = z.object({
-  scheduledClips: z.array(ClipWithId),
+  scheduledClips: z.array(ClipWithId)
 });
 
 export const RenderClipReq = z.object({
   clip: ClipManual,
-  cropData: CropData,
+  cropData: CropData
 });
 
 export type JobId = z.infer<typeof JobId>;
@@ -115,3 +117,4 @@ export type ClipWithIdMongo = WithId<Clip>;
 export type ScheduledClipsArray = z.infer<typeof ScheduledClipsArray>;
 export type CropData = z.infer<typeof CropData>;
 export type RenderClipReq = z.infer<typeof RenderClipReq>;
+export type ClipManualWithUserId = z.infer<typeof ClipManualWithUserId>;
