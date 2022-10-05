@@ -2,10 +2,6 @@ import { Job } from 'bullmq';
 import { getUserByIdWithAccountsAndSettings } from '../service/User';
 import { getClipsStartingAtCertainDateFromTwitchAPI } from '../utils/twitch/clips.handler';
 
-function timeout(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 const clipsProducer = async (job: Job<{ userId: string; providerAccountId: string }, any, any>) => {
   console.log('clip producer: ', job.data);
   const userId = job.data.userId;
@@ -25,12 +21,6 @@ const clipsProducer = async (job: Job<{ userId: string; providerAccountId: strin
     user
   );
   console.log('clips length: ', clips.length);
-  await updateTest(job.id!);
-};
-
-const updateTest = async (id: string) => {
-  await timeout(1000);
-  console.log('Done', id);
 };
 
 export default clipsProducer;
