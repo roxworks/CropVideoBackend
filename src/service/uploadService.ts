@@ -5,7 +5,7 @@ import { uploadVideoToYoutube } from '../utils/uploadToYoutube';
 import { refreshYoutubeToken } from '../utils/youtubeRefresh';
 import { updateAccount } from './Account';
 import { getClipsReadyToUploaded, updateClip } from './Clip';
-import { getUserByIdWithAccounts } from './User';
+import { getUserByIdWithAccountsAndSettings } from './User';
 import { uploadVideoToTiktok } from '../utils/uploadToTiktok';
 import { Clip, ClipWithId, ClipWithIdMongo } from '../api/crop/crop.model';
 import { TAccount } from '../interfaces/Accounts';
@@ -49,14 +49,14 @@ const uploadClipsQueue = async (clips: ClipWithIdMongo[]) => {
         const updateData = {
           ...job,
           uploaded: false,
-          status: 'FAILED_SCHEDULED_UPLOAD_INVALID_DATA',
+          status: 'FAILED_SCHEDULED_UPLOAD_INVALID_DATA'
         };
         const updatedClip = await updateClip(job._id.toString(), exclude(updateData, '_id'));
         failedJobs.push(job);
         continue;
       }
       // get user with accounts
-      const user = await getUserByIdWithAccounts(job.userId);
+      const user = await getUserByIdWithAccountsAndSettings(job.userId);
       const accounts = user?.accounts;
       if (!accounts) {
         console.error('users accounts not found');
@@ -64,7 +64,7 @@ const uploadClipsQueue = async (clips: ClipWithIdMongo[]) => {
         const updateData = {
           ...job,
           uploaded: false,
-          status: 'FAILED_SCHEDULED_UPLOAD_ACCOUNT_NOT_FOUND',
+          status: 'FAILED_SCHEDULED_UPLOAD_ACCOUNT_NOT_FOUND'
         };
 
         const updatedClip = await updateClip(job._id.toString(), exclude(updateData, '_id'));
@@ -110,7 +110,7 @@ const uploadToPlatforms = async (clip: ClipWithIdMongo, accounts: TAccount[]) =>
       ...clip,
       uploaded: true,
       uploadTime: new Date(new Date().toUTCString()),
-      status: uploadError ? 'FAILED_SCHEDULED_UPLOAD' : 'SUCCESS_SCHEDULED_UPLOAD',
+      status: uploadError ? 'FAILED_SCHEDULED_UPLOAD' : 'SUCCESS_SCHEDULED_UPLOAD'
     };
 
     console.log('clipdata: ', clip);
@@ -136,7 +136,7 @@ const uploadToYoutube = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
       clipURL: clip.renderedUrl,
       privacy: clip.youtubePrivacy,
       youtubeDescription: clip.description || undefined,
-      youtubeCategory: clip.youtubeCategory || 'Gaming',
+      youtubeCategory: clip.youtubeCategory || 'Gaming'
     };
     console.log('refreshing token');
     const refreshToken = await refreshYoutubeToken(youtubeToken);
@@ -158,12 +158,12 @@ const uploadToYoutube = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
       access_token: refreshToken.access_token,
       expires_at: refreshToken.expiry_date,
       token_type: 'Bearer',
-      scope: refreshToken.scope,
+      scope: refreshToken.scope
     };
 
     const updatedAccount = await updateAccount({
       userId: clip.userId.toString(),
-      ...accountData,
+      ...accountData
     });
     if (!updatedAccount?.ok) {
       console.log('token error');
@@ -232,12 +232,12 @@ const uploadToTiktok = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
       access_token: refreshToken.access_token ?? null,
       expires_at: refreshToken.expires_in ?? null,
       token_type: 'Bearer',
-      scope: refreshToken.scope,
+      scope: refreshToken.scope
     };
 
     const updatedAccount = await updateAccount({
       userId: clip.userId.toString(),
-      ...accountData,
+      ...accountData
     });
 
     if (!updatedAccount?.ok) {
@@ -250,7 +250,7 @@ const uploadToTiktok = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
     // data for tiktok api
     const tokenData = {
       ...updatedAccount.value,
-      open_id: updatedAccount.value?.providerAccountId,
+      open_id: updatedAccount.value?.providerAccountId
     };
 
     // upload to tiktok
