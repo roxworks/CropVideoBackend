@@ -13,12 +13,12 @@ const connection = {
 };
 
 export const clipQueue = new Queue('clips-all', {
-  connection: isDev ? connection : new Redis(connectionURL)
+  connection: isDev ? connection : new Redis(connectionURL, { maxRetriesPerRequest: null })
 });
 
 const myWroker = new Worker('clips-all', clipsProducer, {
   // connection: new Redis(connectionURL),
-  connection: isDev ? connection : new Redis(connectionURL),
+  connection: isDev ? connection : new Redis(connectionURL, { maxRetriesPerRequest: null }),
   concurrency: 1
 });
 
