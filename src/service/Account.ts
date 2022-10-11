@@ -1,8 +1,9 @@
 import { TAccount } from '../interfaces/Accounts';
 import clientPromise from '../db/conn';
+import log from '../utils/logger';
 
 export const updateAccount = async (accountData: TAccount) => {
-  console.log('update token');
+  log('info', 'update-account', accountData);
   if (!accountData.userId || !accountData.provider) return;
   const client = await clientPromise;
   const db = client.db().collection<TAccount>('Account');
@@ -13,7 +14,7 @@ export const updateAccount = async (accountData: TAccount) => {
     { returnDocument: 'after' }
   );
 
-  console.log('UpdateAccount: ', updatedAccount);
+  log('info', 'updated-account', updatedAccount);
 
   return updatedAccount;
 };

@@ -3,6 +3,7 @@ import cron from 'node-cron';
 import { EVERY_MINUTE } from './cronConstants';
 import { addToGetAllClipsQueue } from '../utils/twitch/clips.handler';
 import { getUsersWithoutClips, updateUserDefaultClipsById } from '../service/User';
+import log from '../utils/logger';
 
 export default () => {
   cron.schedule(EVERY_MINUTE, async () => {
@@ -10,7 +11,7 @@ export default () => {
       //get all users where defaultClips is false or null
       const users = await getUsersWithoutClips();
       if (users.length === 0) {
-        console.log('No users without default clips');
+        log('info', 'cron-default-clips', 'No users without default clips');
         return;
       }
       // add users to clipqueue
@@ -24,7 +25,7 @@ export default () => {
       }
     } catch (error) {
       if (error instanceof Error) {
-        console.log(error.message);
+        log('error', 'cron-default-clips', error.message);
       }
     }
   });

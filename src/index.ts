@@ -18,6 +18,7 @@ ffmpeg.setFfmpegPath(path);
 import { path as ffprobePath } from '@ffprobe-installer/ffprobe';
 import MessageResponse from './interfaces/MessageResponse';
 import { clipQueue } from './queues/clip.queue';
+import log from './utils/logger';
 ffmpeg.setFfprobePath(ffprobePath);
 
 const app = express();
@@ -34,6 +35,7 @@ const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
 // cron jobs
 scheduledFunctions();
 twitchClipsCrons();
+log('info', 'Server started', 'random data');
 
 app.use(cors());
 app.use(express.json());
@@ -51,5 +53,5 @@ app.use(middlewares.notFound);
 app.use(middlewares.errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`App listening on port ${PORT}`);
+  log('info', `App listening on port ${PORT}`);
 });

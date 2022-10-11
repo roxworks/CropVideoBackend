@@ -1,6 +1,7 @@
 import ffmpeg from 'fluent-ffmpeg';
 import axios from 'axios';
 import { Clip, CropData } from './crop.model';
+import log from '../../utils/logger';
 
 export const fileioUpload = (formData: any) => {
   let tempFormData = formData;
@@ -12,10 +13,10 @@ export const fileioUpload = (formData: any) => {
   tempFormData.append('autoDelete', 'true');
   return axios.post('https://file.io', tempFormData, {
     headers: {
-      Authorization: 'Bearer ' + process.env.FILE_IO_KEY,
+      Authorization: 'Bearer ' + process.env.FILE_IO_KEY
     },
     maxContentLength: Infinity,
-    maxBodyLength: Infinity,
+    maxBodyLength: Infinity
   });
 };
 
@@ -23,11 +24,10 @@ export const getVideoDetails = (fileName: string) => {
   return new Promise((resolve, reject) => {
     ffmpeg.ffprobe(fileName, (err, metadata) => {
       if (err) {
-        console.log(err);
+        log('error', 'ffmpeg-ffprobe', err, 'crop.service');
         reject(err);
       } else {
-        // console.log('Metadata for ' + fileName + ':')
-        // console.log(metadata)
+        log('info', 'ffmpeg-ffprobe video details', { metadata, fileName }, 'crop.service');
         const size = metadata.format.size;
         resolve(size);
       }
@@ -41,8 +41,8 @@ let roundTo4 = (number: number, dontConvert?: boolean) => {
 };
 
 export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, fileName: string) => {
-  // console.log(clip)
-  console.log(clipSettings);
+  log('info', 'make-video-vertical clip', { clip, clipSettings }, 'crop.service');
+
   const currentClip = clip;
   const cropType = clipSettings.cropType;
 
@@ -54,7 +54,7 @@ export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, file
   let OUTPUT_HEIGHT = 1920;
   let OUTPUT_WIDTH = 1080;
   if (size > 0.6 * MAX_SIZE) {
-    console.log('MAX_SIZE limit hit');
+    log('warn', 'make-video-vertical', 'MAX_SIZE limit hit', 'crop.service');
     OUTPUT_HEIGHT = 1280;
     OUTPUT_WIDTH = 720;
   }
@@ -62,9 +62,6 @@ export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, file
   const camCrop = clipSettings.camCrop;
   const screenCrop = clipSettings.screenCrop;
   const isNormalized = camCrop?.isNormalized || screenCrop?.isNormalized || false;
-
-  // console.log('Found camcrop: ' + JSON.stringify(camCrop))
-  // console.log('Found screenCrop: ' + JSON.stringify(screenCrop))
 
   //top (cam)
   let CWA = camCrop?.width !== undefined ? roundTo4(camCrop.width, isNormalized) : 350;
@@ -77,11 +74,11 @@ export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, file
   let HA = SHA;
   if (cropType === 'freeform') {
     if (CHA / CWA > 16 / 9) {
-      console.log(`Crop is too tall, forcing to ${OUTPUT_HEIGHT} height`);
+      log('info', 'crop-freeform', `Crop is too tall, forcing to ${OUTPUT_HEIGHT} height`);
       SHA = OUTPUT_HEIGHT;
       SWA = roundTo4(Math.ceil((SHA * CWA) / CHA));
     } else {
-      console.log(`Crop is too wide, forcing to ${OUTPUT_WIDTH} width`);
+      log('info', 'crop-freeform', `Crop is too wide, forcing to ${OUTPUT_WIDTH} width`);
       SWA = OUTPUT_WIDTH;
       SHA = roundTo4(Math.ceil(((SWA * CHA) / CWA) * multiplier));
     }
@@ -101,11 +98,11 @@ export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, file
 
   if (cropType === 'cam-freeform') {
     if (CHB / CWB > 16 / 9) {
-      console.log(`cam-freeform Crop is too tall, forcing to ${OUTPUT_HEIGHT} height`);
+      log('info', 'crop-cam-freeform', `Crop is too tall, forcing to ${OUTPUT_HEIGHT} height`);
       // SHB = 1920 - SHA;
       SWB = roundTo4(Math.ceil((SHB * CWB) / CHB));
     } else {
-      console.log(`cam-freeform Crop is too wide, forcing to ${OUTPUT_WIDTH} width`);
+      log('info', 'crop-freeform', `Crop is too wide, forcing to ${OUTPUT_WIDTH} width`);
       // SWB = 1080;
       SHB = roundTo4(Math.ceil(((SWB * CHB) / CWB) * multiplier));
     }
@@ -145,13 +142,13 @@ export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, file
     }
   }
 
-  // console.log('running command: ' + filter)
+  log('info', 'running command', filter);
   const maxEndTime = 59;
   var command = new Promise((resolve, reject) => {
     let commandToRunInternal = ffmpeg(inputFilePath)
       .videoCodec('libx265')
       .on('error', function (err, stdout, stderr) {
-        console.log(err);
+        log('error', 'command error', err);
         reject(err);
       })
       .on('end', function (err, stdout, stderr) {
@@ -178,8 +175,6 @@ export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, file
   });
 
   let outputFile = await command;
-
-  // console.log(outputFile)
 
   return outputFile;
 };

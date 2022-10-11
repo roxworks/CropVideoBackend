@@ -27,6 +27,7 @@
     "mongodb": "^4.8.0",
     "node-cron": "^3.0.1",
     "stream": "^0.0.2",
+    "throttled-queue": "^2.1.4",
     "universal-perf-hooks": "^1.0.1",
     "util": "^0.12.4",
     "uuid": "^8.3.2",

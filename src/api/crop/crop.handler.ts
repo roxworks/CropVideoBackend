@@ -6,6 +6,7 @@ import { performance } from 'universal-perf-hooks';
 
 import { fileioUpload, makeVideoVertical } from './crop.service';
 import { JobId } from './crop.model';
+import log from '../../utils/logger';
 
 type JobStatus = {
   fileURL?: string;
@@ -21,13 +22,11 @@ export const createCropVideo = async (req: Request, res: Response, next: NextFun
   const ACTION_KEY = req.headers.authorization.split(' ')[1];
   if (ACTION_KEY !== APP_KEY) return res.status(400).send();
 
-  console.log(req.body);
+  log('info', 'req body', req.body, 'crop.handler');
 
   const { clip, cropData } = req.body;
-  console.log('Clip Data');
-  console.log(clip);
-  console.log('cropData');
-  console.log(cropData);
+  log('info', 'Clip Data', clip, 'crop.handler');
+  log('info', 'cropData', cropData, 'crop.handler');
 
   if (!clip || !cropData) return res.status(400).send('please provide both clip and crop data');
 
@@ -38,13 +37,13 @@ export const createCropVideo = async (req: Request, res: Response, next: NextFun
   const fileName: string = `${Math.random().toString(36).substring(2, 15)}_${id}.mp4`;
 
   const downEnd = performance.now();
-  console.log(`DOWNLOAD call took ${downEnd - downStart} ms`);
+  log('info', 'download-clip', `DOWNLOAD call took ${downEnd - downStart} ms`, 'crop.handler');
 
   currentJobStatus[fileName] = { status: 'processing' };
   res.status(200).send({ id: fileName, ...currentJobStatus[fileName] });
 
   //wait for filestream to end
-  console.log('streaming');
+  log('info', 'streaming');
   const streamStart = performance.now();
   await new Promise((resolve, reject) => {
     let file = fs.createWriteStream('./' + fileName);
@@ -53,20 +52,23 @@ export const createCropVideo = async (req: Request, res: Response, next: NextFun
       resolve('stream done');
     });
     file.on('error', (err) => {
-      console.log('GOOFED');
+      log('error', 'create-write-stream', err, 'crop.handler');
     });
   });
   const streamEnd = performance.now();
-  console.log(`Stream call took ${streamEnd - streamStart} ms`);
+  log('info', 'stream-write', `Stream call took ${streamEnd - streamStart} ms`, 'crop.handler');
 
   const verticalStart = performance.now();
   const editVideo = await makeVideoVertical(clip, cropData, fileName);
   const verticalEnd = performance.now();
-  console.log(`makeVideoVertical call took ${verticalEnd - verticalStart} ms`);
+  log(
+    'info',
+    'make-vertical-video',
+    `makeVideoVertical call took ${verticalEnd - verticalStart} ms`,
+    'crop.handler'
+  );
 
-  console.log('video edited');
-
-  console.log('editedVid:', editVideo);
+  log('info', 'video-edited', editVideo);
 
   //fileIo
   let form = new FormData();
@@ -75,20 +77,22 @@ export const createCropVideo = async (req: Request, res: Response, next: NextFun
   let fileIOResponse = await fileioUpload(form);
 
   const fileEnd = performance.now();
-  console.log(`Fileio upload call took ${fileEnd - fileStart} ms`);
-
-  console.log('fileio done');
+  log('info', 'fileio-upload', `Fileio upload call took ${fileEnd - fileStart} ms`, 'crop.handler');
 
   currentJobStatus[fileName] = {
     fileURL: fileIOResponse.data.link,
     key: fileIOResponse.data.key,
-    status: 'done',
+    status: 'done'
   };
 
   // delete local files
-  fs.unlinkSync(`./${editVideo}`);
-  fs.unlinkSync('./' + fileName);
-  console.log('files deleted: ', editVideo, fileName);
+  try {
+    fs.unlinkSync(`./${editVideo}`);
+    fs.unlinkSync('./' + fileName);
+    log('warn', 'files-deleted: ', { editVideo, fileName }, 'crop.handler');
+  } catch (error) {
+    log('error', 'delete-local-files', error, 'crop.handler');
+  }
 };
 
 export const videoStatus = async (

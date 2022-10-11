@@ -10,6 +10,7 @@ import { uploadVideoToTiktok } from '../utils/uploadToTiktok';
 import { Clip, ClipWithId, ClipWithIdMongo } from '../api/crop/crop.model';
 import { TAccount } from '../interfaces/Accounts';
 import { exclude } from '../utils/excludeClipId';
+import log from '../utils/logger';
 
 var OAuth2 = google.auth.OAuth2;
 const YOUTUBE_SECRETS = JSON.parse(process.env.YOUTUBE_SECRETS || '{}');
@@ -21,37 +22,37 @@ export const uploadClip = async () => {
   try {
     //Get clips ready to upload
     const data = await getClipsReadyToUploaded();
-    if (!data || data.count === 0) return console.log('No clips to upload');
+    if (!data || data.count === 0) return log('info', 'No clips to upload');
     // add clips to upload queue
     await uploadClipsQueue(data.clips);
   } catch (error) {
-    console.log('Error scheduling uploads');
+    log('error', 'Error uploading clips', error, 'uploadService');
     if (error instanceof Error) {
-      console.log(error.message);
+      log('error', 'error uploadin clips', error.message);
     }
   }
 };
 
 const uploadClipsQueue = async (clips: ClipWithIdMongo[]) => {
-  console.log('upload queue');
-  console.log(clips.length);
+  log('info', 'upload-clips-queue', { clips, length: clips.length }, 'uploadService');
 
   const successfulJobs: ClipWithIdMongo[] = [];
   const failedJobs: ClipWithIdMongo[] = [];
   for (let job of clips) {
-    console.log(job.videoId);
+    log('info', 'upload-clip-job-id', job.videoId);
 
     try {
       // check for renderURL and useriD - if fail update db status
       if (!job.renderedUrl || !job.userId) {
-        console.error('Clip missing data');
         //update status in db
         const updateData = {
           ...job,
           uploaded: false,
           status: 'FAILED_SCHEDULED_UPLOAD_INVALID_DATA'
         };
-        const updatedClip = await updateClip(job._id.toString(), exclude(updateData, '_id'));
+        log('error', 'clip-queue missing data', updateData);
+
+        await updateClip(job._id.toString(), exclude(updateData, '_id'));
         failedJobs.push(job);
         continue;
       }
@@ -59,7 +60,6 @@ const uploadClipsQueue = async (clips: ClipWithIdMongo[]) => {
       const user = await getUserByIdWithAccountsAndSettings(job.userId);
       const accounts = user?.accounts;
       if (!accounts) {
-        console.error('users accounts not found');
         //update status in db
         const updateData = {
           ...job,
@@ -67,6 +67,7 @@ const uploadClipsQueue = async (clips: ClipWithIdMongo[]) => {
           status: 'FAILED_SCHEDULED_UPLOAD_ACCOUNT_NOT_FOUND'
         };
 
+        log('error', 'users accounts not found', { user, updateData });
         const updatedClip = await updateClip(job._id.toString(), exclude(updateData, '_id'));
         failedJobs.push(job);
         continue;
@@ -78,14 +79,15 @@ const uploadClipsQueue = async (clips: ClipWithIdMongo[]) => {
 
       successfulJobs.push(job);
     } catch (error) {
+      log('error', 'upload fail', error);
       if (error instanceof Error) {
-        console.log(error.message);
+        log('error', 'upload fail', error.message);
       }
       failedJobs.push(job);
     }
   }
-  console.log('Successful jobs: ', successfulJobs);
-  console.log('Failed jobs: ', failedJobs);
+  log('info', 'Successful upload jobs', successfulJobs, 'uploadService');
+  log('warn', 'Failed upload jobs', failedJobs, 'uploadService');
   jobs = [];
 };
 
@@ -104,7 +106,7 @@ const uploadToPlatforms = async (clip: ClipWithIdMongo, accounts: TAccount[]) =>
   }
 
   // update db
-  console.log('Updating clip in db...');
+  log('info', 'upload-to-platforms Updating clip in db', clip, 'uploadService');
   try {
     const updateData = {
       ...clip,
@@ -113,24 +115,24 @@ const uploadToPlatforms = async (clip: ClipWithIdMongo, accounts: TAccount[]) =>
       status: uploadError ? 'FAILED_SCHEDULED_UPLOAD' : 'SUCCESS_SCHEDULED_UPLOAD'
     };
 
-    console.log('clipdata: ', clip);
+    log('info', 'before upload clip', updateData, 'uploadService');
 
     const updatedClip = await updateClip(clip._id.toString(), exclude(updateData, '_id'));
 
     return updatedClip?.value;
   } catch (error) {
-    console.log(error);
+    log('error', 'upload-to-platforms upload failed', error, 'uploadService');
   }
 };
 
 const uploadToYoutube = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
-  console.log('Youtube upload');
+  log('info', 'upload-to-youtube start');
   const youtubeToken = accounts?.filter((acc) => acc.provider === 'youtube')[0];
   if (!youtubeToken) {
     clip.youtubeStatus = 'FAILED_YOUTUBE_TOKEN';
     return { error: true, clip };
   } else {
-    console.log('ready to upload to youtube');
+    log('info', 'upload-to-youtube ready to upload to youtube');
     const currentClip = {
       title: clip.youtubeTitle || clip.title,
       clipURL: clip.renderedUrl,
@@ -138,13 +140,12 @@ const uploadToYoutube = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
       youtubeDescription: clip.description || undefined,
       youtubeCategory: clip.youtubeCategory || 'Gaming'
     };
-    console.log('refreshing token');
+    log('info', 'upload-to-youtube', 'attempting to refresh token');
     const refreshToken = await refreshYoutubeToken(youtubeToken);
 
-    console.log(refreshToken);
-
     if (!refreshToken?.refresh_token || !refreshToken?.access_token) {
-      console.log('token error');
+      log('error', 'upload-to-youtube', 'refresh token failed');
+      log('error', 'upload-to-youtube', refreshToken);
       clip.youtubeUploaded = false;
       clip.youtubeStatus = 'FAILED_SCHEDULED_UPLOAD_REFRESH_TOKEN';
       return { error: true, clip };
@@ -166,7 +167,7 @@ const uploadToYoutube = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
       ...accountData
     });
     if (!updatedAccount?.ok) {
-      console.log('token error');
+      log('error', 'update token in account error', updatedAccount, 'uploadService');
       clip.youtubeUploaded = false;
       clip.youtubeStatus = 'FAILED_SCHEDULED_UPLOAD_REFRESH_TOKEN_UPDATE';
       return { error: true, clip };
@@ -180,10 +181,10 @@ const uploadToYoutube = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
 
     oauth2Client.credentials = updatedAccount.value!;
 
-    console.log('uploading to yt...');
+    log('info', 'uploading to yt...');
     try {
       await uploadVideoToYoutube(oauth2Client, currentClip);
-      console.log(`${clip.videoId} uploaded to youtube`);
+      log('info', 'clip-uploaded-to-youtube', clip.videoId);
       // set yt fields
       clip.youtubeUploaded = true;
       clip.youtubeUploadTime = new Date(new Date().toUTCString());
@@ -191,7 +192,7 @@ const uploadToYoutube = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
 
       return { error: false, clip };
     } catch (error) {
-      console.log(error);
+      log('error', 'failed to upload clip to youtube', error);
       clip.youtubeUploaded = false;
       clip.youtubeStatus = 'FAILED_SCHEDULED_UPLOAD_ERROR';
       return { error: true, clip };
@@ -200,11 +201,11 @@ const uploadToYoutube = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
 };
 
 const uploadToTiktok = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
-  console.log('Upload to tiktok start...');
+  log('info', 'upload-to-tiktok start');
   const tiktokToken = accounts?.filter((acc) => acc.provider === 'tiktok')[0];
   if (!tiktokToken) {
     clip.tiktokStatus = 'FAILED_TIKTOK_TOKEN';
-    console.log('tiktok refresh failed');
+    log('error', 'tiktok token not found', clip, 'uploadService');
     return { error: true, clip };
   } else {
     //refresh tiktok token
@@ -217,7 +218,7 @@ const uploadToTiktok = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
     const refreshToken = await res.data.data;
 
     if (refreshToken.error_code > 0) {
-      console.error('ERROR: failed to get tiktok refresh token');
+      log('error', 'failed to get tiktok refresh token', refreshToken, 'uploadService');
       clip.tiktokUploaded = false;
       clip.tiktokStatus = 'FAILED_SCHEDULED_UPLOAD_REFRESH_TOKEN';
       return { error: true, clip };
@@ -241,7 +242,7 @@ const uploadToTiktok = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
     });
 
     if (!updatedAccount?.ok) {
-      console.log('token error');
+      log('error', 'update token in account error', updatedAccount, 'uploadService');
       clip.tiktokUploaded = false;
       clip.tiktokStatus = 'FAILED_SCHEDULED_UPLOAD_REFRESH_TOKEN';
       return { error: true, clip };
@@ -254,7 +255,7 @@ const uploadToTiktok = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
     };
 
     // upload to tiktok
-    console.log('uploading to tiktok...');
+    log('info', 'attempting to upload to tiktok', clip._id);
     try {
       let output = await uploadVideoToTiktok(JSON.stringify(tokenData), clip.renderedUrl!);
       // set tiktok fields

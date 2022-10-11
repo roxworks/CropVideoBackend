@@ -8,6 +8,7 @@ import axios from 'axios';
 import { fileioUpload, makeVideoVertical } from '../crop/crop.service';
 import { ClipWithId, ScheduledClipsArray } from '../crop/crop.model';
 import MessageResponse from '../../interfaces/MessageResponse';
+import log from '../../utils/logger';
 
 let jobs: ClipWithId[] = [];
 let currentJobId: string | undefined;
@@ -60,10 +61,15 @@ const renderClips = async () => {
       let fileStream = got.stream(downloadUrl);
       const fileName = `${Math.random().toString(36).substring(2, 15)}_${id}.mp4`;
       const downEnd = performance.now();
-      console.log(`JOB DOWNLOAD call took ${downEnd - downStart} ms`);
+      log(
+        'info',
+        'render-download',
+        `JOB DOWNLOAD call took ${downEnd - downStart} ms`,
+        'schedule.handler'
+      );
 
       //wait for filestream to end
-      console.log('streaming');
+      log('info', 'render-clips', 'streaming');
       const streamStart = performance.now();
       await new Promise((resolve, reject) => {
         let file = fs.createWriteStream('./' + fileName);
@@ -72,18 +78,21 @@ const renderClips = async () => {
           resolve('stream done -schedule');
         });
         file.on('error', (err) => {
-          console.log('GOOFED');
+          log('error', 'render-write-stream', 'GOOFED', 'schedule.handler');
         });
       });
       const streamEnd = performance.now();
-      console.log(`JOB Stream call took ${streamEnd - streamStart} ms`);
+      log('info', 'stream-timer', `JOB Stream call took ${streamEnd - streamStart} ms`);
 
       const verticalStart = performance.now();
       const editVideo = await makeVideoVertical(clip, clip.cropData, fileName);
       const verticalEnd = performance.now();
-      console.log(`JOB makeVideoVertical call took ${verticalEnd - verticalStart} ms`);
-
-      console.log('video edited');
+      log(
+        'info',
+        'render-make-vertical',
+        `JOB makeVideoVertical call took ${verticalEnd - verticalStart} ms`,
+        'schedule.handler'
+      );
 
       //fileIo
       let form = new FormData();
@@ -92,9 +101,7 @@ const renderClips = async () => {
       let fileIOResponse = await fileioUpload(form);
 
       const fileEnd = performance.now();
-      console.log(`Fileio upload call took ${fileEnd - fileStart} ms`);
-
-      console.log('fileio done');
+      log('info', 'render-fileio', `Fileio upload call took ${fileEnd - fileStart} ms`);
 
       job.status = 'RENDERED';
       job.renderedUrl = fileIOResponse.data.link;
@@ -105,25 +112,24 @@ const renderClips = async () => {
         `${process.env.CLIPBOT_URL}/api/clips/renderScheduledClips`,
         { clip: job },
         {
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer: ${clipbotKey}` },
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer: ${clipbotKey}` }
         }
       );
-
       successfulJobs.push(job);
 
       // delete local files
       fs.unlinkSync(`./${editVideo}`);
       fs.unlinkSync('./' + fileName);
-      console.log('files deleted: ', editVideo, fileName);
+      log('info', 'render-files-deleted', { editVideo, fileName }, 'schedule.handler');
     } catch (error) {
       if (error instanceof Error) {
-        console.log(error.message);
+        log('error', 'schedule-error', error.message);
       }
       failedJobs.push(job);
     }
   }
-  console.log(new Date());
-  console.log('Successful jobs: ', successfulJobs);
-  console.log('Failed jobs: ', failedJobs);
+  log('info', 'schedule-jobs-finsihed');
+  log('info', 'schedule-successful-jobs', successfulJobs, 'schedule.handler');
+  log('error', 'schedule-failed-jobs', failedJobs, 'schedule.handler');
   jobs = [];
 };

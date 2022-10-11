@@ -1,9 +1,10 @@
 import clientPromise from '../db/conn';
 import { ClipManualWithUserId } from '../api/crop/crop.model';
+import log from '../utils/logger';
 
 export const saveTwitchClips = async (clips: ClipManualWithUserId[]) => {
   if (!clips) {
-    console.log('unable to save clips - not found');
+    log('warn', 'unable to save clips - not found', undefined, 'saveTwitchClips');
     return;
   }
   const client = await clientPromise;
@@ -15,7 +16,7 @@ export const saveTwitchClips = async (clips: ClipManualWithUserId[]) => {
 
 export const bulkSaveTwitchClips = async (clips: ClipManualWithUserId[]) => {
   if (!clips) {
-    console.log('unable to save clips - not found');
+    log('warn', 'unable to save clips - not found', undefined, 'bulkSaveTwitchClips');
     return;
   }
   const client = await clientPromise;
@@ -34,6 +35,6 @@ export const bulkSaveTwitchClips = async (clips: ClipManualWithUserId[]) => {
   }
 
   const updatedAccounts = await db.bulkWrite(bulk_ops_arr);
-  console.log(updatedAccounts);
+  log('info', 'clips updated', updatedAccounts, 'bulkSaveTwitchClips');
   return updatedAccounts;
 };

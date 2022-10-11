@@ -3,6 +3,7 @@ import axios from 'axios';
 import { bufferToStream, stream2buffer } from './streamUtils';
 import got from 'got';
 import util from 'util';
+import log from './logger';
 
 const IsJsonString = (str: string) => {
   try {
@@ -14,22 +15,21 @@ const IsJsonString = (str: string) => {
 };
 
 export const uploadVideoToTiktok = async (tiktokAuth: string, fileURL: string) => {
-  console.log('start upload');
+  log('info', 'upload-video-to-tiktok start');
   let tiktokSessionId = tiktokAuth;
 
   if (!tiktokSessionId) {
-    console.log('No sessionId found');
+    log('error', 'Tiktok sessionId not found');
     throw new Error('No sessionId found');
   } else if (!IsJsonString(tiktokSessionId)) {
     //clear setting sessionId and throw error
-    console.log('Invalid sessionId found');
+    log('error', 'Invalid sessionId found');
     throw new Error('Invalid sessionId found');
   } else {
-    console.log('sessionId found', tiktokSessionId);
+    log('info', 'sessionId found', tiktokSessionId);
   }
 
   let tiktokAccessObject = JSON.parse(tiktokSessionId);
-  console.log('Got data from sessionId');
 
   // upload video file through form data using tiktok video api
   const formData = new FormData();
@@ -41,21 +41,19 @@ export const uploadVideoToTiktok = async (tiktokAuth: string, fileURL: string) =
   // encode #
   customTestURL = customTestURL.replace(/#/g, '%23');
 
-  console.log('Ready to upload file to ', customTestURL);
-  console.log('File URL: ', fileURL);
+  log('info', 'trying to upload file to url', { customTestURL, fileURL });
 
   let fileStream = got.stream(fileURL);
-  console.log('first stream done');
+  log('info', 'first stream done', fileURL);
   const fileBuffer = await stream2buffer(fileStream);
-  console.log('second stream done');
+  log('info', 'second stream done', fileURL);
   const fileStream2 = bufferToStream(fileBuffer);
-  console.log('third stream done');
+  log('info', 'third stream done', fileURL);
   //create file object from stream
   formData.append('video', fileStream2, { filename: 'video.mp4' });
 
   // formData.append('video', videoData, { filename : 'video.mp4' });
-  console.log('Ready to upload file to ', customTestURL);
-
+  log('info', 'ready to upload file to url', { customTestURL, fileURL });
   // do upload
   const response = await axios({
     method: 'post',
@@ -63,26 +61,27 @@ export const uploadVideoToTiktok = async (tiktokAuth: string, fileURL: string) =
     data: formData,
     maxContentLength: Infinity,
     maxBodyLength: Infinity,
-    headers: formData.getHeaders(),
+    headers: formData.getHeaders()
   }).catch((error) => {
     if (error.response) {
       // Request made and server responded
-      console.log(util.inspect(error.response.data));
-      console.log(util.inspect(error.response.status));
-      console.log(util.inspect(error.response.headers));
-
-      console.log(util.inspect(error.response));
+      log('error', 'axios-tiktok-upload response', {
+        data: util.inspect(error.response.data),
+        status: util.inspect(error.response.status),
+        headers: util.inspect(error.response.headers),
+        error: util.inspect(error)
+      });
     } else if (error.request) {
       // The request was made but no response was received
-      console.log(util.inspect(error.request));
+      log('error', 'axios-tiktok-upload request', util.inspect(error.request));
     } else {
       // Something happened in setting up the request that triggered an Error
-      console.log('Error', error.message);
+      log('error', 'axios-tiktok-upload error', error.message);
     }
     throw new Error('Error uploading file: ' + JSON.stringify(error));
   });
 
   const responseJson = response.data;
-  console.log('tiktok upload response: ', responseJson);
+  log('info', 'tiktok upload response: ', responseJson);
   return responseJson;
 };
