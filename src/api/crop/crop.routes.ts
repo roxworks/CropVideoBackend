@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { validateRequest } from '../../middlewares';
 import { getClipsReadyToUploaded } from '../../service/Clip';
+import log from '../../utils/logger';
 import * as CropHandlers from './crop.handler';
 import { RenderClipReq } from './crop.model';
 import { JobId } from './crop.model';
@@ -9,7 +10,7 @@ const router = Router();
 
 router.get('/', async (req, res) => {
   const clip = await getClipsReadyToUploaded();
-  console.log(clip);
+  log('info', 'clips-ready-to-upload', clip, 'crop.routes');
   res.status(200).json({ message: 'crop' });
 });
 

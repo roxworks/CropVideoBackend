@@ -1,6 +1,7 @@
 import clientPromise from '../db/conn';
 import { ObjectId } from 'mongodb';
 import { ClipManualWithUserId, ClipWithIdMongo } from '../api/crop/crop.model';
+import log from '../utils/logger';
 
 // export const getAllClips = async () => {
 //   const clips = await Clips.find().toArray();
@@ -24,7 +25,10 @@ export const getClipsReadyToUploaded = async () => {
 };
 
 export const updateClip = async (clipId: string, clipData: any) => {
-  if (!clipId) return;
+  if (!clipId) {
+    log('error', 'no clip id', { clipData });
+    return;
+  }
   const client = await clientPromise;
   const db = client.db().collection<ClipWithIdMongo>('Clip');
   const updatedAccount = await db.findOneAndUpdate(
@@ -38,7 +42,7 @@ export const updateClip = async (clipId: string, clipData: any) => {
 
 export const saveTwitchClips = async (clips: ClipManualWithUserId[]) => {
   if (!clips) {
-    console.log('unable to save clips - not found');
+    log('error', 'unable to save clips - not found', undefined, 'saveTwitchClips');
     return;
   }
   const client = await clientPromise;

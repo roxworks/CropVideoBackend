@@ -21,5 +21,7 @@ namespace NodeJS {
     DATABASE_URL: string;
     NEXTAUTH_SECRET: string;
     NEXTAUTH_URL: string;
+    AXIOM_URL: string;
+    AXIOM_TOKEN: string;
   }
 }

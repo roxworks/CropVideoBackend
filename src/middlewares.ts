@@ -3,6 +3,7 @@ import { ZodError } from 'zod';
 
 import ErrorResponse from './interfaces/ErrorResponse';
 import RequestValidators from './interfaces/RequestValidators';
+import log from './utils/logger';
 
 export function validateRequest(validators: RequestValidators) {
   return async (req: Request, res: Response, next: NextFunction) => {
@@ -40,10 +41,10 @@ export function errorHandler(
   next: NextFunction
 ) {
   const statusCode = res.statusCode !== 200 ? res.statusCode : 500;
-  console.log(err.message);
+  log('warn', 'error-handler', err.message);
   res.status(statusCode);
   res.json({
     message: err.message,
-    stack: process.env.NODE_ENV === 'production' ? '🥞' : err.stack,
+    stack: process.env.NODE_ENV === 'production' ? '🥞' : err.stack
   });
 }

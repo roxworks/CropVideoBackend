@@ -1,5 +1,6 @@
 import { google } from 'googleapis';
 import { YTRefreshToken } from '../interfaces/YouTubeRefreshToken';
+import log from './logger';
 var OAuth2 = google.auth.OAuth2;
 const YOUTUBE_SECRETS = JSON.parse(process.env.YOUTUBE_SECRETS || '{}');
 
@@ -17,20 +18,18 @@ export const refreshYoutubeToken = async (credentials: Object): Promise<YTRefres
   let clientToken = new Promise((resolve, reject) => {
     oauth2Client.refreshAccessToken(async function (err, token) {
       if (err) {
-        console.log('Error while trying to retrieve access token', err);
+        log('info', 'Error while trying to retrieve access token', err, 'youtubeRefresh');
         reject(err);
         return;
       }
       if (token == null) {
-        console.log('bad token');
+        log('error', 'bad token');
         reject(
           'Looks like you may have put in a bad token: <br> ' +
             token +
             ' <br> Please try logging in to YouTube again'
         );
         return;
-      } else {
-        console.log('setting new token:' + JSON.stringify(token));
       }
       oauth2Client.credentials = token;
       resolve(token);
@@ -38,16 +37,16 @@ export const refreshYoutubeToken = async (credentials: Object): Promise<YTRefres
   });
 
   let finalToken = await clientToken.catch((e) => {
-    console.log('caught rejection: ' + e);
+    log('error', 'youtube-token caught rejection', e, 'youtubeRefresh');
     return { isRejected: true, error: e };
   });
   //@ts-ignore
   if (finalToken.isRejected) {
-    console.log('rip token s', finalToken);
+    log('error', 'youtube-token rip token', finalToken, 'youtubeRefresh');
     return finalToken as YTRefreshToken;
   }
 
-  console.log('got client tokeN:' + JSON.stringify(finalToken));
+  log('info', 'youtube-token got client token');
 
   return finalToken as YTRefreshToken;
 };
