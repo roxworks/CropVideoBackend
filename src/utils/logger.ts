@@ -44,7 +44,7 @@ const log = async (level: LOGGER_LEVELS, message: string, data?: any, location?:
         }
       })
       .catch((err) => {
-        console.log('error sending log');
+        console.log('error sending log', err);
       });
   });
 };
