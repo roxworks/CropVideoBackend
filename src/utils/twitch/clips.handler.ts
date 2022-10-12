@@ -2,7 +2,7 @@ import { apiClientConnect } from './apiClient';
 import { ClipManual, ClipManualWithUserId } from '../../api/crop/crop.model';
 import { UserWithAccountsAndSettingsWithId } from '../../api/user/user.model';
 import { HelixClip } from '@twurple/api/lib';
-import { clipQueue } from '../../queues/clip.queue';
+import { clipLatestQueue, clipQueue } from '../../queues/clip.queue';
 import log from '../logger';
 
 type TwurpleClip = {
@@ -38,6 +38,15 @@ export const addToGetAllClipsQueue = async (userId: string, broadcasterId: strin
   try {
     log('info', 'add-to-get-all-clips add', { userId, broadcasterId }, 'clips.handler');
     await clipQueue.add('getAll', { userId, broadcasterId });
+  } catch (error) {
+    log('error', 'failed to add user to clips queue', error);
+  }
+};
+
+export const addToGetLatestClipsQueue = async (userId: string, broadcasterId: string) => {
+  try {
+    log('info', 'add-to-get-latest-clips add', { userId, broadcasterId }, 'clips.handler');
+    await clipLatestQueue.add('getLatest', { userId, broadcasterId });
   } catch (error) {
     log('error', 'failed to add user to clips queue', error);
   }

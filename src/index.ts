@@ -17,7 +17,7 @@ ffmpeg.setFfmpegPath(path);
 // @ts-ignore
 import { path as ffprobePath } from '@ffprobe-installer/ffprobe';
 import MessageResponse from './interfaces/MessageResponse';
-import { clipQueue } from './queues/clip.queue';
+import { clipLatestQueue, clipQueue } from './queues/clip.queue';
 import log from './utils/logger';
 ffmpeg.setFfprobePath(ffprobePath);
 
@@ -28,7 +28,10 @@ const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath('/admin/queues');
 
 const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
-  queues: [new BullMQAdapter(clipQueue, { readOnlyMode: true })],
+  queues: [
+    new BullMQAdapter(clipQueue, { readOnlyMode: true }),
+    new BullMQAdapter(clipLatestQueue, { readOnlyMode: true })
+  ],
   serverAdapter: serverAdapter
 });
 

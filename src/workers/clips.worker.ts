@@ -29,6 +29,7 @@ const clipsProducer = async (job: Job<{ userId: string; providerAccountId: strin
     await bulkSaveTwitchClips(clips);
     const lastUpload = clips[clips.length - 1];
     await updateLastUploadDate(userId, new Date(lastUpload.created_at), lastUpload.id);
+    return { name: user.name, broadcasterId: job.data.providerAccountId, clipsCount: clips.length };
   } catch (err) {
     log('error', 'clips-producer failed to get clips', err, 'clips.worker');
     if (err instanceof Error) {
