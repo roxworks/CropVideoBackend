@@ -88,3 +88,33 @@ export const getUsersWithoutClips = async () => {
 
   return users;
 };
+export const getUsersLatestsClips = async () => {
+  const client = await clientPromise;
+  const db = client.db().collection<UserWithId>('User');
+  const users = (await db
+    .aggregate([
+      { $match: { defaultClips: { $in: [null, 'complete'] } } },
+      { $addFields: { userId: { $toString: '$_id' } } },
+      {
+        $lookup: {
+          from: 'Account',
+          localField: 'userId',
+          foreignField: 'userId',
+          as: 'accounts'
+        }
+      },
+      {
+        $lookup: {
+          from: 'Setting',
+          localField: '_id',
+          foreignField: 'userId',
+          as: 'settings',
+          pipeline: [{ $match: { lastUploaded: { $ne: null } } }]
+        }
+      },
+      { $match: { settings: { $ne: [] } } }
+    ])
+    .toArray()) as UserWithAccountsAndSettingsWithId[];
+
+  return users;
+};
