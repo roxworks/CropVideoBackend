@@ -88,6 +88,7 @@ export const getUsersWithoutClips = async () => {
 
   return users;
 };
+type UserAccountWithUserIdAndSettings = UserWithAccountsAndSettingsWithId & { userId: string };
 export const getUsersLatestsClips = async () => {
   const client = await clientPromise;
   const db = client.db().collection<UserWithId>('User');
@@ -114,7 +115,7 @@ export const getUsersLatestsClips = async () => {
       },
       { $match: { settings: { $ne: [] } } }
     ])
-    .toArray()) as UserWithAccountsAndSettingsWithId[];
+    .toArray()) as UserAccountWithUserIdAndSettings[];
 
   return users;
 };
