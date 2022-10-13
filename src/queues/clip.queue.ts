@@ -32,3 +32,23 @@ myWroker.on('failed', async (job, err) => {
   await updateUserDefaultClipsById(job.data.userId, 'failed');
   log('error', 'clip-queue-failed', { id: job.id, user: job.data.userId, error: err });
 });
+
+export const clipLatestQueue = new Queue('clips-latest', {
+  connection: isDev ? connection : new Redis(connectionURL, { maxRetriesPerRequest: null })
+});
+
+const clipLatestWroker = new Worker('clips-latest', clipsProducer, {
+  // connection: new Redis(connectionURL),
+  connection: isDev ? connection : new Redis(connectionURL, { maxRetriesPerRequest: null }),
+  concurrency: 1
+});
+
+clipLatestWroker.on('completed', async (job) => {
+  await updateUserDefaultClipsById(job.data.userId, 'complete');
+  log('info', 'clip-queue-complete', { id: job.id, user: job.data.userId });
+});
+
+clipLatestWroker.on('failed', async (job, err) => {
+  await updateUserDefaultClipsById(job.data.userId, 'failed');
+  log('error', 'clip-queue-failed', { id: job.id, user: job.data.userId, error: err });
+});
