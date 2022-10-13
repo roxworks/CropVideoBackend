@@ -35,7 +35,7 @@ export const ClipManual = z.object({
   download_url: z.string(),
   embed_url: z.string(),
   game_id: z.string(),
-  id: z.string(),
+  twitch_id: z.string(),
   language: z.string(),
   thumbnail_url: z.string(),
   title: z.string(),

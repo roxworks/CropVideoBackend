@@ -26,7 +26,7 @@ export const bulkSaveTwitchClips = async (clips: ClipManualWithUserId[]) => {
   for (let clip of clips) {
     let update_op = {
       updateOne: {
-        filter: { userId: clip.userId, id: clip.id },
+        filter: { userId: clip.userId, twitch_id: clip.twitch_id },
         update: { $set: clip },
         upsert: true
       }
