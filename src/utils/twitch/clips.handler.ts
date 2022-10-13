@@ -78,7 +78,7 @@ const daysOfYearArray = (mostRecentClipPostedCreatedAtTime: string) => {
 const fixTheFreakingNames = (clips: TwurpleClip[], userId: string): ClipManualWithUserId[] => {
   return clips.map((clip) => {
     return {
-      id: clip.id,
+      twitch_id: clip.id,
       userId: userId,
       broadcaster_name: clip.broadcasterDisplayName,
       broadcaster_id: clip.broadcasterId,
