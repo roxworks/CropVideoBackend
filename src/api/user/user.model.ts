@@ -1,4 +1,4 @@
-import { TypeOf, z } from 'zod';
+import { z } from 'zod';
 import { WithId } from 'mongodb';
 import { TAccount } from '../../interfaces/Accounts';
 import { TSettings } from '../../interfaces/Settings';
@@ -28,6 +28,11 @@ export const UserWithAccountsAndSettings = TUser.extend({
   settings: z.array(TSettings)
 });
 
+export const NewUserQueueReq = z.object({
+  userId: z.string(),
+  broadcasterId: z.string()
+});
+
 export type TUser = z.TypeOf<typeof TUser>;
 export type UserWithId = WithId<TUser>;
 export type UserWithAccounts = z.TypeOf<typeof UserWithAccounts>;
@@ -35,3 +40,4 @@ export type UserWithAccountsWithId = WithId<UserWithAccounts>;
 export type UserWithAccountsAndSettings = z.TypeOf<typeof UserWithAccountsAndSettings>;
 export type UserWithAccountsAndSettingsWithId = WithId<UserWithAccountsAndSettings>;
 export type DefaultClips = z.TypeOf<typeof DefaultClips>;
+export type NewUserQueueReq = z.TypeOf<typeof NewUserQueueReq>;
