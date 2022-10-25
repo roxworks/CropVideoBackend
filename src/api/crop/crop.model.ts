@@ -97,7 +97,12 @@ export const CurrentClip = z.object({
 
 export const ClipWithId = Clip.extend({ id: z.string() });
 
-export const ClipManualWithUserId = ClipManual.extend({ userId: z.string() });
+export const ClipManualWithUserId = ClipManual.extend({
+  userId: z.string(),
+  uploaded: z.boolean().optional().nullish(),
+  uploadPlatforms: z.array(z.enum(['tiktok', 'youtube', 'instagram'])).optional(),
+  approved: z.boolean().optional().nullish()
+});
 
 export const ScheduledClipsArray = z.object({
   scheduledClips: z.array(ClipWithId)

@@ -36,7 +36,21 @@ export const TSettings = z.object({
   selectedPlatforms: z.array(platformsSchema).optional().nullable(),
   youtubeCount: z.number().optional().default(0),
   tiktokCount: z.number().optional().default(0),
-  instagramCount: z.number().optional().default(0)
+  instagramCount: z.number().optional().default(0),
+  approveDate: z.date().optional().nullable(),
+  timeOffset: z.number().optional().nullable(),
+  scheduleDays: z
+    .object({
+      sun: z.array(z.string()),
+      mon: z.array(z.string()),
+      tue: z.array(z.string()),
+      wed: z.array(z.string()),
+      thu: z.array(z.string()),
+      fri: z.array(z.string()),
+      sat: z.array(z.string())
+    })
+    .optional()
+    .nullable()
 });
 
 export type TSettings = z.TypeOf<typeof TSettings>;

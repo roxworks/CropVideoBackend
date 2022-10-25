@@ -1,3 +1,4 @@
+import { autoApproveClips } from './../service/TwitchClip';
 import { Job } from 'bullmq';
 import { updateLastUploadDate } from '../service/Settings';
 import { getUserByIdWithAccountsAndSettings } from '../service/User';
@@ -26,10 +27,29 @@ const clipsProducer = async (job: Job<{ userId: string; providerAccountId: strin
     );
 
     if (!clips || clips.length === 0) return;
+
+    //check if auto approve is on
+    if (userSettings.defaultApprove) {
+      log('info', 'default approve', user.name);
+      await autoApproveClips(userSettings);
+    }
+
+    if (clips.length === 1) {
+      const lastUploadedClip = userSettings.lastUploadedId;
+      if (lastUploadedClip === clips[0].twitch_id) {
+        return;
+      }
+    }
     await bulkSaveTwitchClips(clips);
     const lastUpload = clips[clips.length - 1];
     await updateLastUploadDate(userId, new Date(lastUpload.created_at), lastUpload.twitch_id);
-    return { name: user.name, broadcasterId: job.data.providerAccountId, clipsCount: clips.length };
+
+    return {
+      name: user.name,
+      broadcasterId: job.data.providerAccountId,
+      clipsCount: clips.length,
+      autoApprove: userSettings.defaultApprove
+    };
   } catch (err) {
     log('error', 'clips-producer failed to get clips', err, 'clips.worker');
     if (err instanceof Error) {
