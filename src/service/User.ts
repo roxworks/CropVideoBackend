@@ -119,3 +119,32 @@ export const getUsersLatestsClips = async () => {
 
   return users;
 };
+
+export const getUsersWithUploadEnabled = async () => {
+  const client = await clientPromise;
+  const db = client.db().collection<UserWithId>('User');
+  const users = (await db
+    .aggregate([
+      { $addFields: { userId: '$_id' } },
+      {
+        $lookup: {
+          from: 'Setting',
+          localField: '_id',
+          foreignField: 'userId',
+          as: 'settings',
+          pipeline: [
+            {
+              $match: {
+                uploadEnabled: true,
+                scheduleDays: { $exists: true },
+                timeOffset: { $exists: true }
+              }
+            }
+          ]
+        }
+      },
+      { $match: { settings: { $ne: [] } } }
+    ])
+    .toArray()) as UserAccountWithUserIdAndSettings[];
+  return users;
+};
