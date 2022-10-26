@@ -51,3 +51,17 @@ export const saveTwitchClips = async (clips: ClipManualWithUserId[]) => {
 
   return updatedAccount;
 };
+
+export const getUsersApprovedClips = async (userId: string) => {
+  const client = await clientPromise;
+  const db = client.db().collection<ClipManualWithUserId>('TwitchClip');
+  const clips = await db
+    .find({
+      userId: userId,
+      approved: true,
+      $or: [{ uploaded: false }, { uploaded: { $exists: false } }]
+    })
+    .toArray();
+
+  return clips;
+};
