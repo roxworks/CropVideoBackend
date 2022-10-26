@@ -3,6 +3,19 @@ import { WithId } from 'mongodb';
 import { cropSettingsSchema, platformsSchema } from '../api/crop/crop.model';
 import { ObjectId } from 'mongodb';
 
+const scheduleDays = z
+  .object({
+    sun: z.array(z.string()),
+    mon: z.array(z.string()),
+    tue: z.array(z.string()),
+    wed: z.array(z.string()),
+    thu: z.array(z.string()),
+    fri: z.array(z.string()),
+    sat: z.array(z.string())
+  })
+  .optional()
+  .nullable();
+
 export const TSettings = z.object({
   userId: z.instanceof(ObjectId),
   delay: z.number().optional().default(24),
@@ -39,19 +52,10 @@ export const TSettings = z.object({
   instagramCount: z.number().optional().default(0),
   approveDate: z.date().optional().nullable(),
   timeOffset: z.number().optional().nullable(),
-  scheduleDays: z
-    .object({
-      sun: z.array(z.string()),
-      mon: z.array(z.string()),
-      tue: z.array(z.string()),
-      wed: z.array(z.string()),
-      thu: z.array(z.string()),
-      fri: z.array(z.string()),
-      sat: z.array(z.string())
-    })
-    .optional()
-    .nullable()
+  scheduleDays: scheduleDays
 });
+
+type scheduleDays = z.TypeOf<typeof scheduleDays>;
 
 export type TSettings = z.TypeOf<typeof TSettings>;
 export type SettingsWithId = WithId<TSettings>;
