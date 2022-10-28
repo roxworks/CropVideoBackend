@@ -102,6 +102,7 @@ export const ClipManualWithUserId = ClipManual.extend({
   uploaded: z.boolean().optional().nullish(),
   uploadPlatforms: z.array(z.enum(['tiktok', 'youtube', 'instagram'])).optional(),
   approved: z.boolean().optional().nullish(),
+  approvedStatus: z.enum(['AUTO_APPROVE', 'MANUAL_APPROVE', 'CANCELED']),
   scheduled: z.boolean().optional().nullish()
 });
 

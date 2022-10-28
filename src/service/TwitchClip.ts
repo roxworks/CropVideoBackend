@@ -25,10 +25,15 @@ export const autoApproveClips = async (settings: TSettings) => {
       userId: settings.userId.toString(),
       view_count: { $gte: settings.minViewCount },
       created_at: { $gte: settings.approveDate.toISOString() },
-      $and: [{ $or: [{ approved: false }, { approved: { $exists: false } }] }]
+      $and: [
+        { $or: [{ approved: false }, { approved: { $exists: false } }] },
+        { $or: [{ approvedStatus: { $ne: 'CANCELED' } }, { approvedStatus: { $exists: false } }] }
+      ]
     },
-    { $set: { approved: true } }
+    { $set: { approved: true, approvedStatus: 'AUTO_APPROVE' } }
   );
+
+  return updatedClips;
 };
 
 export const bulkSaveTwitchClips = async (clips: ClipManualWithUserId[]) => {
