@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { WithId } from 'mongodb';
+import { WithId, ObjectId } from 'mongodb';
 
 export const JobId = z.object({
   id: z.string()
@@ -22,8 +22,8 @@ export const CropData = z.object({
   camCrop: cropSettingsSchema.optional(),
   screenCrop: cropSettingsSchema,
   cropType: z.enum(['no-cam', 'cam-top', 'cam-freeform', 'freeform']),
-  startTime: z.number(),
-  endTime: z.number()
+  startTime: z.number().optional(),
+  endTime: z.number().optional()
 });
 
 export const ClipManual = z.object({
@@ -45,7 +45,7 @@ export const ClipManual = z.object({
 });
 
 export const Clip = z.object({
-  userId: z.string(),
+  userId: z.instanceof(ObjectId),
   broadcasterName: z.string(),
   broadcasterId: z.string(),
   creatorName: z.string(),
@@ -58,21 +58,21 @@ export const Clip = z.object({
   videoId: z.string(),
   viewCount: z.number(),
   thumbnailUrl: z.string(),
-  createdAt: z.string(),
+  createdAt: z.date(),
   downloadUrl: z.string(),
   approved: z.boolean().default(false),
   status: z.string(),
   uploadPlatforms: z.array(platformsSchema),
   uploadTime: z.string().optional().nullable(),
-  scheduledUploadTime: z.string().optional().nullable(),
+  scheduledUploadTime: z.date().optional().nullable(),
   uploaded: z.boolean().default(false),
-  youtubeUploaded: z.boolean(),
+  youtubeUploaded: z.boolean().default(false).optional(),
   youtubeUploadTime: z.string().or(z.date()).optional().nullable(),
   youtubeStatus: z.string().optional().nullable(),
-  tiktokUploaded: z.boolean(),
+  tiktokUploaded: z.boolean().default(false).optional(),
   tiktokUploadTime: z.string().or(z.date()).optional().nullable(),
   tiktokStatus: z.string().optional().nullable(),
-  instagramUploaded: z.boolean(),
+  instagramUploaded: z.boolean().default(false).optional(),
   instagramUploadTime: z.string().or(z.date()).optional().nullable(),
   instagramStatus: z.string().optional().nullable(),
   youtubePrivacy: z.string(YoutubePrivacy).default('Private'),
@@ -101,7 +101,8 @@ export const ClipManualWithUserId = ClipManual.extend({
   userId: z.string(),
   uploaded: z.boolean().optional().nullish(),
   uploadPlatforms: z.array(z.enum(['tiktok', 'youtube', 'instagram'])).optional(),
-  approved: z.boolean().optional().nullish()
+  approved: z.boolean().optional().nullish(),
+  scheduled: z.boolean().optional().nullish()
 });
 
 export const ScheduledClipsArray = z.object({
@@ -123,3 +124,4 @@ export type ScheduledClipsArray = z.infer<typeof ScheduledClipsArray>;
 export type CropData = z.infer<typeof CropData>;
 export type RenderClipReq = z.infer<typeof RenderClipReq>;
 export type ClipManualWithUserId = z.infer<typeof ClipManualWithUserId>;
+export type platformsSchema = z.infer<typeof platformsSchema>;

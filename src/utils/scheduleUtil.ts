@@ -1,3 +1,6 @@
+import { getUsersApprovedClips, scheduleClips, scheduledClipsFromTime } from '../service/Clip';
+import { getCropTemplateByType } from '../service/CropTemplate';
+import { getUsersWithUploadEnabled } from '../service/User';
 import log from './logger';
 
 export type ScheduleDays = {
@@ -38,7 +41,6 @@ const convertStringDate = (time: string, offset: number) => {
 
 export const scheduleByUTCDay = (scheduleDays: ScheduleDays, UTCoffset: number) => {
   const LOOKUP_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-  console.log('scheduleByUTCDays');
   const newDays: ScheduleDays = {
     sun: [],
     mon: [],
@@ -60,7 +62,6 @@ export const scheduleByUTCDay = (scheduleDays: ScheduleDays, UTCoffset: number) 
           newDays[day[0]].push(newTime.time);
         } else {
           const day = (index + newTime.offsetDay) % 7;
-          console.log({ day });
 
           newDays[LOOKUP_DAYS[day]].push(newTime.time);
         }
@@ -72,7 +73,7 @@ export const scheduleByUTCDay = (scheduleDays: ScheduleDays, UTCoffset: number) 
   return newDays;
 };
 
-const convertTime = (time: string, offset: number) => {
+export const convertTime = (time: string, offset: number) => {
   const [hours, mins] = time.split(':');
   const today = new Date().setHours(+hours, +mins, 0, 0);
   const todaysDay = new Date(today).getDay();
@@ -91,4 +92,88 @@ const convertTime = (time: string, offset: number) => {
     offsetDay: dayAfter - todaysDay,
     time: `${offsetTime.getHours()}:${offsetTime.getMinutes()}`
   };
+};
+
+export const autoScheduleClips = async () => {
+  const LOOKUP_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+  const usersWithUploadEnabled = await getUsersWithUploadEnabled();
+
+  for (const user of usersWithUploadEnabled) {
+    //check if the user has scheduled days
+    const userSettings = user.settings[0];
+    if (!userSettings.cropType) continue;
+
+    const cropTemplate = await getCropTemplateByType(user._id.toString(), userSettings.cropType);
+    if (!cropTemplate) continue;
+
+    const scheduleDays = userSettings.scheduleDays as ScheduleDays;
+    const timeOffset = userSettings.timeOffset;
+    if (!scheduleDays || !timeOffset) continue;
+    let hasSchuldeDays = false;
+    for (const key in scheduleDays) {
+      if (scheduleDays[key].length !== 0) {
+        hasSchuldeDays = true;
+        break;
+      }
+    }
+    if (!hasSchuldeDays) continue;
+    //check if user has approved clips
+    let approvedClips = await getUsersApprovedClips(user._id.toString());
+
+    let approvedClipsCount = approvedClips.length;
+    if (approvedClipsCount === 0) continue;
+
+    // schedule days into UTC days
+    const UTCDays = scheduleByUTCDay(scheduleDays, timeOffset);
+    log('info', 'User UTC days', user.name);
+    // is there any schedules for today.
+    const today = new Date();
+    const todaysSchedule = UTCDays[LOOKUP_DAYS[today.getUTCDay()]];
+    if (todaysSchedule.length === 0) continue;
+
+    // for each time check if they have a scheduled clip already
+    for (const time of todaysSchedule) {
+      if (approvedClips.length === 0) break;
+      const [hours, mins] = time.split(':');
+      const date = new Date().setUTCHours(+hours, +mins, 0, 0);
+      const scheduleTime = new Date(date).toISOString();
+      //check time is greater then now
+      const isGreaterThanNow = scheduleTime > today.toISOString();
+      if (!isGreaterThanNow) continue;
+
+      const scheduledClips = await scheduledClipsFromTime(user._id.toString(), scheduleTime);
+      if (scheduledClips.count > 0) continue;
+      // if not a scheduled clip, add one
+
+      const schedule = await scheduleClips(
+        approvedClips.shift()!,
+        scheduleTime,
+        userSettings,
+        cropTemplate
+      );
+    }
+    const tommorrowDay = (today.getUTCDay() + 1) % 7;
+    const midNightCheck = UTCDays[LOOKUP_DAYS[tommorrowDay]];
+    const hoursSet = new Date().setUTCHours(1, 0, 0, 0);
+    const setDay = new Date(hoursSet).setUTCDate(new Date(hoursSet).getUTCDate() + 1);
+    const nextDayMidnight = new Date(setDay);
+
+    for (const time of midNightCheck) {
+      if (approvedClips.length === 0) break;
+      const [hours, mins] = time.split(':');
+      const date = new Date(nextDayMidnight).setUTCHours(+hours, +mins, 0, 0);
+      const scheduleTime = new Date(date).toISOString();
+      if (scheduleTime > nextDayMidnight.toISOString()) continue;
+
+      const scheduledClips = await scheduledClipsFromTime(user._id.toString(), scheduleTime);
+      if (scheduledClips.count > 0) continue;
+      const schedule = await scheduleClips(
+        approvedClips.shift()!,
+        scheduleTime,
+        userSettings,
+        cropTemplate
+      );
+    }
+  }
+  return usersWithUploadEnabled.length;
 };

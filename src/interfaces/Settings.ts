@@ -24,7 +24,7 @@ export const TSettings = z.object({
   license: z.string().optional().nullable(),
   camCrop: cropSettingsSchema.optional().nullable(),
   screenCrop: cropSettingsSchema.optional().nullable(),
-  cropType: z.string().optional().nullable(),
+  cropType: z.enum(['no-cam', 'cam-top', 'cam-freeform', 'freeform']).optional().nullable(),
   verticalVideoEnabled: z.boolean().optional().default(true),
   uploadEnabled: z.boolean().optional().default(false),
   defaultApprove: z.boolean().optional().default(false),
@@ -46,7 +46,10 @@ export const TSettings = z.object({
   lastUploadedClipTiktok: z.string().optional().nullable(),
   lastUploadedClipInstagram: z.string().optional().nullable(),
   uploadCount: z.number().optional().default(0),
-  selectedPlatforms: z.array(platformsSchema).optional().nullable(),
+  selectedPlatforms: z
+    .array(z.enum(['youtube', 'tiktok', 'instagram']))
+    .optional()
+    .nullable(),
   youtubeCount: z.number().optional().default(0),
   tiktokCount: z.number().optional().default(0),
   instagramCount: z.number().optional().default(0),
