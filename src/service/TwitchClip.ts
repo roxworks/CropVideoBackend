@@ -1,6 +1,7 @@
 import clientPromise from '../db/conn';
 import { ClipManualWithUserId } from '../api/crop/crop.model';
 import log from '../utils/logger';
+import { TSettings } from '../interfaces/Settings';
 
 export const saveTwitchClips = async (clips: ClipManualWithUserId[]) => {
   if (!clips) {
@@ -12,6 +13,27 @@ export const saveTwitchClips = async (clips: ClipManualWithUserId[]) => {
   const updatedAccount = await db.insertMany(clips);
 
   return updatedAccount;
+};
+
+export const autoApproveClips = async (settings: TSettings) => {
+  const client = await clientPromise;
+  const db = client.db().collection<ClipManualWithUserId>('TwitchClip');
+  if (!settings.approveDate && !settings.approveDate) return;
+
+  const updatedClips = await db.updateMany(
+    {
+      userId: settings.userId.toString(),
+      view_count: { $gte: settings.minViewCount },
+      created_at: { $gte: settings.approveDate.toISOString() },
+      $and: [
+        { $or: [{ approved: false }, { approved: { $exists: false } }] },
+        { $or: [{ approvedStatus: { $ne: 'CANCELED' } }, { approvedStatus: { $exists: false } }] }
+      ]
+    },
+    { $set: { approved: true, approvedStatus: 'AUTO_APPROVE' } }
+  );
+
+  return updatedClips;
 };
 
 export const bulkSaveTwitchClips = async (clips: ClipManualWithUserId[]) => {

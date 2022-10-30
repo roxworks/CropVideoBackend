@@ -3,6 +3,19 @@ import { WithId } from 'mongodb';
 import { cropSettingsSchema, platformsSchema } from '../api/crop/crop.model';
 import { ObjectId } from 'mongodb';
 
+const scheduleDays = z
+  .object({
+    sun: z.array(z.string()),
+    mon: z.array(z.string()),
+    tue: z.array(z.string()),
+    wed: z.array(z.string()),
+    thu: z.array(z.string()),
+    fri: z.array(z.string()),
+    sat: z.array(z.string())
+  })
+  .optional()
+  .nullable();
+
 export const TSettings = z.object({
   userId: z.instanceof(ObjectId),
   delay: z.number().optional().default(24),
@@ -11,7 +24,7 @@ export const TSettings = z.object({
   license: z.string().optional().nullable(),
   camCrop: cropSettingsSchema.optional().nullable(),
   screenCrop: cropSettingsSchema.optional().nullable(),
-  cropType: z.string().optional().nullable(),
+  cropType: z.enum(['no-cam', 'cam-top', 'cam-freeform', 'freeform']).optional().nullable(),
   verticalVideoEnabled: z.boolean().optional().default(true),
   uploadEnabled: z.boolean().optional().default(false),
   defaultApprove: z.boolean().optional().default(false),
@@ -33,11 +46,19 @@ export const TSettings = z.object({
   lastUploadedClipTiktok: z.string().optional().nullable(),
   lastUploadedClipInstagram: z.string().optional().nullable(),
   uploadCount: z.number().optional().default(0),
-  selectedPlatforms: z.array(platformsSchema).optional().nullable(),
+  selectedPlatforms: z
+    .array(z.enum(['youtube', 'tiktok', 'instagram']))
+    .optional()
+    .nullable(),
   youtubeCount: z.number().optional().default(0),
   tiktokCount: z.number().optional().default(0),
-  instagramCount: z.number().optional().default(0)
+  instagramCount: z.number().optional().default(0),
+  approveDate: z.date().optional().nullable(),
+  timeOffset: z.number().optional().nullable(),
+  scheduleDays: scheduleDays
 });
+
+type scheduleDays = z.TypeOf<typeof scheduleDays>;
 
 export type TSettings = z.TypeOf<typeof TSettings>;
 export type SettingsWithId = WithId<TSettings>;

@@ -18,3 +18,16 @@ export const updateLastUploadDate = async (
 
   return updatedUserSettings;
 };
+
+export const getUsersSettingsById = async (userId: string) => {
+  const client = await clientPromise;
+  const db = client.db().collection<TSettings>('Setting');
+
+  const userSettings = await db
+    .find({
+      userId: new ObjectId(userId)
+    })
+    .toArray();
+
+  return userSettings[0];
+};
