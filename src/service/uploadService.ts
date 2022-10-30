@@ -7,7 +7,7 @@ import { updateAccount } from './Account';
 import { getClipsReadyToUploaded, updateClip } from './Clip';
 import { getUserByIdWithAccountsAndSettings } from './User';
 import { uploadVideoToTiktok } from '../utils/uploadToTiktok';
-import { Clip, ClipWithId, ClipWithIdMongo } from '../api/crop/crop.model';
+import { ClipWithIdMongo } from '../api/crop/crop.model';
 import { TAccount } from '../interfaces/Accounts';
 import { exclude } from '../utils/excludeClipId';
 import log from '../utils/logger';
@@ -57,7 +57,7 @@ const uploadClipsQueue = async (clips: ClipWithIdMongo[]) => {
         continue;
       }
       // get user with accounts
-      const user = await getUserByIdWithAccountsAndSettings(job.userId);
+      const user = await getUserByIdWithAccountsAndSettings(job.userId.toString());
       const accounts = user?.accounts;
       if (!accounts) {
         //update status in db
@@ -68,7 +68,7 @@ const uploadClipsQueue = async (clips: ClipWithIdMongo[]) => {
         };
 
         log('error', 'users accounts not found', { user, updateData });
-        const updatedClip = await updateClip(job._id.toString(), exclude(updateData, '_id'));
+        await updateClip(job._id.toString(), exclude(updateData, '_id'));
         failedJobs.push(job);
         continue;
       }
@@ -257,7 +257,7 @@ const uploadToTiktok = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
     // upload to tiktok
     log('info', 'attempting to upload to tiktok', clip._id);
     try {
-      let output = await uploadVideoToTiktok(JSON.stringify(tokenData), clip.renderedUrl!);
+      await uploadVideoToTiktok(JSON.stringify(tokenData), clip.renderedUrl!);
       // set tiktok fields
       clip.tiktokUploaded = true;
       clip.tiktokUploadTime = new Date(new Date().toUTCString());
