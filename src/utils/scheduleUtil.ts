@@ -112,7 +112,8 @@ export const autoScheduleClips = async () => {
 
     const scheduleDays = userSettings.scheduleDays as ScheduleDays;
     const timeOffset = userSettings.timeOffset;
-    if (!scheduleDays || !timeOffset) continue;
+
+    if (!scheduleDays || timeOffset === null || timeOffset === undefined) continue;
 
     log('info', 'auto schedule - schduledays', scheduleDays);
     let hasSchuldeDays = false;
