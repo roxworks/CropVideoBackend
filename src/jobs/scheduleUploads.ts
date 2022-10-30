@@ -37,6 +37,7 @@ export default () => {
   // upload clips that have been rednered
   cron.schedule(EVERY_30_MINUTES, async () => {
     try {
+      log('info', 'auto schedule');
       const users = await autoScheduleClips();
       log('info', 'auto schedule clips cron', users);
     } catch (error) {
