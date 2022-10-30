@@ -103,12 +103,18 @@ export const autoScheduleClips = async () => {
     const userSettings = user.settings[0];
     if (!userSettings.cropType) continue;
 
+    log('info', 'auto schedule - got user settings', user.name);
+
     const cropTemplate = await getCropTemplateByType(user._id.toString(), userSettings.cropType);
     if (!cropTemplate) continue;
+
+    log('info', 'auto schedule - got user templates', cropTemplate);
 
     const scheduleDays = userSettings.scheduleDays as ScheduleDays;
     const timeOffset = userSettings.timeOffset;
     if (!scheduleDays || !timeOffset) continue;
+
+    log('info', 'auto schedule - schduledays', scheduleDays);
     let hasSchuldeDays = false;
     for (const key in scheduleDays) {
       if (scheduleDays[key].length !== 0) {
@@ -116,11 +122,16 @@ export const autoScheduleClips = async () => {
         break;
       }
     }
+
+    log('info', 'auto schedule - hasSchuldeDays', hasSchuldeDays);
     if (!hasSchuldeDays) continue;
+
     //check if user has approved clips
     let approvedClips = await getUsersApprovedClips(user._id.toString());
 
     let approvedClipsCount = approvedClips.length;
+
+    log('info', 'auto schedule - approve clips', approvedClips);
     if (approvedClipsCount === 0) continue;
 
     // schedule days into UTC days

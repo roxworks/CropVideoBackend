@@ -1,7 +1,12 @@
 import cron from 'node-cron';
 import axios from 'axios';
 
-import { EVERY_10_MINUTES, EVERY_15_MINUTES, EVERY_30_MINUTES } from './cronConstants';
+import {
+  EVERY_10_MINUTES,
+  EVERY_15_MINUTES,
+  EVERY_30_MINUTES,
+  EVERY_MINUTE
+} from './cronConstants';
 import { uploadClip } from '../service/uploadService';
 import log from '../utils/logger';
 import { autoScheduleClips } from '../utils/scheduleUtil';
@@ -35,8 +40,9 @@ export default () => {
     }
   });
   // upload clips that have been rednered
-  cron.schedule(EVERY_30_MINUTES, async () => {
+  cron.schedule(EVERY_MINUTE, async () => {
     try {
+      log('info', 'auto schedule');
       const users = await autoScheduleClips();
       log('info', 'auto schedule clips cron', users);
     } catch (error) {
