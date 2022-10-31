@@ -129,7 +129,7 @@ export const scheduleClips = async (
     uploaded: false,
     caption: clip.title,
     youtubeTitle: clip.title,
-    youtubeCategory: 'Gaming',
+    youtubeCategory: settings.youtubeCategory || 'Gaming',
     description: settings.youtubeDescription,
     cropData: cropData,
     youtubePrivacy: settings.youtubePrivacy
