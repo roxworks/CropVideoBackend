@@ -35,6 +35,7 @@ export const TSettings = z.object({
   youtubeTags: z.string().optional().nullable(),
   youtubePrivacy: z.string().optional().default('private'),
   youtubeAutoCategorization: z.boolean().optional().default(true),
+  youtubeCategory: z.string().optional(),
   youtubeDescription: z.string().optional().nullable(),
   instagramCaption: z.string().optional().nullable(),
   lastUploaded: z.date().optional().nullable(),
