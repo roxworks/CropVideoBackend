@@ -12,15 +12,15 @@ export const CropSettingsAxios = z.object({
   height: z.number().or(z.string()),
   scaleX: z.number().or(z.string()).nullable().optional(),
   scaleY: z.number().or(z.string()).nullable().optional(),
-  isNormalized: z.boolean().optional(),
+  isNormalized: z.boolean().optional()
 });
 
 export const CropDataAxios = z.object({
   camCrop: CropSettingsAxios.optional(),
   screenCrop: CropSettingsAxios,
   cropType: z.enum(['no-cam', 'cam-top', 'cam-freeform', 'freeform']),
-  startTime: z.number().or(z.string()),
-  endTime: z.number().or(z.string()),
+  startTime: z.union([z.number().optional(), z.string().optional()]).optional().nullable(),
+  endTime: z.union([z.number(), z.string()]).optional().nullable()
 });
 
 export const Clip = z.object({
@@ -58,13 +58,13 @@ export const Clip = z.object({
   caption: z.string().optional().nullable(),
   youtubeTitle: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
-  renderedUrl: z.string().optional().nullable(),
+  renderedUrl: z.string().optional().nullable()
 });
 
 export const ClipWithId = Clip.extend({ id: z.string() });
 
 export const ScheduledClipsArray = z.object({
-  scheduledClips: z.array(ClipWithId),
+  scheduledClips: z.array(ClipWithId)
 });
 
 export type Clip = z.infer<typeof Clip>;
