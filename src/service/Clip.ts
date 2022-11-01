@@ -1,4 +1,4 @@
-import { CropTemplate } from './../interfaces/CropTemplate';
+import { CropTemplate, CropTemplateWithId } from './../interfaces/CropTemplate';
 import clientPromise from '../db/conn';
 import { ObjectId } from 'mongodb';
 import {
@@ -10,6 +10,7 @@ import {
 } from '../api/crop/crop.model';
 import log from '../utils/logger';
 import { TSettings } from '../interfaces/Settings';
+import { getCropTemplateByType } from './CropTemplate';
 
 // export const getAllClips = async () => {
 //   const clips = await Clips.find().toArray();
@@ -60,6 +61,20 @@ export const updateClip = async (clipId: string, clipData: any) => {
 
   return updatedAccount;
 };
+export const updateTwitchClipUploaded = async (clipId: string, userId: string) => {
+  if (!clipId) {
+    log('error', 'no clip id', { clipId, userId });
+    return;
+  }
+  const client = await clientPromise;
+  const db = client.db().collection<ClipManualWithUserId>('TwitchClip');
+  const updateClip = await db.updateOne(
+    { userId: userId, twitch_id: clipId },
+    { $set: { uploaded: true } }
+  );
+
+  return updateClip;
+};
 
 export const saveTwitchClips = async (clips: ClipManualWithUserId[]) => {
   if (!clips) {
@@ -101,10 +116,15 @@ export const scheduleClips = async (
   const db = client.db().collection<Clip>('Clip');
   const twitchClip = client.db().collection<ClipManualWithUserId>('TwitchClip');
 
+  let clipCropData: CropTemplateWithId | undefined;
+  if (clip.cropType) {
+    clipCropData = await getCropTemplateByType(clip.userId, clip.cropType);
+  }
+
   const cropData: CropData = {
-    camCrop: CropTemplate.camCrop || undefined,
-    screenCrop: CropTemplate.screenCrop,
-    cropType: CropTemplate.cropType
+    camCrop: clipCropData?.camCrop || CropTemplate.camCrop || undefined,
+    screenCrop: clipCropData?.screenCrop || CropTemplate.screenCrop,
+    cropType: clipCropData?.cropType || CropTemplate.cropType
   };
   const clipData: Clip = {
     userId: new ObjectId(clip.userId!),
@@ -128,11 +148,11 @@ export const scheduleClips = async (
     scheduledUploadTime: new Date(scheduleTime),
     uploaded: false,
     caption: clip.title,
-    youtubeTitle: clip.title,
-    youtubeCategory: settings.youtubeCategory || 'Gaming',
-    description: settings.youtubeDescription,
+    youtubeTitle: clip.youtubeTitle || clip.title,
+    youtubeCategory: clip.youtubeCategory || settings.youtubeCategory || 'Gaming',
+    description: clip.youtubeDescription || settings.youtubeDescription,
     cropData: cropData,
-    youtubePrivacy: settings.youtubePrivacy
+    youtubePrivacy: clip.youtubePrivacy || settings.youtubePrivacy
   };
 
   const insertedClip = await db.insertOne(clipData);
