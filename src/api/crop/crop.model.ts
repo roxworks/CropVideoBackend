@@ -97,13 +97,37 @@ export const CurrentClip = z.object({
 
 export const ClipWithId = Clip.extend({ id: z.string() });
 
+export const categories = z.enum([
+  'Film & Animation',
+  'Autos & Vehicles',
+  'Music',
+  'Pets & Animals',
+  'Sports',
+  'Travel & Events',
+  'Gaming',
+  'People & Blogs',
+  'Comedy',
+  'Entertainment',
+  'News & Politics',
+  'Howto & Style',
+  'Education',
+  'Science & Technology',
+  'Nonprofits & Activism'
+]);
+
 export const ClipManualWithUserId = ClipManual.extend({
   userId: z.string(),
   uploaded: z.boolean().optional().nullish(),
   uploadPlatforms: z.array(z.enum(['tiktok', 'youtube', 'instagram'])).optional(),
   approved: z.boolean().optional().nullish(),
   approvedStatus: z.enum(['AUTO_APPROVE', 'MANUAL_APPROVE', 'CANCELED']).optional(),
-  scheduled: z.boolean().optional().nullish()
+  scheduled: z.boolean().optional().nullish(),
+  cropType: z.enum(['no-cam', 'cam-top', 'cam-freeform', 'freeform']).optional(),
+  youtubeHashtags: z.array(z.string()).optional(),
+  youtubeDescription: z.string().optional().nullable(),
+  youtubePrivacy: z.enum(['public', 'unlisted', 'private']).optional(),
+  youtubeCategory: categories.optional(),
+  youtubeTitle: z.string().optional().nullable()
 });
 
 export const ScheduledClipsArray = z.object({
