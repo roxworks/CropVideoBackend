@@ -4,7 +4,7 @@ import axios from 'axios';
 import { uploadVideoToYoutube } from '../utils/uploadToYoutube';
 import { refreshYoutubeToken } from '../utils/youtubeRefresh';
 import { updateAccount } from './Account';
-import { getClipsReadyToUploaded, updateClip } from './Clip';
+import { getClipsReadyToUploaded, updateClip, updateTwitchClipUploaded } from './Clip';
 import { getUserByIdWithAccountsAndSettings } from './User';
 import { uploadVideoToTiktok } from '../utils/uploadToTiktok';
 import { ClipWithIdMongo } from '../api/crop/crop.model';
@@ -118,6 +118,7 @@ const uploadToPlatforms = async (clip: ClipWithIdMongo, accounts: TAccount[]) =>
     log('info', 'before upload clip', updateData, 'uploadService');
 
     const updatedClip = await updateClip(clip._id.toString(), exclude(updateData, '_id'));
+    await updateTwitchClipUploaded(clip.videoId, clip.userId.toString());
 
     return updatedClip?.value;
   } catch (error) {

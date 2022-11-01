@@ -61,6 +61,20 @@ export const updateClip = async (clipId: string, clipData: any) => {
 
   return updatedAccount;
 };
+export const updateTwitchClipUploaded = async (clipId: string, userId: string) => {
+  if (!clipId) {
+    log('error', 'no clip id', { clipId, userId });
+    return;
+  }
+  const client = await clientPromise;
+  const db = client.db().collection<ClipManualWithUserId>('TwitchClip');
+  const updateClip = await db.updateOne(
+    { userId: userId, twitch_id: clipId },
+    { $set: { uploaded: true } }
+  );
+
+  return updateClip;
+};
 
 export const saveTwitchClips = async (clips: ClipManualWithUserId[]) => {
   if (!clips) {
