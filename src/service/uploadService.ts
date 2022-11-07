@@ -11,6 +11,7 @@ import { ClipWithIdMongo } from '../api/crop/crop.model';
 import { TAccount } from '../interfaces/Accounts';
 import { exclude } from '../utils/excludeClipId';
 import log from '../utils/logger';
+import { doIGUpload } from '../utils/uploadToInstagram';
 
 var OAuth2 = google.auth.OAuth2;
 const YOUTUBE_SECRETS = JSON.parse(process.env.YOUTUBE_SECRETS || '{}');
@@ -103,6 +104,11 @@ const uploadToPlatforms = async (clip: ClipWithIdMongo, accounts: TAccount[]) =>
   if (clip.uploadPlatforms.includes('TikTok') && !clip.tiktokUploaded) {
     const tiktokUpload = await uploadToTiktok(clip, accounts);
     if (tiktokUpload.error) uploadError = true;
+  }
+  //  upload to instagram
+  if (clip.uploadPlatforms.includes('Instagram') && !clip.instagramUploaded) {
+    const instagramUpload = await uploadInstagram(clip, accounts);
+    if (instagramUpload.error) uploadError = true;
   }
 
   // update db
@@ -267,6 +273,33 @@ const uploadToTiktok = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
     } catch (error) {
       clip.tiktokUploaded = false;
       clip.tiktokStatus = 'FAILED_SCHEDULED_UPLOAD';
+      return { error: true, clip };
+    }
+  }
+};
+
+const uploadInstagram = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
+  log('info', 'upload-to-instagram start');
+  const instagramToken = accounts?.filter((acc) => acc.provider === 'instagram')[0];
+  if (!instagramToken) {
+    clip.youtubeStatus = 'FAILED_INSTAGRAM_TOKEN';
+    return { error: true, clip };
+  } else {
+    log('info', 'upload-to-instragram ready to upload to instagram');
+
+    try {
+      await doIGUpload(instagramToken.access_token, clip.renderedUrl!, clip.caption || clip.title);
+      log('info', 'clip-uploaded-to-youtube', clip.videoId);
+      // set yt fields
+      clip.instagramUploaded = true;
+      clip.instagramUploadTime = new Date(new Date().toUTCString());
+      clip.instagramStatus = 'SUCCESS_SCHEDULED_UPLOAD';
+
+      return { error: false, clip };
+    } catch (error) {
+      log('error', 'failed to upload clip to instagram', error);
+      clip.instagramUploaded = false;
+      clip.instagramStatus = 'FAILED_SCHEDULED_UPLOAD_ERROR';
       return { error: true, clip };
     }
   }
