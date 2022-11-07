@@ -121,11 +121,16 @@ export const scheduleClips = async (
     clipCropData = await getCropTemplateByType(clip.userId, clip.cropType);
   }
 
+  const caption = `${clip.caption || clip.title} ${clip.instagramHashtags
+    ?.map((tag) => '%23' + tag)
+    .join(' ')}`;
+
   const cropData: CropData = {
     camCrop: clipCropData?.camCrop || CropTemplate.camCrop || undefined,
     screenCrop: clipCropData?.screenCrop || CropTemplate.screenCrop,
     cropType: clipCropData?.cropType || CropTemplate.cropType
   };
+
   const clipData: Clip = {
     userId: new ObjectId(clip.userId!),
     broadcasterName: clip.broadcaster_name,
@@ -147,7 +152,7 @@ export const scheduleClips = async (
     uploadPlatforms: convertPlatformString(settings.selectedPlatforms!),
     scheduledUploadTime: new Date(scheduleTime),
     uploaded: false,
-    caption: clip.title,
+    caption: caption,
     youtubeTitle: clip.youtubeTitle || clip.title,
     youtubeCategory: clip.youtubeCategory || settings.youtubeCategory || 'Gaming',
     description: clip.youtubeDescription || settings.youtubeDescription,

@@ -22,7 +22,7 @@ export default () => {
       }
     }
   });
-  // upload clips that have been rednered
+  // upload clips that have been rendered
   cron.schedule(EVERY_15_MINUTES, async () => {
     try {
       const clips = await uploadClip();
@@ -34,7 +34,7 @@ export default () => {
       }
     }
   });
-  // upload clips that have been rednered
+  // schedule auto approved cliped
   cron.schedule(EVERY_30_MINUTES, async () => {
     try {
       log('info', 'auto schedule');
