@@ -31,10 +31,11 @@ export const createCropVideo = async (req: Request, res: Response, next: NextFun
   if (!clip || !cropData) return res.status(400).send('please provide both clip and crop data');
 
   const downStart = performance.now();
-  const { id } = clip;
+
+  const { id, twitch_id } = clip;
   const downloadUrl = clip.download_url || clip.downloadUrl;
   let fileStream = got.stream(downloadUrl);
-  const fileName: string = `${Math.random().toString(36).substring(2, 15)}_${id}.mp4`;
+  const fileName: string = `${Math.random().toString(36).substring(2, 15)}_${twitch_id || id}.mp4`;
 
   const downEnd = performance.now();
   log('info', 'download-clip', `DOWNLOAD call took ${downEnd - downStart} ms`, 'crop.handler');
