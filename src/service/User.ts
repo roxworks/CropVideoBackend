@@ -94,7 +94,7 @@ export const getUsersLatestsClips = async () => {
   const db = client.db().collection<UserWithId>('User');
   const users = (await db
     .aggregate([
-      { $match: { defaultClips: { $in: [null, 'complete'] } } },
+      { $match: { defaultClips: { $in: [null, 'complete', 'failed'] } } },
       { $addFields: { userId: { $toString: '$_id' } } },
       {
         $lookup: {
