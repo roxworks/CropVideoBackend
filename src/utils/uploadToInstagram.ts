@@ -1,9 +1,11 @@
 import { Response } from 'express';
+import { string } from 'zod';
 const BASE_URL = 'https://graph.facebook.com/v15.0';
 // const tempUserId = "17841445045171652";
 
 const axios = require('axios');
 let id: string;
+let pageId: string;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -19,6 +21,16 @@ const getUserID = async (accessToken: string) => {
   console.log('Got id: ', id);
   return id;
 };
+
+const getPageNameandId = async (accessToken: string) => {
+  const response = await axios.get(
+    `${BASE_URL}/me/accounts?fields=name&access_token=${accessToken}`
+  );
+  const { name, id } = response.data?.data?.[0];
+
+  return { pageName: name, pageId: id } as { pageName: string; pageId: string };
+};
+
 const createMediaContainer = async (accessToken: string, downloadURL: string, caption: string) => {
   if (!id) {
     console.log('gettin id');
@@ -100,4 +112,157 @@ export const doIGUpload = async (accessToken: string, downloadURL: string, capti
   return createMediaContainer(accessToken, downloadURL, caption)
     .then((container) => waitForContainerUpload(accessToken, container))
     .then((container) => publishMediaContainer(accessToken, container));
+};
+
+const startFbUpload = async (accessToken: string, id: string) => {
+  pageId = id;
+  if (!pageId) {
+    pageId = (await getPageNameandId(accessToken)).pageId;
+  }
+  const url = `${BASE_URL}/${pageId}/video_reels?upload_phase=start&access_token=${accessToken}`;
+  let response;
+  try {
+    response = await axios.post(url);
+  } catch (e) {
+    console.log(e);
+  }
+
+  console.log('Response:', response?.data);
+  return response.data;
+};
+
+const uploadVideoToFb = async (
+  pageAccessToken: string,
+  downloadUrl: string,
+  startUpload: { video_id: string; upload_url: string }
+) => {
+  if (!startUpload.upload_url) throw new Error('video upload Url not found');
+  const baseUrl = startUpload.upload_url;
+  try {
+    const response = await fetch(baseUrl, {
+      method: 'POST',
+      // mode: 'no-cors',
+      headers: {
+        Authorization: `OAuth ${pageAccessToken}`,
+        file_url: downloadUrl,
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': '*'
+      }
+    });
+
+    const body = await response.json();
+
+    return body;
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.log(error.message);
+    }
+    throw new Error(JSON.stringify(error));
+  }
+};
+
+const waitForFbUpload = async (pageAccessToken: string, videoId: string) => {
+  if (!videoId) throw new Error('invalid video id');
+  const url = `${BASE_URL}/${videoId}?fields=status`;
+  // not_started, in_progress, complete, error
+
+  let uploadStatus = '';
+  let response;
+
+  do {
+    await sleep(1000);
+    try {
+      response = await axios.get(url, {
+        headers: { Authorization: `OAuth ${pageAccessToken}` }
+      });
+    } catch (e) {
+      console.log(e);
+    }
+    uploadStatus = response?.data?.status?.['uploading_phase']?.['status'];
+  } while (uploadStatus === 'in_progress');
+
+  if (uploadStatus === 'complete') {
+    return videoId;
+  } else {
+    console.log('Final Status: ', uploadStatus);
+    console.log(
+      'Possible failed fb upload: ',
+      response?.data,
+      response?.data?.['uploading_phase']?.['status']
+    );
+    throw new Error('Possible failed facebook wait upload: ', response?.data);
+  }
+};
+
+//used for debugging
+const checkFBStatus = async (pageAccessToken: string, videoId: string) => {
+  const url = `${BASE_URL}/${videoId}?fields=status`;
+  try {
+    console.log('checking upload status');
+    const response = await axios.get(url, {
+      headers: { Authorization: `OAuth ${pageAccessToken}` }
+    });
+    console.log('ResponseStatus: ', response?.data?.status?.['uploading_phase']?.['status']);
+    console.log('ResponseStatus: ', response?.data?.status?.['processing_phase']);
+    console.log('ResponseStatus: ', response?.data?.status?.['publishing_phase']);
+    return response.data.status;
+  } catch (e) {
+    console.log(e);
+    throw new Error('unable to get fb status');
+  }
+};
+
+const publishFbVideo = async (
+  pageAccessToken: string,
+  id: string,
+  videoId: string,
+  description: string
+) => {
+  pageId = id;
+
+  if (!pageId) {
+    pageId = (await getPageNameandId(pageAccessToken)).pageId;
+    console.log({ pageId });
+  }
+  const url = `${BASE_URL}/${pageId}/video_reels?upload_phase=finish&access_token=${pageAccessToken}`;
+  const fields = `&video_id=${videoId}&video_state=PUBLISHED&description=${description}`;
+  const fullUrl = url + fields;
+  console.log({ fullUrl });
+  try {
+    const res = await axios.post(fullUrl);
+    return res.data;
+  } catch (error) {
+    //@ts-ignore
+    console.log(error?.response?.data);
+    //@ts-ignore
+    throw new Error(JSON.stringify(error?.response?.data?.error));
+  }
+};
+
+export const doFbUpload = async (
+  pageAccessToken: string,
+  id: string,
+  downloadUrl: string,
+  description: string
+) => {
+  try {
+    console.log({ pageAccessToken, pageId: id, downloadUrl });
+
+    const startUpload = await startFbUpload(pageAccessToken, id);
+    console.log('FinsihedUpload', { startUpload });
+
+    const uploadFbVideo = await uploadVideoToFb(pageAccessToken, downloadUrl, startUpload);
+    console.log('FinishUploadFBVideo', { uploadFbVideo });
+
+    const checkStatus = await waitForFbUpload(pageAccessToken, startUpload.video_id);
+    console.log('FinishCheckStatus', { checkStatus });
+    const publish = await publishFbVideo(pageAccessToken, id, startUpload.video_id, description);
+
+    return { publish, checkStatus, videoId: startUpload.video_id };
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.log(error.message);
+    }
+    throw new Error(JSON.stringify(error));
+  }
 };
