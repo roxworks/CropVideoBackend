@@ -340,6 +340,3 @@ const uploadFacebook = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
     }
   }
 };
-function uploadVideoToFb(access_token: string, arg1: string, arg2: string) {
-  throw new Error('Function not implemented.');
-}

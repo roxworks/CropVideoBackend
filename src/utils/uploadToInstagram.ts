@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { string } from 'zod';
+
 const BASE_URL = 'https://graph.facebook.com/v15.0';
 // const tempUserId = "17841445045171652";
 
@@ -139,20 +139,20 @@ const uploadVideoToFb = async (
   if (!startUpload.upload_url) throw new Error('video upload Url not found');
   const baseUrl = startUpload.upload_url;
   try {
-    const response = await fetch(baseUrl, {
-      method: 'POST',
-      // mode: 'no-cors',
-      headers: {
-        Authorization: `OAuth ${pageAccessToken}`,
-        file_url: downloadUrl,
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': '*'
+    const response = await axios.post(
+      baseUrl,
+      {},
+      {
+        headers: {
+          Authorization: `OAuth ${pageAccessToken}`,
+          file_url: downloadUrl,
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': '*'
+        }
       }
-    });
+    );
 
-    const body = await response.json();
-
-    return body;
+    return response;
   } catch (error: unknown) {
     if (error instanceof Error) {
       console.log(error.message);

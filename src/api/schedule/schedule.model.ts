@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 // axios sending number as string
 
-export const platformsSchema = z.enum(['TikTok', 'YouTube', 'Instagram']);
+export const platformsSchema = z.enum(['TikTok', 'YouTube', 'Instagram', 'Facebook']);
 export const YoutubePrivacy = z.enum(['Public', 'Unlisted', 'Private']);
 
 export const CropSettingsAxios = z.object({
