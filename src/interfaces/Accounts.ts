@@ -16,7 +16,10 @@ export const TAccount = z.object({
   id_token: z.string().optional(),
   session_state: z.string().optional(),
   oauth_token_secret: z.string().optional(),
-  oauth_token: z.string().optional()
+  oauth_token: z.string().optional(),
+  pageName: z.string().optional().nullable(),
+  pageId: z.string().optional().nullable(),
+  pageAccessToken: z.string().optional().nullable()
 });
 
 export type TAccount = z.TypeOf<typeof TAccount>;

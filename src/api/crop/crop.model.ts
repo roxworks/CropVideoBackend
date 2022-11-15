@@ -5,7 +5,7 @@ export const JobId = z.object({
   id: z.string()
 });
 
-export const platformsSchema = z.enum(['TikTok', 'YouTube', 'Instagram']);
+export const platformsSchema = z.enum(['TikTok', 'YouTube', 'Instagram', 'Facebook']);
 export const YoutubePrivacy = z.enum(['Public', 'Unlisted', 'Private']);
 
 export const cropSettingsSchema = z.object({
@@ -75,13 +75,17 @@ export const Clip = z.object({
   instagramUploaded: z.boolean().default(false).optional(),
   instagramUploadTime: z.string().or(z.date()).optional().nullable(),
   instagramStatus: z.string().optional().nullable(),
+  facebookUploaded: z.boolean().default(false).optional(),
+  facebookUploadTime: z.string().or(z.date()).optional().nullable(),
+  facebookStatus: z.string().optional().nullable(),
   youtubePrivacy: z.string(YoutubePrivacy).default('Private'),
   youtubeCategory: z.string().optional().nullable(),
   cropData: CropData,
   caption: z.string().optional().nullable(),
   youtubeTitle: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
-  renderedUrl: z.string().optional()
+  renderedUrl: z.string().optional(),
+  facebookDescription: z.string().optional().nullable()
 });
 
 export const CurrentClip = z.object({
@@ -129,7 +133,8 @@ export const ClipManualWithUserId = ClipManual.extend({
   youtubeCategory: categories.optional(),
   youtubeTitle: z.string().optional().nullable(),
   caption: z.string().optional().nullable(),
-  instagramHashtags: z.array(z.string()).optional()
+  instagramHashtags: z.array(z.string()).optional(),
+  facebookDescription: z.string().optional().nullable()
 });
 
 export const ScheduledClipsArray = z.object({

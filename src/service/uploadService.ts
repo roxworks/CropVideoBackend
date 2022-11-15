@@ -11,7 +11,7 @@ import { ClipWithIdMongo } from '../api/crop/crop.model';
 import { TAccount } from '../interfaces/Accounts';
 import { exclude } from '../utils/excludeClipId';
 import log from '../utils/logger';
-import { doIGUpload } from '../utils/uploadToInstagram';
+import { doFbUpload, doIGUpload } from '../utils/uploadToInstagram';
 
 var OAuth2 = google.auth.OAuth2;
 const YOUTUBE_SECRETS = JSON.parse(process.env.YOUTUBE_SECRETS || '{}');
@@ -108,6 +108,11 @@ const uploadToPlatforms = async (clip: ClipWithIdMongo, accounts: TAccount[]) =>
   //  upload to instagram
   if (clip.uploadPlatforms.includes('Instagram') && !clip.instagramUploaded) {
     const instagramUpload = await uploadInstagram(clip, accounts);
+    if (instagramUpload.error) uploadError = true;
+  }
+  //  upload to instagram
+  if (clip.uploadPlatforms.includes('Facebook') && !clip.facebookUploaded) {
+    const instagramUpload = await uploadFacebook(clip, accounts);
     if (instagramUpload.error) uploadError = true;
   }
 
@@ -282,7 +287,7 @@ const uploadInstagram = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
   log('info', 'upload-to-instagram start');
   const instagramToken = accounts?.filter((acc) => acc.provider === 'instagram')[0];
   if (!instagramToken) {
-    clip.youtubeStatus = 'FAILED_INSTAGRAM_TOKEN';
+    clip.instagramStatus = 'FAILED_INSTAGRAM_TOKEN';
     return { error: true, clip };
   } else {
     log('info', 'upload-to-instragram ready to upload to instagram');
@@ -300,6 +305,37 @@ const uploadInstagram = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
       log('error', 'failed to upload clip to instagram', error);
       clip.instagramUploaded = false;
       clip.instagramStatus = 'FAILED_SCHEDULED_UPLOAD_ERROR';
+      return { error: true, clip };
+    }
+  }
+};
+const uploadFacebook = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
+  log('info', 'upload-to-facebook start');
+  const instagramToken = accounts?.filter((acc) => acc.provider === 'instagram')[0];
+  if (!instagramToken || !instagramToken.pageAccessToken || !instagramToken.pageId) {
+    clip.facebookStatus = 'FAILED_FACEBOOK_TOKEN';
+    return { error: true, clip };
+  } else {
+    log('info', 'upload-to-facebook ready to upload to instagram');
+
+    try {
+      await doFbUpload(
+        instagramToken.pageAccessToken,
+        instagramToken.pageId,
+        clip.renderedUrl!,
+        clip.facebookDescription || clip.title
+      );
+      log('info', 'clip-upload-to-facebook', clip.videoId);
+      // set yt fields
+      clip.facebookUploaded = true;
+      clip.facebookUploadTime = new Date(new Date().toUTCString());
+      clip.facebookStatus = 'SUCCESS_SCHEDULED_UPLOAD';
+
+      return { error: false, clip };
+    } catch (error) {
+      log('error', 'failed to upload clip to instagram', error);
+      clip.facebookUploaded = false;
+      clip.facebookStatus = 'FAILED_SCHEDULED_UPLOAD_ERROR';
       return { error: true, clip };
     }
   }
