@@ -49,6 +49,6 @@ clipLatestWroker.on('completed', async (job) => {
 });
 
 clipLatestWroker.on('failed', async (job, err) => {
-  await updateUserDefaultClipsById(job.data.userId, 'failed');
+  // await updateUserDefaultClipsById(job.data.userId, 'failed');
   log('error', 'clip-queue-failed', { id: job.id, user: job.data.userId, error: err });
 });

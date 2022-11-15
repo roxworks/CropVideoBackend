@@ -157,7 +157,8 @@ export const scheduleClips = async (
     youtubeCategory: clip.youtubeCategory || settings.youtubeCategory || 'Gaming',
     description: clip.youtubeDescription || settings.youtubeDescription,
     cropData: cropData,
-    youtubePrivacy: clip.youtubePrivacy || settings.youtubePrivacy
+    youtubePrivacy: clip.youtubePrivacy || settings.youtubePrivacy,
+    facebookDescription: clip.facebookDescription || clip.title
   };
 
   const insertedClip = await db.insertOne(clipData);
@@ -169,9 +170,14 @@ export const scheduleClips = async (
   return insertedClip;
 };
 
-type LowerPlatforms = ('tiktok' | 'youtube' | 'instagram')[];
+type LowerPlatforms = ('tiktok' | 'youtube' | 'instagram' | 'facebook')[];
 export const convertPlatformString = (platforms: LowerPlatforms): platformsSchema[] => {
-  const map = { youtube: 'YouTube', tiktok: 'TikTok', instagram: 'Instagram' };
+  const map = {
+    youtube: 'YouTube',
+    tiktok: 'TikTok',
+    instagram: 'Instagram',
+    facebook: 'Facebook'
+  };
 
   const updatedArray = platforms.map((platform) => map[platform]) as platformsSchema[];
 
