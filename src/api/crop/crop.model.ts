@@ -134,7 +134,9 @@ export const ClipManualWithUserId = ClipManual.extend({
   youtubeTitle: z.string().optional().nullable(),
   caption: z.string().optional().nullable(),
   instagramHashtags: z.array(z.string()).optional(),
-  facebookDescription: z.string().optional().nullable()
+  facebookDescription: z.string().optional().nullable(),
+  startTime: z.number().optional().nullable(),
+  endTime: z.number().optional().nullable()
 });
 
 export const ScheduledClipsArray = z.object({
