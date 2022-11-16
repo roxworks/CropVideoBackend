@@ -16,7 +16,7 @@ export const CropSettingsAxios = z.object({
 });
 
 export const CropDataAxios = z.object({
-  camCrop: CropSettingsAxios.optional(),
+  camCrop: CropSettingsAxios.optional().nullable(),
   screenCrop: CropSettingsAxios,
   cropType: z.enum(['no-cam', 'cam-top', 'cam-freeform', 'freeform']),
   startTime: z.union([z.number().optional(), z.string().optional()]).optional().nullable(),
