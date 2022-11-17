@@ -294,7 +294,7 @@ const uploadInstagram = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
 
     try {
       await doIGUpload(instagramToken.access_token, clip.renderedUrl!, clip.caption || clip.title);
-      log('info', 'clip-uploaded-to-youtube', clip.videoId);
+      log('info', 'clip-uploaded-to-instagram', clip.videoId);
       // set yt fields
       clip.instagramUploaded = true;
       clip.instagramUploadTime = new Date(new Date().toUTCString());

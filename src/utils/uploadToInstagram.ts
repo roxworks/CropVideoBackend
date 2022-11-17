@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import log from './logger';
 
 const BASE_URL = 'https://graph.facebook.com/v15.0';
 // const tempUserId = "17841445045171652";
@@ -33,33 +33,38 @@ const getPageNameandId = async (accessToken: string) => {
 
 const createMediaContainer = async (accessToken: string, downloadURL: string, caption: string) => {
   if (!id) {
-    console.log('gettin id');
+    log('info', 'instagram get id');
+
     let newId = await getUserID(accessToken);
     if (!newId) {
+      log('error', 'instgram could not get id', { downloadURL });
       throw new Error('Could not get id');
     }
   }
 
   const encodedCaption = caption?.replaceAll('#', '%23') || 'Uploaded with ClipbotTv';
   const videoLocation = downloadURL;
-  console.log({ videoLocation });
+
   const mediaCreationURL = `${BASE_URL}/${id}/media?media_type=REELS&video_url=${encodeURIComponent(
     videoLocation
   )}&access_token=${accessToken}&caption=${encodedCaption}`;
+
   let response;
+
   try {
     response = await axios.post(mediaCreationURL);
-  } catch (e: any) {
-    console.log(e);
-    console.log(e.response?.headers?.['www-authenticate']);
+  } catch (e: unknown) {
+    log('error', 'instagram failed to create media container', { downloadURL, caption, error: e });
+    // console.log(e.response?.headers?.['www-authenticate']);
+    throw new Error(JSON.stringify(e));
   }
 
-  console.log('Response:', response?.data);
+  log('info', 'instagram container response', response?.data);
   return response?.data?.id;
 };
 
 const waitForContainerUpload = async (accessToken: string, containerId: string) => {
-  console.log('--waitForContainerUpload start--');
+  log('info', 'instagram waitForContainerUpload start');
   const checkUploadStatusURL = `${BASE_URL}/${containerId}?fields=status_code,status&access_token=${accessToken}`;
   let status = '';
   let response;
@@ -67,31 +72,34 @@ const waitForContainerUpload = async (accessToken: string, containerId: string) 
   do {
     await sleep(1000);
     try {
-      console.log('checking upload status');
       response = await axios.get(checkUploadStatusURL);
-    } catch (e: any) {
-      console.log(e);
-      console.log(e.response?.headers?.['www-authenticate']);
+    } catch (e: unknown) {
+      log('error', 'instagram failed waitForContainerUpload', { error: e });
+      throw new Error(JSON.stringify(e));
     }
     status = response?.data?.status_code;
-    console.log('--waitForContainerUpload IN_PROGRESS--');
-    console.log('Response: ', response?.data);
-    console.log('Status: ', status);
+    log('info', 'instagram waitForContainerUpload IN_PROGRESS', {
+      response: response?.data,
+      status
+    });
   } while (status === 'IN_PROGRESS');
 
   if (status == 'FINISHED') {
-    console.log('--waitForContainerUpload FINISHED--');
+    log('info', 'instagram waitForContainerUpload FINISHED');
     return containerId;
   } else {
-    console.log('Final Status: ', status);
-    console.log('Possible failed instagram upload: ', response?.data, response?.status);
+    log('error', 'Possible failed insgram upload', {
+      status,
+      data: response?.data,
+      resStatus: response?.status
+    });
     throw new Error('Possible failed instagram upload: ', response?.data);
   }
 };
 
 const publishMediaContainer = async (accessToken: string, containerId: string) => {
   // const containerId = '17938803718939574';
-  console.log('publishing');
+  log('info', 'instagram publishing video');
   if (!id) {
     await getUserID(accessToken);
   }
@@ -100,11 +108,11 @@ const publishMediaContainer = async (accessToken: string, containerId: string) =
   try {
     response = await axios.post(mediaPublishURL);
   } catch (e: any) {
-    console.log(e);
-    console.log(e.response?.headers?.['www-authenticate']);
+    log('error', 'instagram failed to publish media container', { containerId, error: e });
+    throw new Error(JSON.stringify(e));
   }
 
-  console.log('Response:', response?.data);
+  log('info', 'instagram publishMediaContaier Response:', response?.data);
   return response;
 };
 
