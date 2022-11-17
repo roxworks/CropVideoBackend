@@ -129,7 +129,7 @@ export const scheduleClips = async (
     camCrop: clipCropData?.camCrop || CropTemplate.camCrop || undefined,
     screenCrop: clipCropData?.screenCrop || CropTemplate.screenCrop,
     cropType: clipCropData?.cropType || CropTemplate.cropType,
-    startTime: clip.startTime || undefined,
+    startTime: typeof clip.startTime === 'number' ? clip.startTime : undefined,
     endTime: clip.endTime || undefined
   };
 
