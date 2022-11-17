@@ -32,15 +32,18 @@ const getPageNameandId = async (accessToken: string) => {
 };
 
 const createMediaContainer = async (accessToken: string, downloadURL: string, caption: string) => {
+  log('warn', 'is there a token? instagram', { token: Boolean(accessToken) });
   if (!id) {
     log('info', 'instagram get id');
 
-    let newId = await getUserID(accessToken);
-    if (!newId) {
+    id = await getUserID(accessToken);
+    if (!id) {
       log('error', 'instgram could not get id', { downloadURL });
       throw new Error('Could not get id');
     }
   }
+
+  log('info', 'instagram got id', { id });
 
   const encodedCaption = caption?.replaceAll('#', '%23') || 'Uploaded with ClipbotTv';
   const videoLocation = downloadURL;
