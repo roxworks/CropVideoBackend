@@ -34,6 +34,7 @@ const getPageNameandId = async (accessToken: string) => {
 const createMediaContainer = async (accessToken: string, downloadURL: string, caption: string) => {
   try {
     log('warn', 'is there a token? instagram', { token: Boolean(accessToken) });
+    log('warn', 'instagram details', { token: Boolean(accessToken), downloadURL, caption });
     if (!id) {
       log('info', 'instagram get id');
 
@@ -73,7 +74,7 @@ const createMediaContainer = async (accessToken: string, downloadURL: string, ca
     log('info', 'instagram container response', response?.data);
     return response?.data?.id;
   } catch (error) {
-    log('error', 'instagram createMediaContainer', { error });
+    log('error', 'instagram createMediaContainer', error);
     throw new Error(JSON.stringify(error));
   }
 };
