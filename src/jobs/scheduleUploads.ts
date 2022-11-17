@@ -1,12 +1,7 @@
 import cron from 'node-cron';
 import axios from 'axios';
 
-import {
-  EVERY_10_MINUTES,
-  EVERY_15_MINUTES,
-  EVERY_30_MINUTES,
-  EVERY_30_SECONDS
-} from './cronConstants';
+import { EVERY_10_MINUTES, EVERY_15_MINUTES, EVERY_30_MINUTES } from './cronConstants';
 import { uploadClip } from '../service/uploadService';
 import log from '../utils/logger';
 import { autoScheduleClips } from '../utils/scheduleUtil';
@@ -28,7 +23,7 @@ export default () => {
     }
   });
   // upload clips that have been rendered
-  cron.schedule(EVERY_30_SECONDS, async () => {
+  cron.schedule(EVERY_15_MINUTES, async () => {
     try {
       const clips = await uploadClip();
       log('info', 'upload-cron upload clips', clips);
