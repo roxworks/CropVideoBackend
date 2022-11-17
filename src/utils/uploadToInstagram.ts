@@ -46,8 +46,13 @@ const createMediaContainer = async (accessToken: string, downloadURL: string, ca
     }
 
     log('info', 'instagram got id', { id });
-
-    const encodedCaption = caption?.replaceAll('#', '%23') || 'Uploaded with ClipbotTv';
+    let encodedCaption: string = 'Uploaded with ClipbotTv';
+    try {
+      encodedCaption = caption?.replaceAll('#', '%23') || 'Uploaded with ClipbotTv';
+    } catch (error) {
+      log('error', 'instagram cation error', error);
+    }
+    log('warn', 'instagram encoded caption', { encodedCaption });
     const videoLocation = downloadURL;
     log('info', 'instagram caption and videoLocation ', { encodedCaption, videoLocation });
 
