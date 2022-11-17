@@ -42,12 +42,12 @@ const createMediaContainer = async (accessToken: string, downloadURL: string, ca
         throw new Error('Could not get id');
       }
     }
-    let encodedCaption: string = 'Uploaded with ClipbotTv';
-    try {
-      encodedCaption = caption && caption.includes('#') ? caption.replaceAll('#', '%23') : caption;
-    } catch (error) {
-      log('error', 'instagram cation error', error);
-    }
+    let encodedCaption: string = caption?.replace(/#/g, '%23') || 'Uploaded with ClipbotTv';
+    // try {
+    //   encodedCaption = caption && caption.includes('#') ? caption.replaceAll('#', '%23') : caption;
+    // } catch (error) {
+    //   log('error', 'instagram cation error', error);
+    // }
     const videoLocation = downloadURL;
 
     const mediaCreationURL = `${BASE_URL}/${id}/media?media_type=REELS&video_url=${encodeURIComponent(
