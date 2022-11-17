@@ -333,7 +333,7 @@ const uploadFacebook = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
 
       return { error: false, clip };
     } catch (error) {
-      log('error', 'failed to upload clip to instagram', error);
+      log('error', 'failed to upload clip to facebook', error);
       clip.facebookUploaded = false;
       clip.facebookStatus = 'FAILED_SCHEDULED_UPLOAD_ERROR';
       return { error: true, clip };
