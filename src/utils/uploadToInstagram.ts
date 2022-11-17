@@ -42,13 +42,9 @@ const createMediaContainer = async (accessToken: string, downloadURL: string, ca
         throw new Error('Could not get id');
       }
     }
-
     let encodedCaption: string = 'Uploaded with ClipbotTv';
     try {
-      encodedCaption =
-        caption && caption.includes('#')
-          ? caption.replaceAll('#', '%23')
-          : 'Uploaded with ClipbotTv';
+      encodedCaption = caption && caption.includes('#') ? caption.replaceAll('#', '%23') : caption;
     } catch (error) {
       log('error', 'instagram cation error', error);
     }
