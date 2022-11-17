@@ -33,8 +33,6 @@ const getPageNameandId = async (accessToken: string) => {
 
 const createMediaContainer = async (accessToken: string, downloadURL: string, caption: string) => {
   try {
-    log('warn', 'is there a token? instagram', { token: Boolean(accessToken) });
-    log('warn', 'instagram details', { token: Boolean(accessToken), downloadURL, caption });
     if (!id) {
       log('info', 'instagram get id');
 
@@ -45,26 +43,24 @@ const createMediaContainer = async (accessToken: string, downloadURL: string, ca
       }
     }
 
-    log('info', 'instagram got id', { id });
     let encodedCaption: string = 'Uploaded with ClipbotTv';
     try {
-      encodedCaption = caption?.replaceAll('#', '%23') || 'Uploaded with ClipbotTv';
+      encodedCaption =
+        caption && caption.includes('#')
+          ? caption.replaceAll('#', '%23')
+          : 'Uploaded with ClipbotTv';
     } catch (error) {
       log('error', 'instagram cation error', error);
     }
-    log('warn', 'instagram encoded caption', { encodedCaption });
     const videoLocation = downloadURL;
-    log('info', 'instagram caption and videoLocation ', { encodedCaption, videoLocation });
 
     const mediaCreationURL = `${BASE_URL}/${id}/media?media_type=REELS&video_url=${encodeURIComponent(
       videoLocation
     )}&access_token=${accessToken}&caption=${encodedCaption}`;
 
-    log('info', 'instagram mediaCreationUrl ', { mediaCreationURL });
     let response;
 
     try {
-      log('info', 'instagram mediaCreationURl axios request');
       response = await axios.post(mediaCreationURL);
     } catch (e: unknown) {
       log('error', 'instagram failed to create media container', {
@@ -72,11 +68,9 @@ const createMediaContainer = async (accessToken: string, downloadURL: string, ca
         caption,
         error: e
       });
-      // console.log(e.response?.headers?.['www-authenticate']);
       throw new Error(JSON.stringify(e));
     }
 
-    log('info', 'instagram container response', response?.data);
     return response?.data?.id;
   } catch (error) {
     log('error', 'instagram createMediaContainer', error);
