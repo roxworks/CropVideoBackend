@@ -43,6 +43,7 @@ const createMediaContainer = async (accessToken: string, downloadURL: string, ca
       }
     }
     let encodedCaption: string = caption?.replace(/#/g, '%23') || 'Uploaded with ClipbotTv';
+    log('warn', 'instagram encoded caption', { encodedCaption, caption });
     // try {
     //   encodedCaption = caption && caption.includes('#') ? caption.replaceAll('#', '%23') : caption;
     // } catch (error) {
