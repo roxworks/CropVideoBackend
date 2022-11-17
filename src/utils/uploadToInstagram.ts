@@ -32,38 +32,50 @@ const getPageNameandId = async (accessToken: string) => {
 };
 
 const createMediaContainer = async (accessToken: string, downloadURL: string, caption: string) => {
-  log('warn', 'is there a token? instagram', { token: Boolean(accessToken) });
-  if (!id) {
-    log('info', 'instagram get id');
-
-    id = await getUserID(accessToken);
-    if (!id) {
-      log('error', 'instgram could not get id', { downloadURL });
-      throw new Error('Could not get id');
-    }
-  }
-
-  log('info', 'instagram got id', { id });
-
-  const encodedCaption = caption?.replaceAll('#', '%23') || 'Uploaded with ClipbotTv';
-  const videoLocation = downloadURL;
-
-  const mediaCreationURL = `${BASE_URL}/${id}/media?media_type=REELS&video_url=${encodeURIComponent(
-    videoLocation
-  )}&access_token=${accessToken}&caption=${encodedCaption}`;
-
-  let response;
-
   try {
-    response = await axios.post(mediaCreationURL);
-  } catch (e: unknown) {
-    log('error', 'instagram failed to create media container', { downloadURL, caption, error: e });
-    // console.log(e.response?.headers?.['www-authenticate']);
-    throw new Error(JSON.stringify(e));
-  }
+    log('warn', 'is there a token? instagram', { token: Boolean(accessToken) });
+    if (!id) {
+      log('info', 'instagram get id');
 
-  log('info', 'instagram container response', response?.data);
-  return response?.data?.id;
+      id = await getUserID(accessToken);
+      if (!id) {
+        log('error', 'instgram could not get id', { downloadURL });
+        throw new Error('Could not get id');
+      }
+    }
+
+    log('info', 'instagram got id', { id });
+
+    const encodedCaption = caption?.replaceAll('#', '%23') || 'Uploaded with ClipbotTv';
+    const videoLocation = downloadURL;
+    log('info', 'instagram caption and videoLocation ', { encodedCaption, videoLocation });
+
+    const mediaCreationURL = `${BASE_URL}/${id}/media?media_type=REELS&video_url=${encodeURIComponent(
+      videoLocation
+    )}&access_token=${accessToken}&caption=${encodedCaption}`;
+
+    log('info', 'instagram mediaCreationUrl ', { mediaCreationURL });
+    let response;
+
+    try {
+      log('info', 'instagram mediaCreationURl axios request');
+      response = await axios.post(mediaCreationURL);
+    } catch (e: unknown) {
+      log('error', 'instagram failed to create media container', {
+        downloadURL,
+        caption,
+        error: e
+      });
+      // console.log(e.response?.headers?.['www-authenticate']);
+      throw new Error(JSON.stringify(e));
+    }
+
+    log('info', 'instagram container response', response?.data);
+    return response?.data?.id;
+  } catch (error) {
+    log('error', 'instagram createMediaContainer', { error });
+    throw new Error(JSON.stringify(error));
+  }
 };
 
 const waitForContainerUpload = async (accessToken: string, containerId: string) => {
