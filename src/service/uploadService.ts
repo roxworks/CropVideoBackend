@@ -148,7 +148,7 @@ const uploadToYoutube = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
     const currentClip = {
       title: clip.youtubeTitle || clip.title,
       clipURL: clip.renderedUrl,
-      privacy: clip.youtubePrivacy,
+      youtubePrivacy: clip.youtubePrivacy,
       youtubeDescription: clip.description || undefined,
       youtubeCategory: clip.youtubeCategory || 'Gaming'
     };
