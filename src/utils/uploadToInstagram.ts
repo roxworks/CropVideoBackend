@@ -16,9 +16,10 @@ const getUserID = async (accessToken: string) => {
       '/me/accounts?fields=instagram_business_account{id, username}&access_token=' +
       accessToken
   );
-  console.log(JSON.stringify(response.data));
+  log('info', 'instagram getUserId', response.date);
   id = response.data?.data?.[0]?.instagram_business_account?.id;
   console.log('Got id: ', id);
+  log('info', 'instagram bussiness id', id);
   return id;
 };
 
@@ -36,8 +37,8 @@ const createMediaContainer = async (accessToken: string, downloadURL: string, ca
     if (!id) {
       log('info', 'instagram get id');
 
-      id = await getUserID(accessToken);
-      if (!id) {
+      const newId = await getUserID(accessToken);
+      if (!newId) {
         log('error', 'instgram could not get id', { downloadURL });
         throw new Error('Could not get id');
       }
