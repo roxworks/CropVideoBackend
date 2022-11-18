@@ -1,4 +1,5 @@
 import { z } from 'zod';
+
 import { WithId } from 'mongodb';
 
 export const TAccount = z.object({
