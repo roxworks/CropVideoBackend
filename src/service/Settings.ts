@@ -31,3 +31,15 @@ export const getUsersSettingsById = async (userId: string) => {
 
   return userSettings[0];
 };
+export const updateScheduledEnabled = async (userId: string) => {
+  if (!userId) return;
+  const client = await clientPromise;
+  const db = client.db().collection<TSettings>('Setting');
+
+  const updatedUserSettings = await db.updateOne(
+    { userId: new ObjectId(userId) },
+    { $set: { uploadEnabled: false } }
+  );
+
+  return updatedUserSettings;
+};

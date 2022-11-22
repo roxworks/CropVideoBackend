@@ -1,5 +1,6 @@
 import { getUsersApprovedClips, scheduleClips, scheduledClipsFromTime } from '../service/Clip';
 import { getCropTemplateByType } from '../service/CropTemplate';
+import { updateScheduledEnabled } from '../service/Settings';
 import { getUsersWithUploadEnabled } from '../service/User';
 import log from './logger';
 
@@ -99,6 +100,14 @@ export const autoScheduleClips = async () => {
   const usersWithUploadEnabled = await getUsersWithUploadEnabled();
 
   for (const user of usersWithUploadEnabled) {
+    // check if the users is subbed
+    const isSubbed = user.sub_status === 'active';
+    // if not subbed set scheduledEnabled to false
+    if (!isSubbed) {
+      await updateScheduledEnabled(user._id.toString());
+      //TODO:: email client to notfiy sccheduled uploads have been turned off
+      continue;
+    }
     //check if the user has scheduled days
     const userSettings = user.settings[0];
     if (!userSettings.cropType) continue;
