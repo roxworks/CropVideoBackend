@@ -1,124 +1,123 @@
-import { CropTemplate, CropTemplateWithId } from './../interfaces/CropTemplate';
+import { CropTemplate } from './../interfaces/CropTemplate';
 import clientPromise from '../db/conn';
-import { ObjectId } from 'mongodb';
 import {
-  Clip,
+  Clip as TClip,
   ClipManualWithUserId,
-  ClipWithIdMongo,
+  ClipWithRenderedUrl,
   CropData,
   platformsSchema
 } from '../api/crop/crop.model';
 import log from '../utils/logger';
 import { TSettings } from '../interfaces/Settings';
-import { getCropTemplateByType } from './CropTemplate';
-
-// export const getAllClips = async () => {
-//   const clips = await Clips.find().toArray();
-
-//   return clips;
-// };
+import { getCropTemplateByType, TCropType } from './CropTemplate';
+import prisma from '../db/conn';
+import { Clip, Prisma, TwitchClip } from '@prisma/client';
 
 export const getClipsReadyToUploaded = async () => {
-  const client = await clientPromise;
-  const db = client.db().collection('Clip');
-  const clips = await db
-    .find({
-      uploaded: false,
-      status: 'RENDERED',
-      scheduledUploadTime: { $ne: null },
-      $and: [{ scheduledUploadTime: { $lte: new Date(new Date().toUTCString()) } }]
-    })
-    .toArray();
+  try {
+    const clips = await prisma.clip.findMany({
+      where: {
+        uploaded: false,
+        status: 'RENDERED',
+        NOT: [{ scheduledUploadTime: null }, { renderedUrl: null }],
+        AND: [{ scheduledUploadTime: { lte: new Date(new Date().toUTCString()) } }]
+      }
+    });
 
-  return { count: clips.length, clips } as { count: number; clips: ClipWithIdMongo[] };
+    return { count: clips.length, clips } as { count: number; clips: ClipWithRenderedUrl[] };
+  } catch (error) {
+    log('error', 'getClipsreadToUpload failed', error);
+    return { count: 0, clips: [] } as { count: number; clips: ClipWithRenderedUrl[] };
+  }
 };
+
 export const scheduledClipsFromTime = async (userId: string, time: string) => {
-  const client = await clientPromise;
-  const db = client.db().collection('Clip');
+  //TODO:: make sure userId is converted to object for mongodb
 
-  const clips = await db
-    .find({
-      userId: new ObjectId(userId),
-      scheduledUploadTime: new Date(time)
-    })
-    .toArray();
+  try {
+    const clips = await prisma.clip.findMany({
+      where: {
+        userId: userId,
+        scheduledUploadTime: new Date(time)
+      }
+    });
 
-  return { count: clips.length, clips } as { count: number; clips: ClipWithIdMongo[] };
+    return { count: clips.length, clips };
+  } catch (error) {
+    log('error', 'scheduledCLipsfromTime', error);
+    return { count: 0, clips: [] } as { count: number; clips: Clip[] };
+  }
 };
 
 export const updateClip = async (clipId: string, clipData: any) => {
-  if (!clipId) {
-    log('error', 'no clip id', { clipData });
-    return;
+  try {
+    return (await prisma.clip.update({
+      where: { id: clipId },
+      data: { ...clipData }
+    })) as ClipWithRenderedUrl;
+  } catch (error) {
+    log('error', 'updateClip Error', error);
+    return {} as ClipWithRenderedUrl;
   }
-  const client = await clientPromise;
-  const db = client.db().collection<ClipWithIdMongo>('Clip');
-  const updatedAccount = await db.findOneAndUpdate(
-    { _id: new ObjectId(clipId) },
-    { $set: { ...clipData } },
-    { returnDocument: 'after' }
-  );
-
-  return updatedAccount;
 };
 export const updateTwitchClipUploaded = async (clipId: string, userId: string) => {
-  if (!clipId) {
-    log('error', 'no clip id', { clipId, userId });
-    return;
+  try {
+    return await prisma.twitchClip.update({
+      where: {
+        userId_twitch_id: {
+          userId,
+          twitch_id: clipId
+        }
+      },
+      data: { uploaded: true }
+    });
+  } catch (error) {
+    log('error', 'updateTwitchClipUploaded Error', error);
+    return {} as TwitchClip;
   }
-  const client = await clientPromise;
-  const db = client.db().collection<ClipManualWithUserId>('TwitchClip');
-  const updateClip = await db.updateOne(
-    { userId: userId, twitch_id: clipId },
-    { $set: { uploaded: true } }
-  );
-
-  return updateClip;
 };
 
 export const saveTwitchClips = async (clips: ClipManualWithUserId[]) => {
-  if (!clips) {
-    log('error', 'unable to save clips - not found', undefined, 'saveTwitchClips');
-    return;
+  try {
+    return await prisma.twitchClip.createMany({ data: clips });
+  } catch (error) {
+    log('error', 'saveTwitchClips Error', error);
+    return { count: 0, error: true };
   }
-  const client = await clientPromise;
-  const db = client.db().collection<ClipManualWithUserId>('TwitchClip');
-  const updatedAccount = await db.insertMany(clips);
-
-  return updatedAccount;
 };
 
 export const getUsersApprovedClips = async (userId: string) => {
-  const client = await clientPromise;
-  const db = client.db().collection<ClipManualWithUserId>('TwitchClip');
-  const clips = await db
-    .find({
-      userId: userId,
-      approved: true,
-      $and: [
-        { $or: [{ scheduled: false }, { scheduled: { $exists: false } }] },
-        { $or: [{ uploaded: false }, { uploaded: { $exists: false } }] }
-      ]
-    })
-    .sort({ created_at: 1 })
-    .toArray();
-
-  return clips;
+  try {
+    return await prisma.twitchClip.findMany({
+      where: {
+        userId,
+        AND: [
+          {
+            OR: [{ scheduled: false }, { scheduled: { isSet: false } }]
+          },
+          {
+            OR: [{ uploaded: false }, { uploaded: { isSet: false } }]
+          }
+        ],
+        approved: true
+      },
+      orderBy: { created_at: 'asc' }
+    });
+  } catch (error) {
+    log('error', 'getUsersApprovedClips Error', error);
+    return [] as TwitchClip[];
+  }
 };
 
 export const scheduleClips = async (
-  clip: ClipManualWithUserId,
+  clip: TwitchClip,
   scheduleTime: string,
   settings: TSettings,
   CropTemplate: CropTemplate
 ) => {
-  const client = await clientPromise;
-  const db = client.db().collection<Clip>('Clip');
-  const twitchClip = client.db().collection<ClipManualWithUserId>('TwitchClip');
-
-  let clipCropData: CropTemplateWithId | undefined;
+  let clipCropData: CropTemplate | undefined;
   if (clip.cropType) {
-    clipCropData = await getCropTemplateByType(clip.userId, clip.cropType);
+    clipCropData = await getCropTemplateByType(clip.userId, clip.cropType as TCropType);
   }
 
   const caption = `${clip.caption || clip.title} ${clip.instagramHashtags
@@ -126,15 +125,15 @@ export const scheduleClips = async (
     .join(' ')}`;
 
   const cropData: CropData = {
-    camCrop: clipCropData?.camCrop || CropTemplate.camCrop || undefined,
+    camCrop: (clipCropData && clipCropData.camCrop) || CropTemplate.camCrop || null,
     screenCrop: clipCropData?.screenCrop || CropTemplate.screenCrop,
     cropType: clipCropData?.cropType || CropTemplate.cropType,
-    startTime: typeof clip.startTime === 'number' ? clip.startTime : undefined,
-    endTime: clip.endTime || undefined
+    startTime: typeof clip.startTime === 'number' ? new Prisma.Decimal(clip.startTime) : null,
+    endTime: typeof clip.endTime === 'number' ? new Prisma.Decimal(clip.endTime) : null
   };
 
-  const clipData: Clip = {
-    userId: new ObjectId(clip.userId!),
+  const clipData: TClip = {
+    userId: clip.userId,
     broadcasterName: clip.broadcaster_name,
     broadcasterId: clip.broadcaster_id,
     creatorName: clip.creator_name,
@@ -157,17 +156,21 @@ export const scheduleClips = async (
     caption: caption,
     youtubeTitle: clip.youtubeTitle || clip.title,
     youtubeCategory: clip.youtubeCategory || settings.youtubeCategory || 'Gaming',
-    description: clip.youtubeDescription || settings.youtubeDescription,
+    description: (clip.youtubeDescription || settings.youtubeDescription) ?? null,
     cropData: cropData,
     youtubePrivacy: clip.youtubePrivacy || settings.youtubePrivacy,
     facebookDescription: clip.facebookDescription || clip.title
   };
 
-  const insertedClip = await db.insertOne(clipData);
-  await twitchClip.updateOne(
-    { userId: clip.userId, twitch_id: clip.twitch_id, approved: true },
-    { $set: { scheduled: true } }
-  );
+  const insertedClip = await prisma.clip.create({ data: clipData });
+  await prisma.twitchClip.updateMany({
+    where: {
+      userId: clip.userId,
+      twitch_id: clip.twitch_id,
+      approved: true
+    },
+    data: { scheduled: true }
+  });
 
   return insertedClip;
 };

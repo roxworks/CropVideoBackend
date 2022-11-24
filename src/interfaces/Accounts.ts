@@ -24,4 +24,5 @@ export const TAccount = z.object({
 });
 
 export type TAccount = z.TypeOf<typeof TAccount>;
+export type UpdateAccount = Omit<TAccount, 'userId' | 'provider' | 'providerAccountId'>;
 export type AccountWithId = WithId<TAccount>;

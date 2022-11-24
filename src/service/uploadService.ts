@@ -7,11 +7,12 @@ import { updateAccount } from './Account';
 import { getClipsReadyToUploaded, updateClip, updateTwitchClipUploaded } from './Clip';
 import { getUserByIdWithAccountsAndSettings } from './User';
 import { uploadVideoToTiktok } from '../utils/uploadToTiktok';
-import { ClipWithIdMongo } from '../api/crop/crop.model';
 import { TAccount } from '../interfaces/Accounts';
 import { exclude } from '../utils/excludeClipId';
 import log from '../utils/logger';
 import { doFbUpload, doIGUpload } from '../utils/uploadToInstagram';
+import { Clip } from '@prisma/client';
+import { ClipWithRenderedUrl, CurrentClip } from '../api/crop/crop.model';
 
 var OAuth2 = google.auth.OAuth2;
 const YOUTUBE_SECRETS = JSON.parse(process.env.YOUTUBE_SECRETS || '{}');
@@ -34,11 +35,11 @@ export const uploadClip = async () => {
   }
 };
 
-const uploadClipsQueue = async (clips: ClipWithIdMongo[]) => {
+const uploadClipsQueue = async (clips: ClipWithRenderedUrl[]) => {
   log('info', 'upload-clips-queue', { clips, length: clips.length }, 'uploadService');
 
-  const successfulJobs: ClipWithIdMongo[] = [];
-  const failedJobs: ClipWithIdMongo[] = [];
+  const successfulJobs: ClipWithRenderedUrl[] = [];
+  const failedJobs: ClipWithRenderedUrl[] = [];
   for (let job of clips) {
     log('info', 'upload-clip-job-id', job.videoId);
 
@@ -53,7 +54,7 @@ const uploadClipsQueue = async (clips: ClipWithIdMongo[]) => {
         };
         log('error', 'clip-queue missing data', updateData);
 
-        await updateClip(job._id.toString(), exclude(updateData, '_id'));
+        await updateClip(job.id.toString(), exclude(updateData, 'id'));
         failedJobs.push(job);
         continue;
       }
@@ -69,7 +70,7 @@ const uploadClipsQueue = async (clips: ClipWithIdMongo[]) => {
         };
 
         log('error', 'users accounts not found', { user, updateData });
-        await updateClip(job._id.toString(), exclude(updateData, '_id'));
+        await updateClip(job.id.toString(), exclude(updateData, 'id'));
         failedJobs.push(job);
         continue;
       }
@@ -92,7 +93,7 @@ const uploadClipsQueue = async (clips: ClipWithIdMongo[]) => {
   jobs = [];
 };
 
-const uploadToPlatforms = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
+const uploadToPlatforms = async (clip: ClipWithRenderedUrl, accounts: TAccount[]) => {
   let uploadError = false;
   // upload to youtube
   if (clip.uploadPlatforms.includes('YouTube') && !clip.youtubeUploaded) {
@@ -128,16 +129,16 @@ const uploadToPlatforms = async (clip: ClipWithIdMongo, accounts: TAccount[]) =>
 
     log('info', 'before upload clip', updateData, 'uploadService');
 
-    const updatedClip = await updateClip(clip._id.toString(), exclude(updateData, '_id'));
+    const updatedClip = await updateClip(clip.id.toString(), exclude(updateData, 'id'));
     await updateTwitchClipUploaded(clip.videoId, clip.userId.toString());
 
-    return updatedClip?.value;
+    return updatedClip;
   } catch (error) {
     log('error', 'upload-to-platforms upload failed', error, 'uploadService');
   }
 };
 
-const uploadToYoutube = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
+const uploadToYoutube = async (clip: ClipWithRenderedUrl, accounts: TAccount[]) => {
   log('info', 'upload-to-youtube start');
   const youtubeToken = accounts?.filter((acc) => acc.provider === 'youtube')[0];
   if (!youtubeToken) {
@@ -145,7 +146,7 @@ const uploadToYoutube = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
     return { error: true, clip };
   } else {
     log('info', 'upload-to-youtube ready to upload to youtube');
-    const currentClip = {
+    const currentClip: CurrentClip = {
       title: clip.youtubeTitle || clip.title,
       clipURL: clip.renderedUrl,
       youtubePrivacy: clip.youtubePrivacy,
@@ -174,11 +175,13 @@ const uploadToYoutube = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
       scope: refreshToken.scope
     };
 
+    try {
+    } catch (error) {}
     const updatedAccount = await updateAccount({
       userId: clip.userId.toString(),
       ...accountData
     });
-    if (!updatedAccount?.ok) {
+    if (!updatedAccount) {
       log('error', 'update token in account error', updatedAccount, 'uploadService');
       clip.youtubeUploaded = false;
       clip.youtubeStatus = 'FAILED_SCHEDULED_UPLOAD_REFRESH_TOKEN_UPDATE';
@@ -191,7 +194,12 @@ const uploadToYoutube = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
     let redirectUrl = YOUTUBE_SECRETS.web.redirect_uris[0];
     let oauth2Client = new OAuth2(clientId, clientSecret, redirectUrl);
 
-    oauth2Client.credentials = updatedAccount.value!;
+    const newCreds = {
+      ...updatedAccount,
+      scope: updatedAccount.scope ?? undefined
+    };
+
+    oauth2Client.credentials = newCreds;
 
     log('info', 'uploading to yt...');
     try {
@@ -212,7 +220,7 @@ const uploadToYoutube = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
   }
 };
 
-const uploadToTiktok = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
+const uploadToTiktok = async (clip: ClipWithRenderedUrl, accounts: TAccount[]) => {
   log('info', 'upload-to-tiktok start');
   const tiktokToken = accounts?.filter((acc) => acc.provider === 'tiktok')[0];
   if (!tiktokToken) {
@@ -253,7 +261,7 @@ const uploadToTiktok = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
       ...accountData
     });
 
-    if (!updatedAccount?.ok) {
+    if (!updatedAccount) {
       log('error', 'update token in account error', updatedAccount, 'uploadService');
       clip.tiktokUploaded = false;
       clip.tiktokStatus = 'FAILED_SCHEDULED_UPLOAD_REFRESH_TOKEN';
@@ -262,12 +270,12 @@ const uploadToTiktok = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
 
     // data for tiktok api
     const tokenData = {
-      ...updatedAccount.value,
-      open_id: updatedAccount.value?.providerAccountId
+      ...updatedAccount,
+      open_id: updatedAccount.providerAccountId
     };
 
     // upload to tiktok
-    log('info', 'attempting to upload to tiktok', clip._id);
+    log('info', 'attempting to upload to tiktok', clip.id);
     try {
       await uploadVideoToTiktok(JSON.stringify(tokenData), clip.renderedUrl!);
       // set tiktok fields
@@ -283,7 +291,7 @@ const uploadToTiktok = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
   }
 };
 
-const uploadInstagram = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
+const uploadInstagram = async (clip: ClipWithRenderedUrl, accounts: TAccount[]) => {
   log('info', 'upload-to-instagram start');
   const instagramToken = accounts?.filter((acc) => acc.provider === 'instagram')[0];
   if (!instagramToken) {
@@ -309,7 +317,7 @@ const uploadInstagram = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
     }
   }
 };
-const uploadFacebook = async (clip: ClipWithIdMongo, accounts: TAccount[]) => {
+const uploadFacebook = async (clip: ClipWithRenderedUrl, accounts: TAccount[]) => {
   log('info', 'upload-to-facebook start');
   const instagramToken = accounts?.filter((acc) => acc.provider === 'instagram')[0];
   if (!instagramToken || !instagramToken.pageAccessToken || !instagramToken.pageId) {

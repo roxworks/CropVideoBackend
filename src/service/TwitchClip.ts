@@ -3,18 +3,6 @@ import { ClipManualWithUserId } from '../api/crop/crop.model';
 import log from '../utils/logger';
 import { TSettings } from '../interfaces/Settings';
 
-export const saveTwitchClips = async (clips: ClipManualWithUserId[]) => {
-  if (!clips) {
-    log('warn', 'unable to save clips - not found', undefined, 'saveTwitchClips');
-    return;
-  }
-  const client = await clientPromise;
-  const db = client.db().collection<ClipManualWithUserId>('TwitchClip');
-  const updatedAccount = await db.insertMany(clips);
-
-  return updatedAccount;
-};
-
 export const autoApproveClips = async (settings: TSettings) => {
   const client = await clientPromise;
   const db = client.db().collection<ClipManualWithUserId>('TwitchClip');

@@ -36,8 +36,8 @@ const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
 });
 
 // cron jobs
-scheduledFunctions();
-twitchClipsCrons();
+// scheduledFunctions();
+// twitchClipsCrons();
 log('info', 'Server started', 'random data');
 
 app.use(cors());

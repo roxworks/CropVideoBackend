@@ -1,0 +1,256 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // provider = "postgresql"
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                   String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId               String
+  type                 String
+  provider             String
+  providerAccountId    String
+  refresh_token        String?
+  access_token         String?
+  expires_at           Int?
+  refresh_expires_at   Int?
+  obtainment_timestamp Int     @default(0)
+  token_type           String?
+  scope                String?
+  id_token             String?
+  session_state        String?
+  oauth_token_secret   String?
+  oauth_token          String?
+  username             String?
+  pageName             String?
+  pageId               String?
+  pageAccessToken      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id                String         @id @default(auto()) @map("_id") @db.ObjectId
+  name              String?
+  email             String?        @unique
+  emailVerified     DateTime?
+  image             String?
+  customer_id       String?
+  sub_id            String?
+  sub_type          Int?
+  sub_time_range    Int?
+  sub_time_created  Int?
+  sub_current_start Int?
+  sub_current_end   Int?
+  sub_status        String?
+  defaultClips      String         @default("pending")
+  accounts          Account[]
+  settings          Setting[]
+  sessions          Session[]
+  createdAt         DateTime       @default(now())
+  CropType          CropTemplate[]
+}
+
+model VerificationToken {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Setting {
+  id                        String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId                    String        @db.ObjectId
+  delay                     Int           @default(24)
+  hastags                   String?
+  minViewCount              Int           @default(10)
+  uploadFrequency           Int           @default(8)
+  license                   String?
+  camCrop                   CropSettings?
+  screenCrop                CropSettings?
+  cropType                  String?
+  verticalVideoEnabled      Boolean       @default(true)
+  uploadEnabled             Boolean       @default(false)
+  defaultApprove            Boolean       @default(false)
+  approveDate               DateTime?
+  mainTutorialComplete      Boolean       @default(false)
+  clipsTutorialComplete     Boolean       @default(false)
+  youtubeHashtags           String[]
+  youtubeTags               String?
+  youtubePrivacy            String        @default("private")
+  youtubeAutoCategorization Boolean       @default(true)
+  youtubeCategory           String?       @default("Gaming")
+  youtubeDescription        String?
+  instagramCaption          String?
+  lastUploaded              DateTime?
+  lastUploadedId            String?
+  lastUploadTiktok          DateTime?
+  lastUploadYoutube         DateTime?
+  lastInstagramYoutube      DateTime?
+  lastUploadedClipYouTube   String?
+  lastUploadedClipTiktok    String?
+  lastUploadedClipInstagram String?
+  uploadCount               Int           @default(0)
+  selectedPlatforms         String[]
+  youtubeCount              Int           @default(0)
+  tiktokCount               Int           @default(0)
+  instagramCount            Int           @default(0)
+  timeOffset                Int?
+  scheduleDays              ScheduleDays?
+  instagramHashtags         String[]
+
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  CropType CropTemplate[]
+}
+
+model Clip {
+  id                  String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId              String    @db.ObjectId
+  broadcasterName     String
+  broadcasterId       String
+  creatorName         String
+  creatorId           String
+  embedUrl            String
+  gameId              String
+  language            String
+  title               String
+  url                 String
+  videoId             String
+  viewCount           Int
+  thumbnailUrl        String
+  createdAt           DateTime
+  downloadUrl         String
+  approved            Boolean   @default(false)
+  status              String?
+  uploadPlatforms     String[]
+  uploadTime          DateTime?
+  scheduledUploadTime DateTime?
+  uploaded            Boolean   @default(false)
+  youtubeUploaded     Boolean   @default(false)
+  youtubeUploadTime   DateTime?
+  youtubeStatus       String?
+  tiktokUploaded      Boolean   @default(false)
+  tiktokUploadTime    DateTime?
+  tiktokStatus        String?
+  instagramUploaded   Boolean   @default(false)
+  instagramUploadTime DateTime?
+  instagramStatus     String?
+  facebookUploaded    Boolean   @default(false)
+  facebookUploadTime  DateTime?
+  facebookStatus      String?
+  facebookDescription String?
+  youtubePrivacy      String    @default("private")
+  youtubeCategory     String?
+  cropData            CropData
+  caption             String?
+  youtubeTitle        String?
+  description         String?
+  renderedUrl         String?
+}
+
+model TwitchClip {
+  id                  String         @id @default(auto()) @map("_id") @db.ObjectId
+  twitch_id           String
+  userId              String
+  broadcaster_name    String
+  broadcaster_id      String
+  creator_name        String
+  creator_id          String
+  embed_url           String
+  game_id             String
+  language            String
+  title               String
+  url                 String
+  video_id            String
+  view_count          Int
+  thumbnail_url       String
+  created_at          String
+  download_url        String
+  uploaded            Boolean?       @default(false)
+  uploadPlatforms     String[]
+  approved            Boolean?       @default(false)
+  scheduled           Boolean?       @default(false)
+  approvedStatus      ApproveStatus?
+  youtubePrivacy      String?        @default("private")
+  youtubeCategory     String?
+  youtubeTitle        String?
+  youtubeHashtags     String[]
+  youtubeDescription  String?
+  cropType            String?
+  caption             String?
+  instagramHashtags   String[]
+  facebookDescription String?
+  startTime           Float?
+  endTime             Float?
+
+  @@unique([userId, twitch_id])
+}
+
+model CropTemplate {
+  id         String        @id @default(auto()) @map("_id") @db.ObjectId
+  name       String        @default("default")
+  settingId  String
+  userId     String
+  cropType   String
+  camCrop    CropSettings?
+  screenCrop CropSettings
+
+  setting Setting @relation(fields: [settingId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([name, cropType, settingId])
+}
+
+type CropSettings {
+  x            Decimal
+  y            Decimal
+  width        Decimal
+  height       Decimal
+  scaleX       Decimal?
+  scaleY       Decimal?
+  isNormalized Boolean  @default(true)
+}
+
+type CropData {
+  camCrop    CropSettings?
+  screenCrop CropSettings?
+  cropType   String?
+  startTime  Decimal?
+  endTime    Decimal?
+}
+
+type ScheduleDays {
+  sun String[]
+  mon String[]
+  tue String[]
+  wed String[]
+  thu String[]
+  fri String[]
+  sat String[]
+}
+
+enum ApproveStatus {
+  MANUAL_APPROVE
+  AUTO_APPROVE
+  CANCELED
+}

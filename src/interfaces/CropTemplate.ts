@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import { WithId } from 'mongodb';
 import { cropSettingsSchema } from '../api/crop/crop.model';
 
 export const CropTemplate = z.object({
@@ -12,4 +11,3 @@ export const CropTemplate = z.object({
 });
 
 export type CropTemplate = z.TypeOf<typeof CropTemplate>;
-export type CropTemplateWithId = WithId<CropTemplate>;

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { WithId, ObjectId } from 'mongodb';
+import { Decimal } from '@prisma/client/runtime';
 
 export const JobId = z.object({
   id: z.string()
@@ -9,21 +10,37 @@ export const platformsSchema = z.enum(['TikTok', 'YouTube', 'Instagram', 'Facebo
 export const YoutubePrivacy = z.enum(['Public', 'Unlisted', 'Private']);
 
 export const cropSettingsSchema = z.object({
-  x: z.number(),
-  y: z.number(),
-  width: z.number(),
-  height: z.number(),
-  scaleX: z.number().optional(),
-  scaleY: z.number().optional(),
-  isNormalized: z.boolean().optional()
+  x: z.instanceof(Decimal),
+  y: z.instanceof(Decimal),
+  width: z.instanceof(Decimal),
+  height: z.instanceof(Decimal),
+  scaleX: z.instanceof(Decimal).nullable(),
+  scaleY: z.instanceof(Decimal).nullable(),
+  isNormalized: z.boolean().default(true)
+});
+export const cropSettingsSchemaInput = z.object({
+  x: z.instanceof(Decimal).or(z.number()),
+  y: z.instanceof(Decimal).or(z.number()),
+  width: z.instanceof(Decimal).or(z.number()),
+  height: z.instanceof(Decimal).or(z.number()),
+  scaleX: z.instanceof(Decimal).or(z.number()).optional().nullable(),
+  scaleY: z.instanceof(Decimal).or(z.number()).optional().nullable(),
+  isNormalized: z.boolean().optional().nullable()
 });
 
 export const CropData = z.object({
-  camCrop: cropSettingsSchema.optional(),
+  camCrop: cropSettingsSchema.nullable(),
   screenCrop: cropSettingsSchema,
   cropType: z.enum(['no-cam', 'cam-top', 'cam-freeform', 'freeform']),
-  startTime: z.number().optional(),
-  endTime: z.number().optional()
+  startTime: z.instanceof(Decimal).nullable(),
+  endTime: z.instanceof(Decimal).nullable()
+});
+export const CropDataInput = z.object({
+  camCrop: cropSettingsSchema.nullable().optional(),
+  screenCrop: cropSettingsSchema,
+  cropType: z.enum(['no-cam', 'cam-top', 'cam-freeform', 'freeform']),
+  startTime: z.instanceof(Decimal).or(z.number()).optional().nullable(),
+  endTime: z.instanceof(Decimal).or(z.number()).optional().nullable()
 });
 
 export const ClipManual = z.object({
@@ -40,12 +57,12 @@ export const ClipManual = z.object({
   thumbnail_url: z.string(),
   title: z.string(),
   url: z.string(),
-  video_id: z.string().optional(),
+  video_id: z.string().default(''),
   view_count: z.number()
 });
 
 export const Clip = z.object({
-  userId: z.instanceof(ObjectId),
+  userId: z.string(),
   broadcasterName: z.string(),
   broadcasterId: z.string(),
   creatorName: z.string(),
@@ -153,9 +170,10 @@ export type Clip = z.infer<typeof Clip>;
 export type CurrentClip = z.infer<typeof CurrentClip>;
 export type ClipManual = z.infer<typeof ClipManual>;
 export type ClipWithId = z.infer<typeof ClipWithId>;
-export type ClipWithIdMongo = WithId<Clip>;
 export type ScheduledClipsArray = z.infer<typeof ScheduledClipsArray>;
 export type CropData = z.infer<typeof CropData>;
 export type RenderClipReq = z.infer<typeof RenderClipReq>;
 export type ClipManualWithUserId = z.infer<typeof ClipManualWithUserId>;
 export type platformsSchema = z.infer<typeof platformsSchema>;
+
+export type ClipWithRenderedUrl = ClipWithId & { renderedUrl: string };
