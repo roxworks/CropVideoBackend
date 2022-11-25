@@ -80,7 +80,7 @@ model VerificationToken {
 
 model Setting {
   id                        String        @id @default(auto()) @map("_id") @db.ObjectId
-  userId                    String        @db.ObjectId
+  userId                    String        @unique @db.ObjectId
   delay                     Int           @default(24)
   hastags                   String?
   minViewCount              Int           @default(10)
