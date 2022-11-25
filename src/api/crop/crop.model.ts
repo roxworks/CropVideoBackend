@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { TypeOf, z } from 'zod';
 import { WithId, ObjectId } from 'mongodb';
 import { Decimal } from '@prisma/client/runtime';
 
@@ -8,6 +8,16 @@ export const JobId = z.object({
 
 export const platformsSchema = z.enum(['TikTok', 'YouTube', 'Instagram', 'Facebook']);
 export const YoutubePrivacy = z.enum(['Public', 'Unlisted', 'Private']);
+export const ClipStatuses = z.enum([
+  'SCHEDULED',
+  'RENDERED',
+  'FAILED_SCHEDULED_UPLOAD_INVALID_DATA',
+  'FAILED_SCHEDULED_UPLOAD_ACCOUNT_NOT_FOUND',
+  'FAILED_SCHEDULED_UPLOAD',
+  'SUCCESS_SCHEDULED_UPLOAD',
+  'SUCCESS_MANUAL_UPLOAD',
+  'FAILED_MANUAL_UPLOAD'
+]);
 
 export const cropSettingsSchema = z.object({
   x: z.instanceof(Decimal),
@@ -78,7 +88,7 @@ export const Clip = z.object({
   createdAt: z.date(),
   downloadUrl: z.string(),
   approved: z.boolean().default(false),
-  status: z.string(),
+  status: ClipStatuses,
   uploadPlatforms: z.array(platformsSchema),
   uploadTime: z.string().optional().nullable(),
   scheduledUploadTime: z.date().optional().nullable(),
@@ -175,5 +185,6 @@ export type CropData = z.infer<typeof CropData>;
 export type RenderClipReq = z.infer<typeof RenderClipReq>;
 export type ClipManualWithUserId = z.infer<typeof ClipManualWithUserId>;
 export type platformsSchema = z.infer<typeof platformsSchema>;
+export type ClipStatuses = z.infer<typeof ClipStatuses>;
 
 export type ClipWithRenderedUrl = ClipWithId & { renderedUrl: string };

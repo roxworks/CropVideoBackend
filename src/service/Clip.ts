@@ -12,6 +12,7 @@ import { TSettings } from '../interfaces/Settings';
 import { getCropTemplateByType, TCropType } from './CropTemplate';
 import prisma from '../db/conn';
 import { Clip, Prisma, TwitchClip } from '@prisma/client';
+import { convertTags, convertToClipFromTwitchClip, convertToCropData } from '../utils/helpers';
 
 export const getClipsReadyToUploaded = async () => {
   try {
@@ -113,54 +114,30 @@ export const scheduleClips = async (
   clip: TwitchClip,
   scheduleTime: string,
   settings: TSettings,
-  CropTemplate: CropTemplate
+  cropTemplate: CropTemplate
 ) => {
   let clipCropData: CropTemplate | undefined;
   if (clip.cropType) {
     clipCropData = await getCropTemplateByType(clip.userId, clip.cropType as TCropType);
   }
 
-  const caption = `${clip.caption || clip.title} ${clip.instagramHashtags
-    ?.map((tag) => '%23' + tag)
-    .join(' ')}`;
+  const caption = `${clip.caption || clip.title} ${convertTags(clip.instagramHashtags)}`;
 
-  const cropData: CropData = {
-    camCrop: (clipCropData && clipCropData.camCrop) || CropTemplate.camCrop || null,
-    screenCrop: clipCropData?.screenCrop || CropTemplate.screenCrop,
-    cropType: clipCropData?.cropType || CropTemplate.cropType,
-    startTime: typeof clip.startTime === 'number' ? new Prisma.Decimal(clip.startTime) : null,
-    endTime: typeof clip.endTime === 'number' ? new Prisma.Decimal(clip.endTime) : null
-  };
+  const cropData = convertToCropData({
+    cropTemplate,
+    clipCropData,
+    startTime: clip.startTime ?? undefined,
+    endTime: clip.endTime ?? undefined
+  });
 
-  const clipData: TClip = {
-    userId: clip.userId,
-    broadcasterName: clip.broadcaster_name,
-    broadcasterId: clip.broadcaster_id,
-    creatorName: clip.creator_name,
-    creatorId: clip.creator_id,
-    embedUrl: clip.embed_url,
-    gameId: clip.game_id,
-    language: clip.language,
-    title: clip.title,
-    url: clip.url,
-    videoId: clip.twitch_id,
-    viewCount: clip.view_count,
-    thumbnailUrl: clip.thumbnail_url,
-    createdAt: new Date(clip.created_at),
-    downloadUrl: clip.download_url,
-    approved: true,
-    status: 'SCHEDULED',
-    uploadPlatforms: convertPlatformString(settings.selectedPlatforms!),
-    scheduledUploadTime: new Date(scheduleTime),
-    uploaded: false,
-    caption: caption,
-    youtubeTitle: clip.youtubeTitle || clip.title,
-    youtubeCategory: clip.youtubeCategory || settings.youtubeCategory || 'Gaming',
-    description: (clip.youtubeDescription || settings.youtubeDescription) ?? null,
-    cropData: cropData,
-    youtubePrivacy: clip.youtubePrivacy || settings.youtubePrivacy,
-    facebookDescription: clip.facebookDescription || clip.title
-  };
+  const clipData = convertToClipFromTwitchClip({
+    clip,
+    settings,
+    scheduleTime,
+    caption,
+    cropData,
+    approved: true
+  });
 
   const insertedClip = await prisma.clip.create({ data: clipData });
   await prisma.twitchClip.updateMany({
@@ -173,18 +150,4 @@ export const scheduleClips = async (
   });
 
   return insertedClip;
-};
-
-type LowerPlatforms = ('tiktok' | 'youtube' | 'instagram' | 'facebook')[];
-export const convertPlatformString = (platforms: LowerPlatforms): platformsSchema[] => {
-  const map = {
-    youtube: 'YouTube',
-    tiktok: 'TikTok',
-    instagram: 'Instagram',
-    facebook: 'Facebook'
-  };
-
-  const updatedArray = platforms.map((platform) => map[platform]) as platformsSchema[];
-
-  return updatedArray;
 };
