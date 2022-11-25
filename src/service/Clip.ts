@@ -1,17 +1,10 @@
 import { CropTemplate } from './../interfaces/CropTemplate';
-import clientPromise from '../db/conn';
-import {
-  Clip as TClip,
-  ClipManualWithUserId,
-  ClipWithRenderedUrl,
-  CropData,
-  platformsSchema
-} from '../api/crop/crop.model';
+import { ClipManualWithUserId, ClipWithRenderedUrl } from '../api/crop/crop.model';
 import log from '../utils/logger';
 import { TSettings } from '../interfaces/Settings';
 import { getCropTemplateByType, TCropType } from './CropTemplate';
 import prisma from '../db/conn';
-import { Clip, Prisma, TwitchClip } from '@prisma/client';
+import { Clip, TwitchClip } from '@prisma/client';
 import { convertTags, convertToClipFromTwitchClip, convertToCropData } from '../utils/helpers';
 
 export const getClipsReadyToUploaded = async () => {
