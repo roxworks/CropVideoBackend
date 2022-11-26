@@ -1,9 +1,10 @@
+import { SettingsOutput } from './../interfaces/Settings';
 import { ClipManualWithUserId } from '../api/crop/crop.model';
 import log from '../utils/logger';
 import { TSettings } from '../interfaces/Settings';
 import prisma from '../db/conn';
 
-export const autoApproveClips = async (settings: TSettings) => {
+export const autoApproveClips = async (settings: TSettings | SettingsOutput) => {
   if (!settings.approveDate && !settings.approveDate) return;
 
   const updatedClips = await prisma.twitchClip.updateMany({

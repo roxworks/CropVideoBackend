@@ -48,9 +48,9 @@ model Session {
 }
 
 model User {
-  id                String         @id @default(auto()) @map("_id") @db.ObjectId
+  id                String              @id @default(auto()) @map("_id") @db.ObjectId
   name              String?
-  email             String?        @unique
+  email             String              @unique
   emailVerified     DateTime?
   image             String?
   customer_id       String?
@@ -61,11 +61,11 @@ model User {
   sub_current_start Int?
   sub_current_end   Int?
   sub_status        String?
-  defaultClips      String         @default("pending")
+  defaultClips      DefaultClipsStatus? @default(pending)
   accounts          Account[]
-  settings          Setting[]
+  settings          Setting?
   sessions          Session[]
-  createdAt         DateTime       @default(now())
+  createdAt         DateTime            @default(now())
   CropType          CropTemplate[]
 }
 
@@ -80,7 +80,6 @@ model VerificationToken {
 
 model Setting {
   id                        String        @id @default(auto()) @map("_id") @db.ObjectId
-  userId                    String        @unique @db.ObjectId
   delay                     Int           @default(24)
   hastags                   String?
   minViewCount              Int           @default(10)
@@ -120,6 +119,7 @@ model Setting {
   instagramHashtags         String[]
 
   user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String         @unique @db.ObjectId
   CropType CropTemplate[]
 }
 
@@ -253,4 +253,11 @@ enum ApproveStatus {
   MANUAL_APPROVE
   AUTO_APPROVE
   CANCELED
+}
+
+enum DefaultClipsStatus {
+  pending
+  inqueue
+  complete
+  failed
 }

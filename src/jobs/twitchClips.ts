@@ -14,7 +14,7 @@ export default () => {
     try {
       //get all users where defaultClips is false or null
       const users = await getUsersWithoutClips();
-      if (users.length === 0) {
+      if (!users || users.length === 0) {
         log('info', 'cron-default-clips', 'No users without default clips');
         return;
       }
@@ -23,7 +23,7 @@ export default () => {
         const twitchProvider = user.accounts?.filter((acc) => acc.provider === 'twitch')[0];
         if (!twitchProvider.providerAccountId) return;
 
-        addToGetAllClipsQueue(user.userId, twitchProvider.providerAccountId);
+        addToGetAllClipsQueue(user.id, twitchProvider.providerAccountId);
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -35,13 +35,14 @@ export default () => {
     try {
       // get list of users with lastUploaded date to fetch new clips
       const users = await getUsersLatestsClips();
-      log('info', 'cron-latest-clips', users.length);
+      log('info', 'cron-latest-clips', users?.length || 0);
+      if (!users) return;
       // add users to latest clip queue
       for (const user of users) {
         const twitchProvider = user.accounts?.filter((acc) => acc.provider === 'twitch')[0];
         if (!twitchProvider.providerAccountId) return;
 
-        addToGetLatestClipsQueue(user.userId, twitchProvider.providerAccountId);
+        addToGetLatestClipsQueue(user.id, twitchProvider.providerAccountId);
       }
     } catch (error) {
       log('error', 'cron-latest-clips');

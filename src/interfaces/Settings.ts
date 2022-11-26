@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { WithId } from 'mongodb';
 import { cropSettingsSchema, platformsSchema } from '../api/crop/crop.model';
 import { ObjectId } from 'mongodb';
+import { CropTemplate } from './CropTemplate';
 
 const scheduleDays = z
   .object({
@@ -59,7 +59,48 @@ export const TSettings = z.object({
   scheduleDays: scheduleDays
 });
 
-type scheduleDays = z.TypeOf<typeof scheduleDays>;
+export const SettingsOutput = z.object({
+  id: z.string(),
+  userId: z.string(),
+  delay: z.number().default(24),
+  hastags: z.string().nullable(),
+  minViewCount: z.number().default(10),
+  uploadFrequency: z.number().default(8),
+  license: z.string().nullable(),
+  camCrop: cropSettingsSchema.nullable(),
+  screenCrop: cropSettingsSchema.nullable(),
+  cropType: z.string().nullable(),
+  verticalVideoEnabled: z.boolean().default(true),
+  uploadEnabled: z.boolean().default(false),
+  defaultApprove: z.boolean().default(false),
+  approveDate: z.date().nullable(),
+  mainTutorialComplete: z.boolean().default(false),
+  clipsTutorialComplete: z.boolean().default(false),
+  youtubeHashtags: z.array(z.string()),
+  youtubeTags: z.string().nullable(),
+  youtubePrivacy: z.string().default('private'),
+  youtubeAutoCategorization: z.boolean().default(true),
+  youtubeCategory: z.string().default('Gaming').nullable(),
+  youtubeDescription: z.string().nullable(),
+  instagramCaption: z.string().nullable(),
+  lastUploaded: z.date().nullable(),
+  lastUploadedId: z.string().nullable(),
+  lastUploadTiktok: z.date().nullable(),
+  lastUploadYoutube: z.date().nullable(),
+  lastInstagramYoutube: z.date().nullable(),
+  lastUploadedClipYouTube: z.string().nullable(),
+  lastUploadedClipTiktok: z.string().nullable(),
+  lastUploadedClipInstagram: z.string().nullable(),
+  uploadCount: z.number().default(0),
+  selectedPlatforms: z.array(z.string()),
+  youtubeCount: z.number().default(0),
+  tiktokCount: z.number().default(0),
+  instagramCount: z.number().default(0),
+  timeOffset: z.number().nullable(),
+  scheduleDays: scheduleDays.nullable(),
+  instagramHashtags: z.array(z.string())
+});
 
+type scheduleDays = z.TypeOf<typeof scheduleDays>;
 export type TSettings = z.TypeOf<typeof TSettings>;
-export type SettingsWithId = WithId<TSettings>;
+export type SettingsOutput = z.TypeOf<typeof SettingsOutput>;

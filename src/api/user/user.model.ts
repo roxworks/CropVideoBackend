@@ -1,6 +1,7 @@
+import { SettingsOutput } from './../../interfaces/Settings';
 import { z } from 'zod';
 import { WithId } from 'mongodb';
-import { TAccount } from '../../interfaces/Accounts';
+import { TAccount, TAccountOutput } from '../../interfaces/Accounts';
 import { TSettings } from '../../interfaces/Settings';
 
 export const DefaultClips = z.enum(['pending', 'inqueue', 'complete', 'failed']);
@@ -24,8 +25,12 @@ export const UserWithAccounts = TUser.extend({
   accounts: z.array(TAccount)
 });
 export const UserWithAccountsAndSettings = TUser.extend({
-  accounts: z.array(TAccount),
-  settings: z.array(TSettings)
+  accounts: z.array(TAccountOutput),
+  settings: z.array(SettingsOutput)
+});
+
+export const UserWithAccountsAndSettingsWithId = UserWithAccountsAndSettings.extend({
+  id: z.string()
 });
 
 export const NewUserQueueReq = z.object({
@@ -38,6 +43,6 @@ export type UserWithId = WithId<TUser>;
 export type UserWithAccounts = z.TypeOf<typeof UserWithAccounts>;
 export type UserWithAccountsWithId = WithId<UserWithAccounts>;
 export type UserWithAccountsAndSettings = z.TypeOf<typeof UserWithAccountsAndSettings>;
-export type UserWithAccountsAndSettingsWithId = WithId<UserWithAccountsAndSettings>;
+export type UserWithAccountsAndSettingsWithId = z.TypeOf<typeof UserWithAccountsAndSettings>;
 export type DefaultClips = z.TypeOf<typeof DefaultClips>;
 export type NewUserQueueReq = z.TypeOf<typeof NewUserQueueReq>;

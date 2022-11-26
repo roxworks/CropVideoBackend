@@ -7,11 +7,10 @@ import { updateAccount } from './Account';
 import { getClipsReadyToUploaded, updateClip, updateTwitchClipUploaded } from './Clip';
 import { getUserByIdWithAccountsAndSettings } from './User';
 import { uploadVideoToTiktok } from '../utils/uploadToTiktok';
-import { TAccount } from '../interfaces/Accounts';
 import { exclude } from '../utils/excludeClipId';
 import log from '../utils/logger';
 import { doFbUpload, doIGUpload } from '../utils/uploadToInstagram';
-import { Clip } from '@prisma/client';
+import { Account, Clip } from '@prisma/client';
 import { ClipWithRenderedUrl, CurrentClip } from '../api/crop/crop.model';
 
 var OAuth2 = google.auth.OAuth2;
@@ -93,7 +92,7 @@ const uploadClipsQueue = async (clips: ClipWithRenderedUrl[]) => {
   jobs = [];
 };
 
-const uploadToPlatforms = async (clip: ClipWithRenderedUrl, accounts: TAccount[]) => {
+const uploadToPlatforms = async (clip: ClipWithRenderedUrl, accounts: Account[]) => {
   let uploadError = false;
   // upload to youtube
   if (clip.uploadPlatforms.includes('YouTube') && !clip.youtubeUploaded) {
@@ -138,7 +137,7 @@ const uploadToPlatforms = async (clip: ClipWithRenderedUrl, accounts: TAccount[]
   }
 };
 
-const uploadToYoutube = async (clip: ClipWithRenderedUrl, accounts: TAccount[]) => {
+const uploadToYoutube = async (clip: ClipWithRenderedUrl, accounts: Account[]) => {
   log('info', 'upload-to-youtube start');
   const youtubeToken = accounts?.filter((acc) => acc.provider === 'youtube')[0];
   if (!youtubeToken) {
@@ -220,7 +219,7 @@ const uploadToYoutube = async (clip: ClipWithRenderedUrl, accounts: TAccount[]) 
   }
 };
 
-const uploadToTiktok = async (clip: ClipWithRenderedUrl, accounts: TAccount[]) => {
+const uploadToTiktok = async (clip: ClipWithRenderedUrl, accounts: Account[]) => {
   log('info', 'upload-to-tiktok start');
   const tiktokToken = accounts?.filter((acc) => acc.provider === 'tiktok')[0];
   if (!tiktokToken) {
@@ -291,10 +290,10 @@ const uploadToTiktok = async (clip: ClipWithRenderedUrl, accounts: TAccount[]) =
   }
 };
 
-const uploadInstagram = async (clip: ClipWithRenderedUrl, accounts: TAccount[]) => {
+const uploadInstagram = async (clip: ClipWithRenderedUrl, accounts: Account[]) => {
   log('info', 'upload-to-instagram start');
   const instagramToken = accounts?.filter((acc) => acc.provider === 'instagram')[0];
-  if (!instagramToken) {
+  if (!instagramToken || !instagramToken.access_token) {
     clip.instagramStatus = 'FAILED_INSTAGRAM_TOKEN';
     return { error: true, clip };
   } else {
@@ -317,7 +316,7 @@ const uploadInstagram = async (clip: ClipWithRenderedUrl, accounts: TAccount[]) 
     }
   }
 };
-const uploadFacebook = async (clip: ClipWithRenderedUrl, accounts: TAccount[]) => {
+const uploadFacebook = async (clip: ClipWithRenderedUrl, accounts: Account[]) => {
   log('info', 'upload-to-facebook start');
   const instagramToken = accounts?.filter((acc) => acc.provider === 'instagram')[0];
   if (!instagramToken || !instagramToken.pageAccessToken || !instagramToken.pageId) {
