@@ -10,4 +10,5 @@ export const CropTemplate = z.object({
   screenCrop: cropSettingsSchema
 });
 
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export type CropTemplate = z.TypeOf<typeof CropTemplate>;

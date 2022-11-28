@@ -8,4 +8,5 @@ export const YTRefreshToken = z.object({
   token_type: z.string().optional(),
 });
 
+// eslint-disable-next-line @typescript-eslint/no-redeclare
 export type YTRefreshToken = z.TypeOf<typeof YTRefreshToken>;

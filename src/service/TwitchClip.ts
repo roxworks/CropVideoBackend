@@ -1,7 +1,6 @@
-import { SettingsOutput } from './../interfaces/Settings';
+import { SettingsOutput, TSettings } from '../interfaces/Settings';
 import { ClipManualWithUserId } from '../api/crop/crop.model';
 import log from '../utils/logger';
-import { TSettings } from '../interfaces/Settings';
 import prisma from '../db/conn';
 
 export const autoApproveClips = async (settings: TSettings | SettingsOutput) => {
@@ -14,10 +13,10 @@ export const autoApproveClips = async (settings: TSettings | SettingsOutput) => 
       created_at: { gte: settings.approveDate.toISOString() },
       AND: [
         { OR: [{ approved: false }, { approved: { isSet: false } }] },
-        { OR: [{ approvedStatus: { not: 'CANCELED' } }, { approvedStatus: { isSet: false } }] }
-      ]
+        { OR: [{ approvedStatus: { not: 'CANCELED' } }, { approvedStatus: { isSet: false } }] },
+      ],
     },
-    data: { approved: true, approvedStatus: 'AUTO_APPROVE' }
+    data: { approved: true, approvedStatus: 'AUTO_APPROVE' },
   });
 
   return updatedClips;
@@ -28,7 +27,7 @@ export const bulkSaveTwitchClips = async (clips: ClipManualWithUserId[]) => {
     log('warn', 'unable to save clips - not found', undefined, 'bulkSaveTwitchClips');
     return;
   }
-  //TODO:: when change to postgress use skipDuplicates
+  // TODO:: when change to postgress use skipDuplicates
   // await prisma.twitchClip.createMany({ data: [], skipDuplicates: true });
 
   const bulked = await prisma.twitchClip.createMany({ data: clips });

@@ -17,10 +17,13 @@ export function bufferToStream(binary: any) {
 
 export async function stream2buffer(stream: Stream): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const _buf = Array();
+    // @ts-ignore
+    // eslint-disable-next-line no-underscore-dangle
+    const _buf = [];
 
     stream.on('data', (chunk) => _buf.push(chunk));
+    // @ts-ignore
     stream.on('end', () => resolve(Buffer.concat(_buf)));
-    stream.on('error', (err) => reject(`error converting stream - ${err}`));
+    stream.on('error', (err) => reject(err));
   });
 }

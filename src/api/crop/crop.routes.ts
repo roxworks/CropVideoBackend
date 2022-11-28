@@ -3,8 +3,7 @@ import { validateRequest } from '../../middlewares';
 import { getClipsReadyToUploaded } from '../../service/Clip';
 import log from '../../utils/logger';
 import * as CropHandlers from './crop.handler';
-import { RenderClipReq } from './crop.model';
-import { JobId } from './crop.model';
+import { JobId, RenderClipReq } from './crop.model';
 
 const router = Router();
 

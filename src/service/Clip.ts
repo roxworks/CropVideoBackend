@@ -1,10 +1,10 @@
-import { CropTemplate } from './../interfaces/CropTemplate';
+import { Clip, TwitchClip } from '@prisma/client';
+import { CropTemplate } from '../interfaces/CropTemplate';
 import { ClipManualWithUserId, ClipWithRenderedUrl } from '../api/crop/crop.model';
 import log from '../utils/logger';
 import { TSettings } from '../interfaces/Settings';
 import { getCropTemplateByType, TCropType } from './CropTemplate';
 import prisma from '../db/conn';
-import { Clip, TwitchClip } from '@prisma/client';
 import { convertTags, convertToClipFromTwitchClip, convertToCropData } from '../utils/helpers';
 
 export const getClipsReadyToUploaded = async () => {
@@ -14,8 +14,8 @@ export const getClipsReadyToUploaded = async () => {
         uploaded: false,
         status: 'RENDERED',
         NOT: [{ scheduledUploadTime: null }, { renderedUrl: null }],
-        AND: [{ scheduledUploadTime: { lte: new Date(new Date().toUTCString()) } }]
-      }
+        AND: [{ scheduledUploadTime: { lte: new Date(new Date().toUTCString()) } }],
+      },
     });
 
     return { count: clips.length, clips } as { count: number; clips: ClipWithRenderedUrl[] };
@@ -26,14 +26,14 @@ export const getClipsReadyToUploaded = async () => {
 };
 
 export const scheduledClipsFromTime = async (userId: string, time: string) => {
-  //TODO:: make sure userId is converted to object for mongodb
+  // TODO:: make sure userId is converted to object for mongodb
 
   try {
     const clips = await prisma.clip.findMany({
       where: {
-        userId: userId,
-        scheduledUploadTime: new Date(time)
-      }
+        userId,
+        scheduledUploadTime: new Date(time),
+      },
     });
 
     return { count: clips.length, clips };
@@ -47,7 +47,7 @@ export const updateClip = async (clipId: string, clipData: any) => {
   try {
     return (await prisma.clip.update({
       where: { id: clipId },
-      data: { ...clipData }
+      data: { ...clipData },
     })) as ClipWithRenderedUrl;
   } catch (error) {
     log('error', 'updateClip Error', error);
@@ -60,10 +60,10 @@ export const updateTwitchClipUploaded = async (clipId: string, userId: string) =
       where: {
         userId_twitch_id: {
           userId,
-          twitch_id: clipId
-        }
+          twitch_id: clipId,
+        },
       },
-      data: { uploaded: true }
+      data: { uploaded: true },
     });
   } catch (error) {
     log('error', 'updateTwitchClipUploaded Error', error);
@@ -87,15 +87,15 @@ export const getUsersApprovedClips = async (userId: string) => {
         userId,
         AND: [
           {
-            OR: [{ scheduled: false }, { scheduled: { isSet: false } }]
+            OR: [{ scheduled: false }, { scheduled: { isSet: false } }],
           },
           {
-            OR: [{ uploaded: false }, { uploaded: { isSet: false } }]
-          }
+            OR: [{ uploaded: false }, { uploaded: { isSet: false } }],
+          },
         ],
-        approved: true
+        approved: true,
       },
-      orderBy: { created_at: 'asc' }
+      orderBy: { created_at: 'asc' },
     });
   } catch (error) {
     log('error', 'getUsersApprovedClips Error', error);
@@ -120,7 +120,7 @@ export const scheduleClips = async (
     cropTemplate,
     clipCropData,
     startTime: clip.startTime ?? undefined,
-    endTime: clip.endTime ?? undefined
+    endTime: clip.endTime ?? undefined,
   });
 
   const clipData = convertToClipFromTwitchClip({
@@ -129,7 +129,7 @@ export const scheduleClips = async (
     scheduleTime,
     caption,
     cropData,
-    approved: true
+    approved: true,
   });
 
   const insertedClip = await prisma.clip.create({ data: clipData });
@@ -137,9 +137,9 @@ export const scheduleClips = async (
     where: {
       userId: clip.userId,
       twitch_id: clip.twitch_id,
-      approved: true
+      approved: true,
     },
-    data: { scheduled: true }
+    data: { scheduled: true },
   });
 
   return insertedClip;

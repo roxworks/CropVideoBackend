@@ -1,7 +1,6 @@
-import { apiClientConnect } from './apiClient';
-import { ClipManual, ClipManualWithUserId } from '../../api/crop/crop.model';
+import apiClientConnect from './apiClient';
+import { ClipManualWithUserId } from '../../api/crop/crop.model';
 import { UserWithAccountsAndSettingsWithId } from '../../api/user/user.model';
-import { HelixClip } from '@twurple/api/lib';
 import { clipLatestQueue, clipQueue } from '../../queues/clip.queue';
 import log from '../logger';
 
@@ -20,18 +19,6 @@ type TwurpleClip = {
   views: number;
   thumbnailUrl: string;
   creationDate: Date;
-};
-
-export const testAddToClipQueue = async () => {
-  try {
-    log('info', 'Test -Adding jobs...');
-    for (let i = 0; i < 3; i++) {
-      await clipQueue.add('my-job', { foo: 'bar' });
-    }
-    log('info', 'added clips');
-  } catch (error) {
-    log('error', 'hu', error);
-  }
 };
 
 export const addToGetAllClipsQueue = async (userId: string, broadcasterId: string) => {
@@ -61,10 +48,10 @@ export const previous14Date = (startDate?: string) => {
 };
 
 const daysOfYearArray = (mostRecentClipPostedCreatedAtTime: string) => {
-  let now = new Date();
-  let nextDate = new Date().setDate(now.getDate() + 1);
-  let tomorrow = new Date(nextDate);
-  let daysOfYear = [];
+  const now = new Date();
+  const nextDate = new Date().setDate(now.getDate() + 1);
+  const tomorrow = new Date(nextDate);
+  const daysOfYear = [];
   for (
     let d = new Date(mostRecentClipPostedCreatedAtTime);
     d <= tomorrow;
@@ -72,49 +59,40 @@ const daysOfYearArray = (mostRecentClipPostedCreatedAtTime: string) => {
   ) {
     daysOfYear.push(new Date(d));
   }
-  log('info', 'Day arr length: ' + daysOfYear.length);
+  log('info', `Day arr length: ${daysOfYear.length}`);
   return daysOfYear;
 };
-const fixTheFreakingNames = (clips: TwurpleClip[], userId: string): ClipManualWithUserId[] => {
-  return clips.map((clip) => {
-    return {
-      twitch_id: clip.id,
-      userId: userId,
-      broadcaster_name: clip.broadcasterDisplayName,
-      broadcaster_id: clip.broadcasterId,
-      creator_name: clip.creatorDisplayName,
-      creator_id: clip.creatorId,
-      embed_url: clip.embedUrl,
-      game_id: clip.gameId,
-      language: clip.language,
-      title: clip.title,
-      url: clip.url,
-      video_id: clip.videoId,
-      view_count: clip.views,
-      thumbnail_url: clip.thumbnailUrl,
-      created_at: clip.creationDate.toISOString(),
-      download_url: clip.thumbnailUrl.split('-preview-')[0] + '.mp4'
-    };
-  });
-};
+const fixTheFreakingNames = (clips: TwurpleClip[], userId: string): ClipManualWithUserId[] =>
+  clips.map((clip) => ({
+    twitch_id: clip.id,
+    userId,
+    broadcaster_name: clip.broadcasterDisplayName,
+    broadcaster_id: clip.broadcasterId,
+    creator_name: clip.creatorDisplayName,
+    creator_id: clip.creatorId,
+    embed_url: clip.embedUrl,
+    game_id: clip.gameId,
+    language: clip.language,
+    title: clip.title,
+    url: clip.url,
+    video_id: clip.videoId,
+    view_count: clip.views,
+    thumbnail_url: clip.thumbnailUrl,
+    created_at: clip.creationDate.toISOString(),
+    download_url: `${clip.thumbnailUrl.split('-preview-')[0]}.mp4`,
+  }));
 
-const sortClipsByCreationDate = (clips: ClipManualWithUserId[]) => {
-  return clips.sort((a, b) => (a.created_at > b.created_at ? 1 : -1));
-};
+const sortClipsByCreationDate = (clips: ClipManualWithUserId[]) =>
+  clips.sort((a, b) => (a.created_at > b.created_at ? 1 : -1));
 
-const filterClipsByCurrentSettings = (clips: ClipManualWithUserId[]) => {
-  return (
-    clips
-      .sort((a, b) => (a.created_at > b.created_at ? 1 : -1))
-      // .filter((x) => x.created_at > getCurrentState()?.lastUploadCreatedAtDate)
-      .filter((x) => x.created_at > new Date(2010, 0, 1).toISOString())
-      .map((clipBlob) => {
-        // convert thumbnail url to actual url
-        clipBlob.download_url = clipBlob.thumbnail_url.split('-preview-')[0] + '.mp4';
-        return clipBlob;
-      })
-  );
-};
+const filterClipsByCurrentSettings = (clips: ClipManualWithUserId[]) =>
+  clips
+    .sort((a, b) => (a.created_at > b.created_at ? 1 : -1))
+    .filter((x) => x.created_at > new Date(2010, 0, 1).toISOString())
+    .map((clipBlob) => ({
+      ...clipBlob,
+      download_url: `${clipBlob.thumbnail_url.split('-preview-')[0]}.mp4`,
+    }));
 
 export const getClipsStartingAtCertainDateFromTwitchAPI = async (
   broadcasterId: string,
@@ -122,52 +100,54 @@ export const getClipsStartingAtCertainDateFromTwitchAPI = async (
   date?: string,
   doSort: boolean = true
 ) => {
-  user.settings[0].lastUploaded;
   log('info', 'gettin more clips');
-  let mostRecentClipPostedCreatedAtTime = date
-    ? date
-    : user?.settings[0]?.lastUploaded
-    ? new Date(user?.settings[0].lastUploaded).toISOString()
-    : new Date(2010, 0, 1).toISOString();
+  const mostRecentClipPostedCreatedAtTime =
+    date ||
+    (user?.settings?.lastUploaded
+      ? new Date(user?.settings.lastUploaded).toISOString()
+      : new Date(2010, 0, 1).toISOString());
   log('info', 'Most recent clip posted created at time', {
     mostRecentClipPostedCreatedAtTime,
-    broadcasterId
+    broadcasterId,
   });
   const daysOfYear = daysOfYearArray(mostRecentClipPostedCreatedAtTime);
 
-  let clips: TwurpleClip[] = [];
+  const clips: TwurpleClip[] = [];
 
   let jumpSize = 1;
   let lastEndDateIndex = 0;
-  let totalClipsFoundSoFar = 0;
   for (let i = jumpSize; i < daysOfYear.length; i = Math.min(i + jumpSize, daysOfYear.length - 1)) {
     let startDate =
       daysOfYear[lastEndDateIndex] > daysOfYear[i - jumpSize + 1]
         ? daysOfYear[lastEndDateIndex]
         : daysOfYear[i - jumpSize + 1];
-    if (lastEndDateIndex == 0) {
-      startDate = daysOfYear[0];
+    if (lastEndDateIndex === 0) {
+      [startDate] = daysOfYear;
     }
-    let endDate = new Date(daysOfYear[i]);
+    const endDate = new Date(daysOfYear[i]);
     endDate.setUTCHours(
       endDate.getUTCHours() + 23,
       endDate.getUTCMinutes() + 59,
       endDate.getUTCSeconds() + 59,
       endDate.getUTCMilliseconds() + 999
     );
+
+    // eslint-disable-next-line no-await-in-loop
     const api = await apiClientConnect(user);
 
-    if (api == undefined) {
+    if (api === undefined) {
       log('warn', 'API is undefined, getting no new clips');
       return [];
     }
 
     let newClips = [];
+
+    // eslint-disable-next-line no-await-in-loop
     newClips = await api.clips
       .getClipsForBroadcasterPaginated(broadcasterId, {
         limit: 100000,
-        startDate: startDate, //whichever is later in life to avoid overlap
-        endDate: endDate
+        startDate, // whichever is later in life to avoid overlap
+        endDate,
       })
       .getAll();
 
@@ -180,14 +160,14 @@ export const getClipsStartingAtCertainDateFromTwitchAPI = async (
     if (newClips.length > 900) {
       i -= jumpSize;
       jumpSize = 2;
+      // eslint-disable-next-line no-continue
       continue;
     } else {
       lastEndDateIndex = i + 1;
       jumpSize += 1;
     }
     clips.push(newClips);
-    totalClipsFoundSoFar += newClips.length;
-    // updateStatus('LOADING NEW TWITCH CLIPS: ' + totalClipsFoundSoFar)
+
     log(
       'info',
       'Unique clips in twitch output',
@@ -195,21 +175,21 @@ export const getClipsStartingAtCertainDateFromTwitchAPI = async (
       'clips.handler'
     );
 
-    if (i == daysOfYear.length - 1) {
+    if (i === daysOfYear.length - 1) {
       log('info', 'Got to end');
       break;
     }
   }
 
   log('info', 'Checked clips starting at', { mostRecentClipPostedCreatedAtTime, broadcasterId });
-  let recentClips: TwurpleClip[] = clips.flatMap((x) => x); //clips.data.data;
+  let recentClips: TwurpleClip[] = clips.flatMap((x) => x); // clips.data.data;
 
-  if (recentClips.length == 0) {
+  if (recentClips.length === 0) {
     return [];
   }
-  let uniqueIds = new Set(recentClips.map((x) => x.id));
+  const uniqueIds = new Set(recentClips.map((x) => x.id));
   recentClips = recentClips.filter((x) => uniqueIds.has(x.id));
-  let fixedRecentClips = fixTheFreakingNames(recentClips, user._id.toString()); // i hate libraries
+  let fixedRecentClips = fixTheFreakingNames(recentClips, user.id.toString()); // i hate libraries
   log('info', 'all clips length', recentClips.length);
 
   // we mostly do this so we force in the download_url field

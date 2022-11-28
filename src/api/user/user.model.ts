@@ -1,8 +1,7 @@
-import { SettingsOutput } from './../../interfaces/Settings';
+/* eslint-disable @typescript-eslint/no-redeclare */
 import { z } from 'zod';
-import { WithId } from 'mongodb';
+import { SettingsOutput } from '../../interfaces/Settings';
 import { TAccount, TAccountOutput } from '../../interfaces/Accounts';
-import { TSettings } from '../../interfaces/Settings';
 
 export const DefaultClips = z.enum(['pending', 'inqueue', 'complete', 'failed']);
 
@@ -18,31 +17,29 @@ export const TUser = z.object({
   sub_current_start: z.number().nullable(),
   sub_current_end: z.number().nullable(),
   sub_status: z.string().nullable(),
-  defaultClips: DefaultClips
+  defaultClips: DefaultClips.nullable(),
 });
 
 export const UserWithAccounts = TUser.extend({
-  accounts: z.array(TAccount)
+  accounts: z.array(TAccount),
 });
 export const UserWithAccountsAndSettings = TUser.extend({
   accounts: z.array(TAccountOutput),
-  settings: z.array(SettingsOutput)
+  settings: SettingsOutput.nullable(),
 });
 
 export const UserWithAccountsAndSettingsWithId = UserWithAccountsAndSettings.extend({
-  id: z.string()
+  id: z.string(),
 });
 
 export const NewUserQueueReq = z.object({
   userId: z.string(),
-  broadcasterId: z.string()
+  broadcasterId: z.string(),
 });
 
 export type TUser = z.TypeOf<typeof TUser>;
-export type UserWithId = WithId<TUser>;
 export type UserWithAccounts = z.TypeOf<typeof UserWithAccounts>;
-export type UserWithAccountsWithId = WithId<UserWithAccounts>;
 export type UserWithAccountsAndSettings = z.TypeOf<typeof UserWithAccountsAndSettings>;
-export type UserWithAccountsAndSettingsWithId = z.TypeOf<typeof UserWithAccountsAndSettings>;
+export type UserWithAccountsAndSettingsWithId = z.TypeOf<typeof UserWithAccountsAndSettingsWithId>;
 export type DefaultClips = z.TypeOf<typeof DefaultClips>;
 export type NewUserQueueReq = z.TypeOf<typeof NewUserQueueReq>;

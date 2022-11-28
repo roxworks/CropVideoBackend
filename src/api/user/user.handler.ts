@@ -1,12 +1,11 @@
-import { Response, Request, NextFunction } from 'express';
+import { Response, Request } from 'express';
 import log from '../../utils/logger';
 import { NewUserQueueReq } from './user.model';
 import { addToGetAllClipsQueue } from '../../utils/twitch/clips.handler';
 
-export const addToDefaultClipQueue = async (
+const addToDefaultClipQueue = async (
   req: Request<{}, {}, NewUserQueueReq>,
   res: Response,
-  next: NextFunction
 ) => {
   if (!req.headers.authorization) return res.status(400).send();
   const { APP_KEY } = process.env;
@@ -19,5 +18,7 @@ export const addToDefaultClipQueue = async (
 
   addToGetAllClipsQueue(userId, broadcasterId);
 
-  res.status(200).end();
+  return res.status(200).end();
 };
+
+export default addToDefaultClipQueue;

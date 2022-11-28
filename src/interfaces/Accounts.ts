@@ -1,4 +1,4 @@
-import { Account, Setting } from '@prisma/client';
+/* eslint-disable @typescript-eslint/no-redeclare */
 import { z } from 'zod';
 
 export const TAccount = z.object({

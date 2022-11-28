@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { validateRequest } from '../../middlewares';
 import * as ScheduleHandler from './schedule.handler';
-import { ScheduledClipsArray } from '../schedule/schedule.model';
+import { ScheduledClipsArray } from './schedule.model';
 
 const router = Router();
 

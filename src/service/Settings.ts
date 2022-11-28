@@ -1,8 +1,5 @@
-import clientPromise from '../db/conn';
-import { TSettings } from '../interfaces/Settings';
-import { ObjectId } from 'mongodb';
-import prisma from '../db/conn';
 import { Setting } from '@prisma/client';
+import prisma from '../db/conn';
 import log from '../utils/logger';
 
 export const updateLastUploadDate = async (
@@ -13,7 +10,7 @@ export const updateLastUploadDate = async (
   try {
     const updatedUserSettings = await prisma.setting.update({
       where: { userId },
-      data: { lastUploaded, lastUploadedId }
+      data: { lastUploaded, lastUploadedId },
     });
 
     return updatedUserSettings;
@@ -26,25 +23,23 @@ export const updateLastUploadDate = async (
 export const getUsersSettingsById = async (userId: string) => {
   try {
     const userSettings = await prisma.setting.findUniqueOrThrow({
-      where: { userId }
+      where: { userId },
     });
 
     return userSettings;
   } catch (error) {
     log('error', 'getUsersSettingsById Error', { error, userId });
-    return;
   }
 };
 export const updateScheduledEnabled = async (userId: string, uploadEnabled = false) => {
   try {
     const updatedUserSettings = await prisma.setting.update({
       where: { userId },
-      data: { uploadEnabled }
+      data: { uploadEnabled },
     });
 
     return updatedUserSettings;
   } catch (error) {
     log('error', 'updateScheduledEnabled Error', { error, userId });
-    return;
   }
 };

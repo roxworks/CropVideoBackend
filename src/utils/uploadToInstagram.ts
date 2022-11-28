@@ -1,24 +1,24 @@
+/* eslint-disable no-await-in-loop */
 import log from './logger';
 
 const BASE_URL = 'https://graph.facebook.com/v15.0';
 // const tempUserId = "17841445045171652";
 
 const axios = require('axios');
+
 let id: string;
 let pageId: string;
 
+// eslint-disable-next-line no-promise-executor-return
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const getUserID = async (accessToken: string) => {
   // const accessToken = getCurrentSettings().accessToken;
   const response = await axios.get(
-    BASE_URL +
-      '/me/accounts?fields=instagram_business_account{id, username}&access_token=' +
-      accessToken
+    `${BASE_URL}/me/accounts?fields=instagram_business_account{id, username}&access_token=${accessToken}`
   );
   log('info', 'instagram getUserId', response.date);
   id = response.data?.data?.[0]?.instagram_business_account?.id;
-  console.log('Got id: ', id);
   log('info', 'instagram bussiness id', id);
   return id;
 };
@@ -27,9 +27,10 @@ const getPageNameandId = async (accessToken: string) => {
   const response = await axios.get(
     `${BASE_URL}/me/accounts?fields=name&access_token=${accessToken}`
   );
-  const { name, id } = response.data?.data?.[0];
+  const name = response.data?.data?.[0].name;
+  const resId = response.data?.data?.[0].id;
 
-  return { pageName: name, pageId: id } as { pageName: string; pageId: string };
+  return { pageName: name, pageId: resId } as { pageName: string; pageId: string };
 };
 
 const createMediaContainer = async (accessToken: string, downloadURL: string, caption: string) => {
@@ -43,7 +44,7 @@ const createMediaContainer = async (accessToken: string, downloadURL: string, ca
         throw new Error('Could not get id');
       }
     }
-    let encodedCaption: string = caption?.replace(/#/g, '%23') || 'Uploaded with ClipbotTv';
+    const encodedCaption: string = caption?.replace(/#/g, '%23') || 'Uploaded with ClipbotTv';
     log('warn', 'instagram encoded caption', { encodedCaption, caption });
     // try {
     //   encodedCaption = caption && caption.includes('#') ? caption.replaceAll('#', '%23') : caption;
@@ -64,7 +65,7 @@ const createMediaContainer = async (accessToken: string, downloadURL: string, ca
       log('error', 'instagram failed to create media container', {
         downloadURL,
         caption,
-        error: e
+        error: e,
       });
       throw new Error(JSON.stringify(e));
     }
@@ -93,21 +94,20 @@ const waitForContainerUpload = async (accessToken: string, containerId: string) 
     status = response?.data?.status_code;
     log('info', 'instagram waitForContainerUpload IN_PROGRESS', {
       response: response?.data,
-      status
+      status,
     });
   } while (status === 'IN_PROGRESS');
 
-  if (status == 'FINISHED') {
+  if (status === 'FINISHED') {
     log('info', 'instagram waitForContainerUpload FINISHED');
     return containerId;
-  } else {
-    log('error', 'Possible failed insgram upload', {
-      status,
-      data: response?.data,
-      resStatus: response?.status
-    });
-    throw new Error('Possible failed instagram upload: ', response?.data);
   }
+  log('error', 'Possible failed insgram upload', {
+    status,
+    data: response?.data,
+    resStatus: response?.status,
+  });
+  throw new Error('Possible failed instagram upload: ', response?.data);
 };
 
 const publishMediaContainer = async (accessToken: string, containerId: string) => {
@@ -129,14 +129,13 @@ const publishMediaContainer = async (accessToken: string, containerId: string) =
   return response;
 };
 
-export const doIGUpload = async (accessToken: string, downloadURL: string, caption: string) => {
-  return createMediaContainer(accessToken, downloadURL, caption)
+export const doIGUpload = async (accessToken: string, downloadURL: string, caption: string) =>
+  createMediaContainer(accessToken, downloadURL, caption)
     .then((container) => waitForContainerUpload(accessToken, container))
     .then((container) => publishMediaContainer(accessToken, container));
-};
 
-const startFbUpload = async (accessToken: string, id: string) => {
-  pageId = id;
+const startFbUpload = async (accessToken: string, fbId: string) => {
+  pageId = fbId;
   if (!pageId) {
     pageId = (await getPageNameandId(accessToken)).pageId;
   }
@@ -145,10 +144,9 @@ const startFbUpload = async (accessToken: string, id: string) => {
   try {
     response = await axios.post(url);
   } catch (e) {
-    console.log(e);
+    /* empty */
   }
 
-  console.log('Response:', response?.data);
   return response.data;
 };
 
@@ -168,15 +166,15 @@ const uploadVideoToFb = async (
           Authorization: `OAuth ${pageAccessToken}`,
           file_url: downloadUrl,
           'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Headers': '*'
-        }
+          'Access-Control-Allow-Headers': '*',
+        },
       }
     );
 
     return response;
   } catch (error: unknown) {
     if (error instanceof Error) {
-      console.log(error.message);
+      log('error', error.message);
     }
     throw new Error(JSON.stringify(error));
   }
@@ -194,95 +192,66 @@ const waitForFbUpload = async (pageAccessToken: string, videoId: string) => {
     await sleep(1000);
     try {
       response = await axios.get(url, {
-        headers: { Authorization: `OAuth ${pageAccessToken}` }
+        headers: { Authorization: `OAuth ${pageAccessToken}` },
       });
     } catch (e) {
-      console.log(e);
+      if (e instanceof Error) {
+        log('error', e.message);
+      }
     }
-    uploadStatus = response?.data?.status?.['uploading_phase']?.['status'];
+    uploadStatus = response?.data?.status?.uploading_phase?.status;
   } while (uploadStatus === 'in_progress');
 
   if (uploadStatus === 'complete') {
     return videoId;
-  } else {
-    console.log('Final Status: ', uploadStatus);
-    console.log(
-      'Possible failed fb upload: ',
-      response?.data,
-      response?.data?.['uploading_phase']?.['status']
-    );
-    throw new Error('Possible failed facebook wait upload: ', response?.data);
   }
-};
 
-//used for debugging
-const checkFBStatus = async (pageAccessToken: string, videoId: string) => {
-  const url = `${BASE_URL}/${videoId}?fields=status`;
-  try {
-    console.log('checking upload status');
-    const response = await axios.get(url, {
-      headers: { Authorization: `OAuth ${pageAccessToken}` }
-    });
-    console.log('ResponseStatus: ', response?.data?.status?.['uploading_phase']?.['status']);
-    console.log('ResponseStatus: ', response?.data?.status?.['processing_phase']);
-    console.log('ResponseStatus: ', response?.data?.status?.['publishing_phase']);
-    return response.data.status;
-  } catch (e) {
-    console.log(e);
-    throw new Error('unable to get fb status');
-  }
+  throw new Error('Possible failed facebook wait upload: ', response?.data);
 };
 
 const publishFbVideo = async (
   pageAccessToken: string,
-  id: string,
+  fbId: string,
   videoId: string,
   description: string
 ) => {
-  pageId = id;
+  pageId = fbId;
 
   if (!pageId) {
     pageId = (await getPageNameandId(pageAccessToken)).pageId;
-    console.log({ pageId });
   }
   const url = `${BASE_URL}/${pageId}/video_reels?upload_phase=finish&access_token=${pageAccessToken}`;
   const fields = `&video_id=${videoId}&video_state=PUBLISHED&description=${description}`;
   const fullUrl = url + fields;
-  console.log({ fullUrl });
   try {
     const res = await axios.post(fullUrl);
     return res.data;
-  } catch (error) {
-    //@ts-ignore
-    console.log(error?.response?.data);
-    //@ts-ignore
+  } catch (err) {
+    // @ts-ignore
+    if (err instanceof Error) {
+      log('error', err.message);
+    }
+    // @ts-ignore
     throw new Error(JSON.stringify(error?.response?.data?.error));
   }
 };
 
 export const doFbUpload = async (
   pageAccessToken: string,
-  id: string,
+  fbId: string,
   downloadUrl: string,
   description: string
 ) => {
   try {
-    console.log({ pageAccessToken, pageId: id, downloadUrl });
-
-    const startUpload = await startFbUpload(pageAccessToken, id);
-    console.log('FinsihedUpload', { startUpload });
-
-    const uploadFbVideo = await uploadVideoToFb(pageAccessToken, downloadUrl, startUpload);
-    console.log('FinishUploadFBVideo', { uploadFbVideo });
-
+    const startUpload = await startFbUpload(pageAccessToken, fbId);
+    await uploadVideoToFb(pageAccessToken, downloadUrl, startUpload);
     const checkStatus = await waitForFbUpload(pageAccessToken, startUpload.video_id);
-    console.log('FinishCheckStatus', { checkStatus });
-    const publish = await publishFbVideo(pageAccessToken, id, startUpload.video_id, description);
+    const publish = await publishFbVideo(pageAccessToken, fbId, startUpload.video_id, description);
 
     return { publish, checkStatus, videoId: startUpload.video_id };
   } catch (error: unknown) {
     if (error instanceof Error) {
-      console.log(error.message);
+      log('error', error.message);
     }
     throw new Error(JSON.stringify(error));
   }

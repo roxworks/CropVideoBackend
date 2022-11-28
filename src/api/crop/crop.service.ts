@@ -1,50 +1,45 @@
 import ffmpeg from 'fluent-ffmpeg';
 import axios from 'axios';
-import { Clip, CropData } from './crop.model';
+import { Clip, CropData} from './crop.model';
 import log from '../../utils/logger';
 
 export const fileioUpload = (formData: any) => {
-  let tempFormData = formData;
-  //@ts-ignore
+  const tempFormData = formData;
+  // @ts-ignore
   tempFormData.append('maxDownloads', '10');
-  let today = new Date();
-  let tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+  const today = new Date();
+  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
   tempFormData.append('expires', tomorrow.toISOString());
   tempFormData.append('autoDelete', 'true');
   return axios.post('https://file.io', tempFormData, {
     headers: {
-      Authorization: 'Bearer ' + process.env.FILE_IO_KEY
+      Authorization: `Bearer ${  process.env.FILE_IO_KEY}`
     },
     maxContentLength: Infinity,
     maxBodyLength: Infinity
   });
 };
 
-export const getVideoDetails = (fileName: string) => {
-  return new Promise((resolve, reject) => {
+export const getVideoDetails = (fileName: string) => new Promise((resolve, reject) => {
     ffmpeg.ffprobe(fileName, (err, metadata) => {
       if (err) {
         log('error', 'ffmpeg-ffprobe', err, 'crop.service');
         reject(err);
       } else {
         log('info', 'ffmpeg-ffprobe video details', { metadata, fileName }, 'crop.service');
-        const size = metadata.format.size;
+        const {size} = metadata.format;
         resolve(size);
       }
     });
   });
-};
 
 // return a number rounded to the nearest multiple of 4
-let roundTo4 = (number: number, dontConvert?: boolean) => {
-  return dontConvert ? number : Math.ceil(number / 4) * 4;
-};
+const roundTo4 = (number: number, dontConvert?: boolean) => dontConvert ? number : Math.ceil(number / 4) * 4;
 
 export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, fileName: string) => {
   log('info', 'make-video-vertical clip', { clip, clipSettings }, 'crop.service');
 
-  const currentClip = clip;
-  const cropType = clipSettings.cropType;
+  const {cropType} = clipSettings;
 
   const inputFilePath = `./${fileName}`;
   const outputFilePath = `./rendered_${fileName}`;
@@ -59,31 +54,35 @@ export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, file
     OUTPUT_WIDTH = 720;
   }
 
-  const camCrop = clipSettings.camCrop;
-  const screenCrop = clipSettings.screenCrop;
+  const {camCrop} = clipSettings;
+  const {screenCrop} = clipSettings;
   const isNormalized = camCrop?.isNormalized || screenCrop?.isNormalized || false;
 
-  //top (cam)
-  let CWA = camCrop?.width !== undefined ? roundTo4(camCrop.width, isNormalized) : 350;
-  let CHA = camCrop?.height !== undefined ? roundTo4(camCrop.height, isNormalized) : 263;
-  let CXA = camCrop?.x !== undefined ? roundTo4(camCrop.x, isNormalized) : 1600;
-  let CYA = camCrop?.y !== undefined ? roundTo4(camCrop.y, isNormalized) : 50;
-  let SWA = OUTPUT_WIDTH; //SHA * CWA / CHA;
-  let multiplier = isNormalized ? 9 / 16 : 1;
-  let SHA = roundTo4(Math.ceil(((SWA * CHA) / CWA) * multiplier));
-  let HA = SHA;
+  // top (cam)
+  const CWA = camCrop?.width !== undefined ? roundTo4(camCrop.width, isNormalized) : 350;
+  const CHA = camCrop?.height !== undefined ? roundTo4(camCrop.height, isNormalized) : 263;
+  const CXA = camCrop?.x !== undefined ? roundTo4(camCrop.x, isNormalized) : 1600;
+  const CYA = camCrop?.y !== undefined ? roundTo4(camCrop.y, isNormalized) : 50;
+  const SWA = OUTPUT_WIDTH; // SHA * CWA / CHA;
+  const multiplier = isNormalized ? 9 / 16 : 1;
+  const SHA = roundTo4(Math.ceil(((SWA * CHA) / CWA) * multiplier));
+  // const HA = SHA;
 
   // bottom
-  let OW = OUTPUT_WIDTH;
-  let CWB =
-    screenCrop.width !== undefined ? roundTo4(screenCrop.width, isNormalized) : OUTPUT_WIDTH;
-  let CHB =
-    screenCrop.height !== undefined ? roundTo4(screenCrop.height, isNormalized) : OUTPUT_WIDTH;
-  let CXB = screenCrop.x !== undefined ? roundTo4(screenCrop.x, isNormalized) : 420;
-  let CYB = screenCrop.y !== undefined ? roundTo4(screenCrop.y, isNormalized) : 0;
+  // const OW = OUTPUT_WIDTH;
+  const CWB =
+    screenCrop.width !== undefined
+      ? roundTo4(Number(screenCrop.width), isNormalized)
+      : OUTPUT_WIDTH;
+  const CHB =
+    screenCrop.height !== undefined
+      ? roundTo4(Number(screenCrop.height), isNormalized)
+      : OUTPUT_WIDTH;
+  const CXB = screenCrop.x !== undefined ? roundTo4(screenCrop.x, isNormalized) : 420;
+  const CYB = screenCrop.y !== undefined ? roundTo4(screenCrop.y, isNormalized) : 0;
   let SHB = Math.floor(OUTPUT_HEIGHT - SHA);
   let SWB = OUTPUT_WIDTH;
-  let HB = SHB;
+  // const HB = SHB;
 
   if (cropType === 'freeform') {
     if (CHB / CWB > 16 / 9) {
@@ -108,27 +107,27 @@ export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, file
     }
   }
 
-  console.log(`CWA: ${CWA}`);
-  console.log(`CHA: ${CHA}`);
-  console.log(`CXA: ${CXA}`);
-  console.log(`CYA: ${CYA}`);
-  console.log(`CWB: ${CWB}`);
-  console.log(`CHB: ${CHB}`);
-  console.log(`CXB: ${CXB}`);
-  console.log(`CYB: ${CYB}`);
+  // console.log(`CWA: ${CWA}`);
+  // console.log(`CHA: ${CHA}`);
+  // console.log(`CXA: ${CXA}`);
+  // console.log(`CYA: ${CYA}`);
+  // console.log(`CWB: ${CWB}`);
+  // console.log(`CHB: ${CHB}`);
+  // console.log(`CXB: ${CXB}`);
+  // console.log(`CYB: ${CYB}`);
 
-  //log all heights and widths
-  console.log('SHA: ' + SHA);
-  console.log('SWA: ' + SWA);
-  console.log('SHB: ' + SHB);
-  console.log('SWB: ' + SWB);
-  console.log('HA: ' + HA);
-  console.log('HB: ' + HB);
+  // log all heights and widths
+  // console.log(`SHA: ${  SHA}`);
+  // console.log(`SWA: ${  SWA}`);
+  // console.log(`SHB: ${  SHB}`);
+  // console.log(`SWB: ${  SWB}`);
+  // console.log(`HA: ${  HA}`);
+  // console.log(`HB: ${  HB}`);
 
   let filter = '';
   if (isNormalized) {
     switch (cropType) {
-      //Math.ceil(number / 4) * 4
+      // Math.ceil(number / 4) * 4
       case 'cam-top':
         filter = `[0:v]split=2[a][b];
         [a]crop=w=min(ceil(${CWA}*iw/4)*4\\, iw):h=min(ceil(${CHA}*ih/4)*4\\, ih):x=min(ceil(${CXA}*iw/4)*4\\, iw):y=min(ceil(${CYA}*ih/4)*4\\, ih),scale=w=min(${OUTPUT_WIDTH}\\, ceil(${SWA}/4)*4):h=min(${OUTPUT_HEIGHT}\\, ceil(${SHA}/4)*4)[a];
@@ -151,6 +150,8 @@ export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, file
       case 'freeform':
         filter = `crop=w=min(ceil(${CWB}*iw/4)*4\\, iw):h=min(ceil(${CHB}*ih/4)*4\\, ih):x=min(ceil(${CXB}*iw/4)*4\\, iw):y=min(ceil(${CYB}*ih/4)*4\\, ih),scale=w=${SWB}:h=${SHB},pad=w=${OUTPUT_WIDTH}:h=${OUTPUT_HEIGHT}:x=(ow-iw)/2:y=(oh-ih)/2`;
         break;
+      default:
+        break;
     }
   } else {
     switch (cropType) {
@@ -163,24 +164,26 @@ export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, file
       case 'no-cam':
         filter = `crop=${CWB}:${CHB}:${CXB}:${CYB},scale=w=${OUTPUT_WIDTH}:h=${OUTPUT_HEIGHT}`;
         break;
+      default:
+        break;
     }
   }
 
   log('info', 'running command', filter);
   const maxEndTime = 59;
-  var command = new Promise((resolve, reject) => {
+  const command = new Promise((resolve, reject) => {
     let commandToRunInternal = ffmpeg(inputFilePath)
       .videoCodec('libx265')
-      .on('error', function (err, stdout, stderr) {
+      .on('error', (err ) => {
         log('error', 'command error', err);
         reject(err);
       })
-      .on('end', function (err, stdout, stderr) {
+      .on('end', () => {
         resolve(outputFilePath);
       })
       .autopad(true, 'pink')
       .outputOptions(['-loglevel debug'])
-      .videoFilter(filter + ',fps=30') //omega filter extra
+      .videoFilter(`${filter  },fps=30`) // omega filter extra
       .toFormat('mp4');
 
     if (clipSettings.startTime) {
@@ -198,7 +201,7 @@ export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, file
     commandToRunInternal.save(outputFilePath);
   });
 
-  let outputFile = await command;
+  const outputFile = await command;
 
   return outputFile;
 };

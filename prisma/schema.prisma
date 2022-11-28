@@ -222,21 +222,21 @@ model CropTemplate {
 }
 
 type CropSettings {
-  x            Decimal
-  y            Decimal
-  width        Decimal
-  height       Decimal
-  scaleX       Decimal?
-  scaleY       Decimal?
-  isNormalized Boolean  @default(true)
+  x            Float
+  y            Float
+  width        Float
+  height       Float
+  scaleX       Float?
+  scaleY       Float?
+  isNormalized Boolean @default(true)
 }
 
 type CropData {
   camCrop    CropSettings?
   screenCrop CropSettings?
   cropType   String?
-  startTime  Decimal?
-  endTime    Decimal?
+  startTime  Float?
+  endTime    Float?
 }
 
 type ScheduleDays {

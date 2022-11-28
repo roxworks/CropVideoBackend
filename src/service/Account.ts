@@ -9,16 +9,16 @@ export const updateAccount = async (accountData: TAccount) => {
   const updateData: UpdateAccount = exclude(accountData, 'userId', 'provider', 'providerAccountId');
 
   try {
-    const updateAccount = await prisma.account.update({
+    const updatedAccount = await prisma.account.update({
       where: {
         userId_provider: {
           userId: accountData.userId,
-          provider: accountData.provider
-        }
+          provider: accountData.provider,
+        },
       },
-      data: { ...updateData }
+      data: { ...updateData },
     });
-    return updateAccount;
+    return updatedAccount;
   } catch (error) {
     if (error instanceof Error) {
       log('error', error.message);
@@ -33,9 +33,9 @@ export const getUsersTwitchAccount = async (userId: string) => {
     where: {
       userId_provider: {
         userId,
-        provider: 'twitch'
-      }
-    }
+        provider: 'twitch',
+      },
+    },
   });
 
   return twitchAccount;

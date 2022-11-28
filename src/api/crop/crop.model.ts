@@ -1,5 +1,5 @@
-import { TypeOf, z } from 'zod';
-import { WithId, ObjectId } from 'mongodb';
+/* eslint-disable @typescript-eslint/no-redeclare */
+import {  z } from 'zod';
 import { Decimal } from '@prisma/client/runtime';
 
 export const JobId = z.object({
@@ -20,30 +20,30 @@ export const ClipStatuses = z.enum([
 ]);
 
 export const cropSettingsSchema = z.object({
-  x: z.instanceof(Decimal),
-  y: z.instanceof(Decimal),
-  width: z.instanceof(Decimal),
-  height: z.instanceof(Decimal),
-  scaleX: z.instanceof(Decimal).nullable(),
-  scaleY: z.instanceof(Decimal).nullable(),
+  x: z.number(),
+  y: z.number(),
+  width: z.number(),
+  height: z.number(),
+  scaleX: z.number().nullable(),
+  scaleY: z.number().nullable(),
   isNormalized: z.boolean().default(true)
 });
-export const cropSettingsSchemaInput = z.object({
-  x: z.instanceof(Decimal).or(z.number()),
-  y: z.instanceof(Decimal).or(z.number()),
-  width: z.instanceof(Decimal).or(z.number()),
-  height: z.instanceof(Decimal).or(z.number()),
-  scaleX: z.instanceof(Decimal).or(z.number()).optional().nullable(),
-  scaleY: z.instanceof(Decimal).or(z.number()).optional().nullable(),
-  isNormalized: z.boolean().optional().nullable()
+export const cropSettingsSchemaOutput = z.object({
+  x: z.number(),
+  y: z.number(),
+  width: z.number(),
+  height: z.number(),
+  scaleX: z.number().nullable(),
+  scaleY: z.number().nullable(),
+  isNormalized: z.boolean().default(true)
 });
 
 export const CropData = z.object({
   camCrop: cropSettingsSchema.nullable(),
   screenCrop: cropSettingsSchema,
   cropType: z.enum(['no-cam', 'cam-top', 'cam-freeform', 'freeform']),
-  startTime: z.instanceof(Decimal).nullable(),
-  endTime: z.instanceof(Decimal).nullable()
+  startTime: z.number().nullable(),
+  endTime: z.number().nullable()
 });
 export const CropDataInput = z.object({
   camCrop: cropSettingsSchema.nullable().optional(),
@@ -186,5 +186,7 @@ export type RenderClipReq = z.infer<typeof RenderClipReq>;
 export type ClipManualWithUserId = z.infer<typeof ClipManualWithUserId>;
 export type platformsSchema = z.infer<typeof platformsSchema>;
 export type ClipStatuses = z.infer<typeof ClipStatuses>;
+export type CropSettingsSchema = z.infer<typeof cropSettingsSchema>;
+export type cropSettingsSchemaOutput = z.infer<typeof cropSettingsSchemaOutput>;
 
 export type ClipWithRenderedUrl = ClipWithId & { renderedUrl: string };
