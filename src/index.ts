@@ -30,14 +30,14 @@ serverAdapter.setBasePath('/admin/queues');
 const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
   queues: [
     new BullMQAdapter(clipQueue, { readOnlyMode: true }),
-    new BullMQAdapter(clipLatestQueue, { readOnlyMode: true })
+    new BullMQAdapter(clipLatestQueue, { readOnlyMode: true }),
   ],
-  serverAdapter: serverAdapter
+  serverAdapter: serverAdapter,
 });
 
 // cron jobs
-// scheduledFunctions();
-// twitchClipsCrons();
+scheduledFunctions();
+twitchClipsCrons();
 log('info', 'Server started', 'random data');
 
 app.use(cors());
@@ -45,7 +45,7 @@ app.use(express.json());
 
 app.get<{}, MessageResponse>('/', (req, res) => {
   res.json({
-    message: '👋🌎🚀'
+    message: '👋🌎🚀',
   });
 });
 

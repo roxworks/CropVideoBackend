@@ -2,7 +2,7 @@ import cron from 'node-cron';
 import axios from 'axios';
 
 import { EVERY_10_MINUTES, EVERY_15_MINUTES, EVERY_30_MINUTES } from './cronConstants';
-import { uploadClip } from '../service/uploadService';
+import uploadClip from '../service/uploadService';
 import log from '../utils/logger';
 import { autoScheduleClips } from '../utils/scheduleUtil';
 
@@ -12,7 +12,7 @@ export default () => {
     const clipbotKey = process.env.APP_KEY;
     try {
       const res = await axios.get(`${process.env.CLIPBOT_URL}/api/clips/renderScheduledClips`, {
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer: ${clipbotKey}` }
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer: ${clipbotKey}` },
       });
       log('info', 'schedule-cron', res.data);
     } catch (error) {

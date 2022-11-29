@@ -3,6 +3,13 @@ import { Clip, ClipStatuses, CropData, platformsSchema } from '../api/crop/crop.
 import { CropTemplate } from '../interfaces/CropTemplate';
 import { TSettings } from '../interfaces/Settings';
 
+export function exclude<T, Key extends keyof T>(list: T, ...keys: Key[]): Omit<T, Key> {
+  for (let key of keys) {
+    delete list[key];
+  }
+  return list;
+}
+
 export const convertTags = (tags: string[]) => tags.map((tag) => `%23${tag}`).join(' ');
 type CropDataInput = {
   cropTemplate: CropTemplate;

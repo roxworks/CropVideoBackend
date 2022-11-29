@@ -1,5 +1,5 @@
 {
-  "extends": ["airbnb-base", "airbnb-typescript/base", "plugin:import/recommended", "prettier"],
+  "extends": ["eslint:recommended", "plugin:import/recommended", "prettier"],
   "plugins": ["import"],
   "overrides": [
     {
@@ -18,7 +18,8 @@
     "no-continue": "off",
     "no-use-before-define": "off",
     "@typescript-eslint/no-use-before-define": "off",
-    "no-restricted-syntax": "off"
+    "no-restricted-syntax": "off",
+    "prefer-const": ["error", { "destructuring": "any", "ignoreReadBeforeAssign": false }]
   },
   "parserOptions": {
     "project": "./tsconfig.json"
