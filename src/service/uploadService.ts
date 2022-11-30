@@ -81,7 +81,7 @@ const uploadClip = async () => {
   try {
     // Get clips ready to upload
     const data = await getClipsReadyToUploaded();
-    if (!data || data.count === 0) return await log('info', 'No clips to upload');
+    if (!data || data.count === 0) return log('info', 'No clips to upload');
     // add clips to upload queue
     await uploadClipsQueue(data.clips);
   } catch (error) {

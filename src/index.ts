@@ -38,7 +38,7 @@ createBullBoard({
 // cron jobs
 scheduledFunctions();
 twitchClipsCrons();
-log('info', 'Server started', 'random data');
+log('info', 'Server started');
 
 app.use(cors());
 app.use(express.json());

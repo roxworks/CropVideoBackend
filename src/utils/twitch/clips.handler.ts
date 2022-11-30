@@ -23,7 +23,6 @@ type TwurpleClip = {
 
 export const addToGetAllClipsQueue = async (userId: string, broadcasterId: string) => {
   try {
-    log('info', 'add-to-get-all-clips add', { userId, broadcasterId }, 'clips.handler');
     await clipQueue.add('getAll', { userId, broadcasterId });
   } catch (error) {
     log('error', 'failed to add user to clips queue', error);
@@ -32,7 +31,6 @@ export const addToGetAllClipsQueue = async (userId: string, broadcasterId: strin
 
 export const addToGetLatestClipsQueue = async (userId: string, broadcasterId: string) => {
   try {
-    log('info', 'add-to-get-latest-clips add', { userId, broadcasterId }, 'clips.handler');
     await clipLatestQueue.add('getLatest', { userId, broadcasterId });
   } catch (error) {
     log('error', 'failed to add user to clips queue', error);
@@ -59,7 +57,6 @@ const daysOfYearArray = (mostRecentClipPostedCreatedAtTime: string) => {
   ) {
     daysOfYear.push(new Date(d));
   }
-  log('info', `Day arr length: ${daysOfYear.length}`);
   return daysOfYear;
 };
 const fixTheFreakingNames = (clips: TwurpleClip[], userId: string): ClipManualWithUserId[] =>
@@ -100,16 +97,12 @@ export const getClipsStartingAtCertainDateFromTwitchAPI = async (
   date?: string,
   doSort: boolean = true
 ) => {
-  log('info', 'gettin more clips');
   const mostRecentClipPostedCreatedAtTime =
     date ||
     (user?.settings?.lastUploaded
       ? new Date(user?.settings.lastUploaded).toISOString()
       : new Date(2010, 0, 1).toISOString());
-  log('info', 'Most recent clip posted created at time', {
-    mostRecentClipPostedCreatedAtTime,
-    broadcasterId,
-  });
+
   const daysOfYear = daysOfYearArray(mostRecentClipPostedCreatedAtTime);
 
   const clips: TwurpleClip[] = [];
@@ -151,12 +144,6 @@ export const getClipsStartingAtCertainDateFromTwitchAPI = async (
       })
       .getAll();
 
-    log(
-      'info',
-      `Clips from ${startDate.toISOString()} until ${endDate.toISOString()}`,
-      newClips.length
-    );
-
     if (newClips.length > 900) {
       i -= jumpSize;
       jumpSize = 2;
@@ -168,20 +155,11 @@ export const getClipsStartingAtCertainDateFromTwitchAPI = async (
     }
     clips.push(newClips);
 
-    log(
-      'info',
-      'Unique clips in twitch output',
-      new Set(newClips.map((x: TwurpleClip) => x.id)).size,
-      'clips.handler'
-    );
-
     if (i === daysOfYear.length - 1) {
-      log('info', 'Got to end');
       break;
     }
   }
 
-  log('info', 'Checked clips starting at', { mostRecentClipPostedCreatedAtTime, broadcasterId });
   let recentClips: TwurpleClip[] = clips.flatMap((x) => x); // clips.data.data;
 
   if (recentClips.length === 0) {
@@ -190,7 +168,6 @@ export const getClipsStartingAtCertainDateFromTwitchAPI = async (
   const uniqueIds = new Set(recentClips.map((x) => x.id));
   recentClips = recentClips.filter((x) => uniqueIds.has(x.id));
   let fixedRecentClips = fixTheFreakingNames(recentClips, user.id.toString()); // i hate libraries
-  log('info', 'all clips length', recentClips.length);
 
   // we mostly do this so we force in the download_url field
   if (doSort) {
@@ -198,8 +175,6 @@ export const getClipsStartingAtCertainDateFromTwitchAPI = async (
   } else {
     fixedRecentClips = sortClipsByCreationDate(fixedRecentClips);
   }
-
-  log('info', 'new clip ids: ', uniqueIds);
 
   return fixedRecentClips;
 };

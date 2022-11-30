@@ -17,9 +17,7 @@ const getUserID = async (accessToken: string) => {
   const response = await axios.get(
     `${BASE_URL}/me/accounts?fields=instagram_business_account{id, username}&access_token=${accessToken}`
   );
-  log('info', 'instagram getUserId', response.date);
   id = response.data?.data?.[0]?.instagram_business_account?.id;
-  log('info', 'instagram bussiness id', id);
   return id;
 };
 
@@ -232,7 +230,7 @@ const publishFbVideo = async (
       log('error', err.message);
     }
     // @ts-ignore
-    throw new Error(JSON.stringify(error?.response?.data?.error));
+    throw new Error(JSON.stringify(err?.response?.data?.error));
   }
 };
 

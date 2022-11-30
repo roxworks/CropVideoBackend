@@ -60,7 +60,6 @@ export const scheduleByUTCDay = (scheduleDays: ScheduleDays, UTCoffset: number) 
       }
     });
   });
-  log('info', 'UTC Schedule', { userDays: scheduleDays, UTCDays: newDays });
 
   return newDays;
 };

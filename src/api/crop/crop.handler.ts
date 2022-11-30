@@ -1,4 +1,4 @@
-import { Response, Request  } from 'express';
+import { Response, Request } from 'express';
 import got from 'got';
 import fs from 'fs';
 import FormData from 'form-data';
@@ -22,11 +22,7 @@ export const createCropVideo = async (req: Request, res: Response) => {
   const ACTION_KEY = req.headers.authorization.split(' ')[1];
   if (ACTION_KEY !== APP_KEY) return res.status(400).send();
 
-  log('info', 'req body', req.body, 'crop.handler');
-
   const { clip, cropData } = req.body;
-  log('info', 'Clip Data', clip, 'crop.handler');
-  log('info', 'cropData', cropData, 'crop.handler');
 
   if (!clip || !cropData) return res.status(400).send('please provide both clip and crop data');
 
@@ -45,9 +41,8 @@ export const createCropVideo = async (req: Request, res: Response) => {
 
   // wait for filestream to end
   log('info', 'streaming');
-  const streamStart = performance.now();
   await new Promise((resolve) => {
-    const file = fs.createWriteStream(`./${  fileName}`);
+    const file = fs.createWriteStream(`./${fileName}`);
     fileStream.pipe(file);
     file.on('finish', () => {
       resolve('stream done');
@@ -56,8 +51,6 @@ export const createCropVideo = async (req: Request, res: Response) => {
       log('error', 'create-write-stream', err, 'crop.handler');
     });
   });
-  const streamEnd = performance.now();
-  log('info', 'stream-write', `Stream call took ${streamEnd - streamStart} ms`, 'crop.handler');
 
   const verticalStart = performance.now();
   const editVideo = await makeVideoVertical(clip, cropData, fileName);
@@ -83,28 +76,24 @@ export const createCropVideo = async (req: Request, res: Response) => {
   currentJobStatus[fileName] = {
     fileURL: fileIOResponse.data.link,
     key: fileIOResponse.data.key,
-    status: 'done'
+    status: 'done',
   };
 
   // delete local files
   try {
     fs.unlinkSync(`./${editVideo}`);
-    fs.unlinkSync(`./${  fileName}`);
+    fs.unlinkSync(`./${fileName}`);
     log('warn', 'files-deleted: ', { editVideo, fileName }, 'crop.handler');
   } catch (error) {
     log('error', 'delete-local-files', error, 'crop.handler');
   }
 
-  return {message: 'done'}; 
-  
+  return { message: 'done' };
 };
 
-export const videoStatus = async (
-  req: Request<{}, {}, JobId>,
-  res: Response<JobStatus>,
-) => {
+export const videoStatus = async (req: Request<{}, {}, JobId>, res: Response<JobStatus>) => {
   const jobId = req.query.id;
   if (typeof jobId !== 'string') return res.status(400);
 
- return res.status(200).send(currentJobStatus[jobId]);
+  return res.status(200).send(currentJobStatus[jobId]);
 };

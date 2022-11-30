@@ -4,7 +4,6 @@ import prisma from '../db/conn';
 import { exclude } from '../utils/helpers';
 
 export const updateAccount = async (accountData: TAccount) => {
-  log('info', 'update-account', accountData);
   if (!accountData.userId || !accountData.provider) return;
   const updateData: UpdateAccount = exclude(accountData, 'userId', 'provider', 'providerAccountId');
 
