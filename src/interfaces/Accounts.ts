@@ -1,6 +1,5 @@
+/* eslint-disable @typescript-eslint/no-redeclare */
 import { z } from 'zod';
-
-import { WithId } from 'mongodb';
 
 export const TAccount = z.object({
   type: z.string(),
@@ -23,5 +22,25 @@ export const TAccount = z.object({
   pageAccessToken: z.string().optional().nullable()
 });
 
+export const TAccountOutput = TAccount.extend({
+  access_token: z.string().nullable(),
+  expires_at: z.number().nullable(),
+  refresh_token: z.string().nullable(),
+  refresh_expires_at: z.number().nullable(),
+  obtainment_timestamp: z.number().nullable(),
+  token_type: z.string().nullable(),
+  scope: z.string().nullable(),
+  id_token: z.string().nullable(),
+  session_state: z.string().nullable(),
+  oauth_token_secret: z.string().nullable(),
+  oauth_token: z.string().nullable(),
+  pageName: z.string().nullable(),
+  pageId: z.string().nullable(),
+  pageAccessToken: z.string().nullable()
+});
+export const TAccountWithId = TAccount.extend({ id: z.string() });
+
 export type TAccount = z.TypeOf<typeof TAccount>;
-export type AccountWithId = WithId<TAccount>;
+export type TAccountOutput = z.TypeOf<typeof TAccountOutput>;
+export type UpdateAccount = Omit<TAccount, 'id' | 'userId' | 'provider' | 'providerAccountId'>;
+export type AccountWithId = z.TypeOf<typeof TAccountWithId>;

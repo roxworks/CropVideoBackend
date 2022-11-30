@@ -1,29 +1,56 @@
+/* eslint-disable no-redeclare */
 import { z } from 'zod';
-import { WithId, ObjectId } from 'mongodb';
+import { Decimal } from '@prisma/client/runtime';
 
 export const JobId = z.object({
-  id: z.string()
+  id: z.string(),
 });
 
 export const platformsSchema = z.enum(['TikTok', 'YouTube', 'Instagram', 'Facebook']);
 export const YoutubePrivacy = z.enum(['Public', 'Unlisted', 'Private']);
+export const ClipStatuses = z.enum([
+  'SCHEDULED',
+  'RENDERED',
+  'FAILED_SCHEDULED_UPLOAD_INVALID_DATA',
+  'FAILED_SCHEDULED_UPLOAD_ACCOUNT_NOT_FOUND',
+  'FAILED_SCHEDULED_UPLOAD',
+  'SUCCESS_SCHEDULED_UPLOAD',
+  'SUCCESS_MANUAL_UPLOAD',
+  'FAILED_MANUAL_UPLOAD',
+]);
 
 export const cropSettingsSchema = z.object({
   x: z.number(),
   y: z.number(),
   width: z.number(),
   height: z.number(),
-  scaleX: z.number().optional(),
-  scaleY: z.number().optional(),
-  isNormalized: z.boolean().optional()
+  scaleX: z.number().nullable().optional(),
+  scaleY: z.number().nullable().optional(),
+  isNormalized: z.boolean().default(true),
+});
+export const cropSettingsSchemaOutput = z.object({
+  x: z.number(),
+  y: z.number(),
+  width: z.number(),
+  height: z.number(),
+  scaleX: z.number().nullable(),
+  scaleY: z.number().nullable(),
+  isNormalized: z.boolean().default(true),
 });
 
 export const CropData = z.object({
-  camCrop: cropSettingsSchema.optional(),
+  camCrop: cropSettingsSchema.nullable(),
   screenCrop: cropSettingsSchema,
   cropType: z.enum(['no-cam', 'cam-top', 'cam-freeform', 'freeform']),
-  startTime: z.number().optional(),
-  endTime: z.number().optional()
+  startTime: z.number().nullable(),
+  endTime: z.number().nullable(),
+});
+export const CropDataInput = z.object({
+  camCrop: cropSettingsSchema.nullable().optional(),
+  screenCrop: cropSettingsSchema,
+  cropType: z.enum(['no-cam', 'cam-top', 'cam-freeform', 'freeform']),
+  startTime: z.instanceof(Decimal).or(z.number()).optional().nullable(),
+  endTime: z.instanceof(Decimal).or(z.number()).optional().nullable(),
 });
 
 export const ClipManual = z.object({
@@ -40,12 +67,12 @@ export const ClipManual = z.object({
   thumbnail_url: z.string(),
   title: z.string(),
   url: z.string(),
-  video_id: z.string().optional(),
-  view_count: z.number()
+  video_id: z.string().default(''),
+  view_count: z.number(),
 });
 
 export const Clip = z.object({
-  userId: z.instanceof(ObjectId),
+  userId: z.string(),
   broadcasterName: z.string(),
   broadcasterId: z.string(),
   creatorName: z.string(),
@@ -61,7 +88,7 @@ export const Clip = z.object({
   createdAt: z.date(),
   downloadUrl: z.string(),
   approved: z.boolean().default(false),
-  status: z.string(),
+  status: ClipStatuses,
   uploadPlatforms: z.array(platformsSchema),
   uploadTime: z.string().optional().nullable(),
   scheduledUploadTime: z.date().optional().nullable(),
@@ -85,7 +112,7 @@ export const Clip = z.object({
   youtubeTitle: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
   renderedUrl: z.string().optional(),
-  facebookDescription: z.string().optional().nullable()
+  facebookDescription: z.string().optional().nullable(),
 });
 
 export const CurrentClip = z.object({
@@ -96,7 +123,7 @@ export const CurrentClip = z.object({
   youtubePrivacy: z.string().optional(),
   youtubeCategory: z.string().optional(),
   youtubeDescription: z.string().optional(),
-  clipURL: z.string().optional()
+  clipURL: z.string().optional(),
 });
 
 export const ClipWithId = Clip.extend({ id: z.string() });
@@ -116,7 +143,7 @@ export const categories = z.enum([
   'Howto & Style',
   'Education',
   'Science & Technology',
-  'Nonprofits & Activism'
+  'Nonprofits & Activism',
 ]);
 
 export const ClipManualWithUserId = ClipManual.extend({
@@ -136,16 +163,16 @@ export const ClipManualWithUserId = ClipManual.extend({
   instagramHashtags: z.array(z.string()).optional(),
   facebookDescription: z.string().optional().nullable(),
   startTime: z.number().optional().nullable(),
-  endTime: z.number().optional().nullable()
+  endTime: z.number().optional().nullable(),
 });
 
 export const ScheduledClipsArray = z.object({
-  scheduledClips: z.array(ClipWithId)
+  scheduledClips: z.array(ClipWithId),
 });
 
 export const RenderClipReq = z.object({
   clip: ClipManual,
-  cropData: CropData
+  cropData: CropData,
 });
 
 export type JobId = z.infer<typeof JobId>;
@@ -153,9 +180,13 @@ export type Clip = z.infer<typeof Clip>;
 export type CurrentClip = z.infer<typeof CurrentClip>;
 export type ClipManual = z.infer<typeof ClipManual>;
 export type ClipWithId = z.infer<typeof ClipWithId>;
-export type ClipWithIdMongo = WithId<Clip>;
 export type ScheduledClipsArray = z.infer<typeof ScheduledClipsArray>;
 export type CropData = z.infer<typeof CropData>;
 export type RenderClipReq = z.infer<typeof RenderClipReq>;
 export type ClipManualWithUserId = z.infer<typeof ClipManualWithUserId>;
 export type platformsSchema = z.infer<typeof platformsSchema>;
+export type ClipStatuses = z.infer<typeof ClipStatuses>;
+export type CropSettingsSchema = z.infer<typeof cropSettingsSchema>;
+export type cropSettingsSchemaOutput = z.infer<typeof cropSettingsSchemaOutput>;
+
+export type ClipWithRenderedUrl = ClipWithId & { renderedUrl: string };

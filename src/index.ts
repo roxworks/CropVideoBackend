@@ -27,25 +27,25 @@ const PORT = process.env.PORT || 5000;
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath('/admin/queues');
 
-const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
+createBullBoard({
   queues: [
     new BullMQAdapter(clipQueue, { readOnlyMode: true }),
-    new BullMQAdapter(clipLatestQueue, { readOnlyMode: true })
+    new BullMQAdapter(clipLatestQueue, { readOnlyMode: true }),
   ],
-  serverAdapter: serverAdapter
+  serverAdapter: serverAdapter,
 });
 
 // cron jobs
 scheduledFunctions();
 twitchClipsCrons();
-log('info', 'Server started', 'random data');
+log('info', 'Server started');
 
 app.use(cors());
 app.use(express.json());
 
 app.get<{}, MessageResponse>('/', (req, res) => {
   res.json({
-    message: '👋🌎🚀'
+    message: '👋🌎🚀',
   });
 });
 

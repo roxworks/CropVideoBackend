@@ -1,0 +1,45 @@
+{
+  "extends": ["eslint:recommended", "plugin:import/recommended", "prettier"],
+  "plugins": ["import"],
+  "env": {
+    "node": true,
+    "es2021": true
+  },
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [".js", ".jsx", ".ts", ".tsx"]
+      }
+    }
+  },
+  "overrides": [
+    {
+      "files": ["src/**/*.d.ts"],
+      "rules": { "no-unused-vars": "off", "@typescript-eslint/no-unused-vars": "off" }
+    }
+  ],
+  "rules": {
+    "quotes": ["error", "single", { "allowTemplateLiterals": true }],
+    "semi": ["error", "always"],
+    "import/no-cycle": "off",
+    // "indent": ["error", 2],
+    "@typescript-eslint/naming-convention": "off",
+    "radix": "off",
+    "consistent-return": "off",
+    "no-continue": "off",
+    "no-use-before-define": "off",
+    "@typescript-eslint/no-use-before-define": "off",
+    // "no-restricted-syntax": "off",
+    "prefer-const": [
+      "error",
+      {
+        "destructuring": "any",
+        "ignoreReadBeforeAssign": false
+      }
+    ]
+  },
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  },
+  "parser": "@typescript-eslint/parser"
+}

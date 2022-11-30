@@ -1,8 +1,10 @@
+/* eslint-disable no-await-in-loop */
+import { TCropType, getCropTemplateByType } from '../service/CropTemplate';
 import { getUsersApprovedClips, scheduleClips, scheduledClipsFromTime } from '../service/Clip';
-import { getCropTemplateByType } from '../service/CropTemplate';
 import { updateScheduledEnabled } from '../service/Settings';
-import { getUsersWithUploadEnabled } from '../service/User';
+import { getSettingsWithUploadEnabled } from '../service/User';
 import log from './logger';
+import { SettingsWithUser } from '../interfaces/Settings';
 
 export type ScheduleDays = {
   [key: string]: string[];
@@ -19,8 +21,8 @@ export type ScheduleDays = {
 //   fri: [],
 //   sat: ['11:45']
 // }
-//OFFSERT -60
-//returns
+// OFFSERT -60
+// returns
 // {
 //   sun: ['10:45','23:15', '00:45'],
 //   mon: ['16:00', '23:15'],
@@ -31,15 +33,6 @@ export type ScheduleDays = {
 //   sat: ['23:15']
 // }
 
-const convertStringDate = (time: string, offset: number) => {
-  const paddedTime = time.replace(':', '').padStart(4, '0');
-  if (offset > 0) {
-    return Number(paddedTime) + offset;
-  }
-
-  return Number(paddedTime) - Math.abs(offset);
-};
-
 export const scheduleByUTCDay = (scheduleDays: ScheduleDays, UTCoffset: number) => {
   const LOOKUP_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
   const newDays: ScheduleDays = {
@@ -49,27 +42,24 @@ export const scheduleByUTCDay = (scheduleDays: ScheduleDays, UTCoffset: number) 
     wed: [],
     thu: [],
     fri: [],
-    sat: []
+    sat: [],
   };
   Object.keys(scheduleDays).forEach((key, index) => {
     scheduleDays[key].forEach((time) => {
       const newTime = convertTime(time, UTCoffset);
       if (newTime.offsetDay === 0) {
         newDays[key].push(newTime.time);
+      } else if (newTime.offsetDay < 0) {
+        const day = LOOKUP_DAYS.slice(index - Math.abs(newTime.offsetDay));
+
+        newDays[day[0]].push(newTime.time);
       } else {
-        if (newTime.offsetDay < 0) {
-          let day = LOOKUP_DAYS.slice(index - Math.abs(newTime.offsetDay));
+        const day = (index + newTime.offsetDay) % 7;
 
-          newDays[day[0]].push(newTime.time);
-        } else {
-          const day = (index + newTime.offsetDay) % 7;
-
-          newDays[LOOKUP_DAYS[day]].push(newTime.time);
-        }
+        newDays[LOOKUP_DAYS[day]].push(newTime.time);
       }
     });
   });
-  log('info', 'UTC Schedule', { userDays: scheduleDays, UTCDays: newDays });
 
   return newDays;
 };
@@ -91,36 +81,40 @@ export const convertTime = (time: string, offset: number) => {
 
   return {
     offsetDay: dayAfter - todaysDay,
-    time: `${offsetTime.getHours()}:${offsetTime.getMinutes()}`
+    time: `${offsetTime.getHours()}:${offsetTime.getMinutes()}`,
   };
 };
 
 export const autoScheduleClips = async () => {
   const LOOKUP_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-  const usersWithUploadEnabled = await getUsersWithUploadEnabled();
+  const settingsWithUploadEnabled = await getSettingsWithUploadEnabled();
+  if (!settingsWithUploadEnabled) return;
 
-  for (const user of usersWithUploadEnabled) {
+  for (const settings of settingsWithUploadEnabled) {
     // check if the users is subbed
-    const isSubbed = user.sub_status === 'active';
+    const isSubbed = settings.user.sub_status === 'active';
     // if not subbed set scheduledEnabled to false
     if (!isSubbed) {
-      await updateScheduledEnabled(user._id.toString());
-      //TODO:: email client to notfiy sccheduled uploads have been turned off
+      // eslint-disable-next-line no-await-in-loop
+      await updateScheduledEnabled(settings.id.toString());
+      // TODO:: email client to notfiy sccheduled uploads have been turned off
       continue;
     }
-    //check if the user has scheduled days
-    const userSettings = user.settings[0];
-    if (!userSettings.cropType) continue;
+    // check if the user has scheduled days
+    const userSettings = settings as SettingsWithUser;
+    if (!userSettings?.cropType) continue;
 
-    log('info', 'auto schedule - got user settings', user.name);
+    log('info', 'auto schedule - got user settings', settings.user.name);
 
-    const cropTemplate = await getCropTemplateByType(user._id.toString(), userSettings.cropType);
+    const cropType = userSettings.cropType as TCropType;
+
+    const cropTemplate = await getCropTemplateByType(settings.user.id.toString(), cropType);
     if (!cropTemplate) continue;
 
     log('info', 'auto schedule - got user templates', cropTemplate);
 
     const scheduleDays = userSettings.scheduleDays as ScheduleDays;
-    const timeOffset = userSettings.timeOffset;
+    const { timeOffset } = userSettings;
 
     if (!scheduleDays || timeOffset === null || timeOffset === undefined) continue;
 
@@ -136,17 +130,17 @@ export const autoScheduleClips = async () => {
     log('info', 'auto schedule - hasSchuldeDays', hasSchuldeDays);
     if (!hasSchuldeDays) continue;
 
-    //check if user has approved clips
-    let approvedClips = await getUsersApprovedClips(user._id.toString());
+    // check if user has approved clips
+    const approvedClips = await getUsersApprovedClips(settings.user.id.toString());
 
-    let approvedClipsCount = approvedClips.length;
+    const approvedClipsCount = approvedClips.length;
 
     log('info', 'auto schedule - approve clips', approvedClips);
     if (approvedClipsCount === 0) continue;
 
     // schedule days into UTC days
     const UTCDays = scheduleByUTCDay(scheduleDays, timeOffset);
-    log('info', 'User UTC days', user.name);
+    log('info', 'User UTC days', settings.user.name);
     // is there any schedules for today.
     const today = new Date();
     const todaysSchedule = UTCDays[LOOKUP_DAYS[today.getUTCDay()]];
@@ -158,20 +152,18 @@ export const autoScheduleClips = async () => {
       const [hours, mins] = time.split(':');
       const date = new Date().setUTCHours(+hours, +mins, 0, 0);
       const scheduleTime = new Date(date).toISOString();
-      //check time is greater then now
+      // check time is greater then now
       const isGreaterThanNow = scheduleTime > today.toISOString();
       if (!isGreaterThanNow) continue;
 
-      const scheduledClips = await scheduledClipsFromTime(user._id.toString(), scheduleTime);
+      const scheduledClips = await scheduledClipsFromTime(
+        settings.user.id.toString(),
+        scheduleTime
+      );
       if (scheduledClips.count > 0) continue;
       // if not a scheduled clip, add one
 
-      const schedule = await scheduleClips(
-        approvedClips.shift()!,
-        scheduleTime,
-        userSettings,
-        cropTemplate
-      );
+      await scheduleClips(approvedClips.shift()!, scheduleTime, userSettings, cropTemplate);
     }
     const tommorrowDay = (today.getUTCDay() + 1) % 7;
     const midNightCheck = UTCDays[LOOKUP_DAYS[tommorrowDay]];
@@ -186,15 +178,13 @@ export const autoScheduleClips = async () => {
       const scheduleTime = new Date(date).toISOString();
       if (scheduleTime > nextDayMidnight.toISOString()) continue;
 
-      const scheduledClips = await scheduledClipsFromTime(user._id.toString(), scheduleTime);
-      if (scheduledClips.count > 0) continue;
-      const schedule = await scheduleClips(
-        approvedClips.shift()!,
-        scheduleTime,
-        userSettings,
-        cropTemplate
+      const scheduledClips = await scheduledClipsFromTime(
+        settings.user.id.toString(),
+        scheduleTime
       );
+      if (scheduledClips.count > 0) continue;
+      await scheduleClips(approvedClips.shift()!, scheduleTime, userSettings, cropTemplate);
     }
   }
-  return usersWithUploadEnabled.length;
+  return settingsWithUploadEnabled.length;
 };

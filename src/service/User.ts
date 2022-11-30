@@ -1,150 +1,61 @@
-import clientPromise from '../db/conn';
-import {
-  UserWithAccountsWithId,
-  UserWithId,
-  UserWithAccountsAndSettingsWithId,
-  TUser,
-  DefaultClips
-} from '../api/user/user.model.js';
-import { ObjectId } from 'mongodb';
+import { DefaultClips } from '../api/user/user.model';
+import prisma from '../db/conn';
+import log from '../utils/logger';
 
-export const getAllUsers = async () => {
-  const client = await clientPromise;
-  const db = client.db().collection<UserWithId>('User');
+export const getAllUsers = async () => prisma.user.findMany();
 
-  const users = await db.find().toArray();
+export const getUserById = async (id: string) => prisma.user.findUnique({ where: { id } });
 
-  return users;
-};
+export const updateUserDefaultClipsById = async (id: string, defaultClip: DefaultClips) =>
+  prisma.user.update({ where: { id }, data: { defaultClips: defaultClip } });
 
-export const getUserById = async (id: string) => {
-  const client = await clientPromise;
-  const db = client.db().collection<UserWithId>('User');
-
-  const user = await db.findOne({ _id: new ObjectId(id) });
-
+export const getUserByIdWithAccountsAndSettings = async (id: string) => {
+  const user = prisma.user.findUnique({
+    where: { id },
+    include: {
+      settings: true,
+      accounts: true,
+    },
+  });
   return user;
 };
 
-export const updateUserDefaultClipsById = async (id: string, defaultClip: DefaultClips) => {
-  const client = await clientPromise;
-  const db = client.db().collection<UserWithId>('User');
-
-  const updatedUser = await db.updateOne(
-    { _id: new ObjectId(id) },
-    { $set: { defaultClips: defaultClip } }
-  );
-
-  return updatedUser;
-};
-export const getUserByIdWithAccountsAndSettings = async (id: string) => {
-  const client = await clientPromise;
-  const db = client.db().collection<UserWithId[]>('User');
-
-  const user = await db
-    .aggregate([
-      { $match: { _id: new ObjectId(id) } },
-      { $addFields: { userId: { $toString: '$_id' } } },
-      {
-        $lookup: {
-          from: 'Account',
-          localField: 'userId',
-          foreignField: 'userId',
-          as: 'accounts'
-        }
-      },
-      {
-        $lookup: {
-          from: 'Setting',
-          localField: '_id',
-          foreignField: 'userId',
-          as: 'settings'
-        }
-      }
-    ])
-    .toArray();
-  return user?.[0] as UserWithAccountsAndSettingsWithId;
-};
-
-type UserAccountWithUserId = UserWithAccountsWithId & { userId: string };
 export const getUsersWithoutClips = async () => {
-  const client = await clientPromise;
-  const db = client.db().collection<UserWithId>('User');
-
-  const users = (await db
-    .aggregate([
-      { $match: { defaultClips: { $in: [null, 'pending'] } } },
-      { $addFields: { userId: { $toString: '$_id' } } },
-      {
-        $lookup: {
-          from: 'Account',
-          localField: 'userId',
-          foreignField: 'userId',
-          as: 'accounts'
-        }
-      }
-    ])
-    .toArray()) as UserAccountWithUserId[];
-
+  // TODO:: does this include accounts correctly
+  const users = await prisma.user.findMany({
+    where: { OR: [{ defaultClips: 'pending' }, { defaultClips: { isSet: false } }] },
+    include: { accounts: true },
+  });
   return users;
 };
-type UserAccountWithUserIdAndSettings = UserWithAccountsAndSettingsWithId & { userId: string };
+
 export const getUsersLatestsClips = async () => {
-  const client = await clientPromise;
-  const db = client.db().collection<UserWithId>('User');
-  const users = (await db
-    .aggregate([
-      { $match: { defaultClips: { $in: [null, 'complete', 'failed'] } } },
-      { $addFields: { userId: { $toString: '$_id' } } },
-      {
-        $lookup: {
-          from: 'Account',
-          localField: 'userId',
-          foreignField: 'userId',
-          as: 'accounts'
-        }
+  try {
+    return await prisma.user.findMany({
+      where: {
+        OR: [{ defaultClips: { in: ['complete', 'failed'] } }, { defaultClips: { isSet: false } }],
+        settings: { lastUploaded: { not: null } },
       },
-      {
-        $lookup: {
-          from: 'Setting',
-          localField: '_id',
-          foreignField: 'userId',
-          as: 'settings',
-          pipeline: [{ $match: { lastUploaded: { $ne: null } } }]
-        }
-      },
-      { $match: { settings: { $ne: [] } } }
-    ])
-    .toArray()) as UserAccountWithUserIdAndSettings[];
-
-  return users;
+      include: { accounts: true, settings: true },
+    });
+  } catch (error) {
+    log('error', 'getUsersLatestsClips Error', { error });
+  }
 };
 
-export const getUsersWithUploadEnabled = async () => {
-  const client = await clientPromise;
-  const db = client.db().collection<UserWithId>('User');
-  const users = (await db
-    .aggregate([
-      { $addFields: { userId: '$_id' } },
-      {
-        $lookup: {
-          from: 'Setting',
-          localField: '_id',
-          foreignField: 'userId',
-          as: 'settings',
-          pipeline: [
-            {
-              $match: {
-                uploadEnabled: true,
-                scheduleDays: { $exists: true },
-                timeOffset: { $exists: true }
-              }
-            }
-          ]
-        }
+export const getSettingsWithUploadEnabled = async () => {
+  try {
+    const user = await prisma.setting.findMany({
+      where: {
+        uploadEnabled: true,
+        scheduleDays: { isSet: true },
+        timeOffset: { isSet: true },
       },
-      { $match: { settings: { $ne: [] } } }
-    ])
-    .toArray()) as UserAccountWithUserIdAndSettings[];
-  return users;
+      include: { user: true },
+    });
+
+    return user;
+  } catch (error) {
+    log('error', 'getUsersWithUploadEnabled Error', { error });
+  }
 };

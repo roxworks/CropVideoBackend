@@ -15,7 +15,7 @@ const makeClient = (credentials: Object) => {
 
 export const refreshYoutubeToken = async (credentials: Object): Promise<YTRefreshToken> => {
   var oauth2Client = makeClient(credentials);
-  let clientToken = new Promise((resolve, reject) => {
+  const clientToken = new Promise((resolve, reject) => {
     oauth2Client.refreshAccessToken(async function (err, token) {
       if (err) {
         log('info', 'Error while trying to retrieve access token', err, 'youtubeRefresh');
@@ -36,7 +36,7 @@ export const refreshYoutubeToken = async (credentials: Object): Promise<YTRefres
     });
   });
 
-  let finalToken = await clientToken.catch((e) => {
+  const finalToken = await clientToken.catch((e) => {
     log('error', 'youtube-token caught rejection', e, 'youtubeRefresh');
     return { isRejected: true, error: e };
   });

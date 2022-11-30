@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-redeclare */
 import { ObjectId } from 'mongodb';
 import * as z from 'zod';
 

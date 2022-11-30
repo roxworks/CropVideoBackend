@@ -1,4 +1,4 @@
-import { Response, Request, NextFunction } from 'express';
+import { Response, Request } from 'express';
 import got from 'got';
 import fs from 'fs';
 import FormData from 'form-data';
@@ -15,18 +15,14 @@ type JobStatus = {
 };
 const currentJobStatus: { [key: string]: JobStatus } = {};
 
-export const createCropVideo = async (req: Request, res: Response, next: NextFunction) => {
+export const createCropVideo = async (req: Request, res: Response) => {
   if (!req.headers.authorization) return res.status(400).send();
   const { APP_KEY } = process.env;
   if (!APP_KEY) return res.status(500).send('internal server error');
   const ACTION_KEY = req.headers.authorization.split(' ')[1];
   if (ACTION_KEY !== APP_KEY) return res.status(400).send();
 
-  log('info', 'req body', req.body, 'crop.handler');
-
   const { clip, cropData } = req.body;
-  log('info', 'Clip Data', clip, 'crop.handler');
-  log('info', 'cropData', cropData, 'crop.handler');
 
   if (!clip || !cropData) return res.status(400).send('please provide both clip and crop data');
 
@@ -34,7 +30,7 @@ export const createCropVideo = async (req: Request, res: Response, next: NextFun
 
   const { id, twitch_id } = clip;
   const downloadUrl = clip.download_url || clip.downloadUrl;
-  let fileStream = got.stream(downloadUrl);
+  const fileStream = got.stream(downloadUrl);
   const fileName: string = `${Math.random().toString(36).substring(2, 15)}_${twitch_id || id}.mp4`;
 
   const downEnd = performance.now();
@@ -43,11 +39,10 @@ export const createCropVideo = async (req: Request, res: Response, next: NextFun
   currentJobStatus[fileName] = { status: 'processing' };
   res.status(200).send({ id: fileName, ...currentJobStatus[fileName] });
 
-  //wait for filestream to end
+  // wait for filestream to end
   log('info', 'streaming');
-  const streamStart = performance.now();
-  await new Promise((resolve, reject) => {
-    let file = fs.createWriteStream('./' + fileName);
+  await new Promise((resolve) => {
+    const file = fs.createWriteStream(`./${fileName}`);
     fileStream.pipe(file);
     file.on('finish', () => {
       resolve('stream done');
@@ -56,8 +51,6 @@ export const createCropVideo = async (req: Request, res: Response, next: NextFun
       log('error', 'create-write-stream', err, 'crop.handler');
     });
   });
-  const streamEnd = performance.now();
-  log('info', 'stream-write', `Stream call took ${streamEnd - streamStart} ms`, 'crop.handler');
 
   const verticalStart = performance.now();
   const editVideo = await makeVideoVertical(clip, cropData, fileName);
@@ -71,11 +64,11 @@ export const createCropVideo = async (req: Request, res: Response, next: NextFun
 
   log('info', 'video-edited', editVideo);
 
-  //fileIo
-  let form = new FormData();
+  // fileIo
+  const form = new FormData();
   const fileStart = performance.now();
   form.append('file', fs.createReadStream(`./${editVideo}`));
-  let fileIOResponse = await fileioUpload(form);
+  const fileIOResponse = await fileioUpload(form);
 
   const fileEnd = performance.now();
   log('info', 'fileio-upload', `Fileio upload call took ${fileEnd - fileStart} ms`, 'crop.handler');
@@ -83,26 +76,24 @@ export const createCropVideo = async (req: Request, res: Response, next: NextFun
   currentJobStatus[fileName] = {
     fileURL: fileIOResponse.data.link,
     key: fileIOResponse.data.key,
-    status: 'done'
+    status: 'done',
   };
 
   // delete local files
   try {
     fs.unlinkSync(`./${editVideo}`);
-    fs.unlinkSync('./' + fileName);
+    fs.unlinkSync(`./${fileName}`);
     log('warn', 'files-deleted: ', { editVideo, fileName }, 'crop.handler');
   } catch (error) {
     log('error', 'delete-local-files', error, 'crop.handler');
   }
+
+  return { message: 'done' };
 };
 
-export const videoStatus = async (
-  req: Request<{}, {}, JobId>,
-  res: Response<JobStatus>,
-  next: NextFunction
-) => {
+export const videoStatus = async (req: Request<{}, {}, JobId>, res: Response<JobStatus>) => {
   const jobId = req.query.id;
   if (typeof jobId !== 'string') return res.status(400);
 
-  res.status(200).send(currentJobStatus[jobId]);
+  return res.status(200).send(currentJobStatus[jobId]);
 };

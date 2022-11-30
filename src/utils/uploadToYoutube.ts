@@ -22,13 +22,13 @@ const youtubeCategoriesToIds: { [key: string]: number } = {
   'Howto & Style': 26,
   Education: 27,
   'Science & Technology': 28,
-  'Nonprofits & Activism': 29
+  'Nonprofits & Activism': 29,
 };
 
 export const uploadVideoToYoutube = async (auth: Auth.OAuth2Client, currentClip: CurrentClip) => {
   log('info', 'upload-to-youtube start', currentClip, 'uploadToYoutube');
-  let privacy = currentClip?.youtubePrivacy || 'private';
-  let adjustedTitle = currentClip?.title || 'ClipbotTV video';
+  const privacy = currentClip?.youtubePrivacy || 'private';
+  const adjustedTitle = currentClip?.title || 'ClipbotTV video';
 
   const category = currentClip?.youtubeCategory;
   const fileStream = got.stream(currentClip?.clipURL!);
@@ -47,18 +47,18 @@ export const uploadVideoToYoutube = async (auth: Auth.OAuth2Client, currentClip:
             title: adjustedTitle,
             description:
               currentClip?.youtubeDescription || currentClip?.description || 'Video Description',
-            categoryId: category ? youtubeCategoriesToIds[category].toString() : '20'
+            categoryId: category ? youtubeCategoriesToIds[category].toString() : '20',
           },
           // I set to public because we're in prod!
           status: {
-            privacyStatus: privacy
-          }
+            privacyStatus: privacy,
+          },
         },
         // Create the readable stream to upload the video
         media: {
           body: finalStream,
-          mimeType: 'video/mp4'
-        }
+          mimeType: 'video/mp4',
+        },
       },
       (error, data) => {
         if (error) {

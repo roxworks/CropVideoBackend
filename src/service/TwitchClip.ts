@@ -1,37 +1,23 @@
-import clientPromise from '../db/conn';
+import { SettingsOutput, TSettings } from '../interfaces/Settings';
 import { ClipManualWithUserId } from '../api/crop/crop.model';
 import log from '../utils/logger';
-import { TSettings } from '../interfaces/Settings';
+import prisma from '../db/conn';
 
-export const saveTwitchClips = async (clips: ClipManualWithUserId[]) => {
-  if (!clips) {
-    log('warn', 'unable to save clips - not found', undefined, 'saveTwitchClips');
-    return;
-  }
-  const client = await clientPromise;
-  const db = client.db().collection<ClipManualWithUserId>('TwitchClip');
-  const updatedAccount = await db.insertMany(clips);
-
-  return updatedAccount;
-};
-
-export const autoApproveClips = async (settings: TSettings) => {
-  const client = await clientPromise;
-  const db = client.db().collection<ClipManualWithUserId>('TwitchClip');
+export const autoApproveClips = async (settings: TSettings | SettingsOutput) => {
   if (!settings.approveDate && !settings.approveDate) return;
 
-  const updatedClips = await db.updateMany(
-    {
+  const updatedClips = await prisma.twitchClip.updateMany({
+    where: {
       userId: settings.userId.toString(),
-      view_count: { $gte: settings.minViewCount },
-      created_at: { $gte: settings.approveDate.toISOString() },
-      $and: [
-        { $or: [{ approved: false }, { approved: { $exists: false } }] },
-        { $or: [{ approvedStatus: { $ne: 'CANCELED' } }, { approvedStatus: { $exists: false } }] }
-      ]
+      view_count: { gte: settings.minViewCount },
+      created_at: { gte: settings.approveDate.toISOString() },
+      AND: [
+        { OR: [{ approved: false }, { approved: { isSet: false } }] },
+        { OR: [{ approvedStatus: { not: 'CANCELED' } }, { approvedStatus: { isSet: false } }] },
+      ],
     },
-    { $set: { approved: true, approvedStatus: 'AUTO_APPROVE' } }
-  );
+    data: { approved: true, approvedStatus: 'AUTO_APPROVE' },
+  });
 
   return updatedClips;
 };
@@ -41,22 +27,24 @@ export const bulkSaveTwitchClips = async (clips: ClipManualWithUserId[]) => {
     log('warn', 'unable to save clips - not found', undefined, 'bulkSaveTwitchClips');
     return;
   }
-  const client = await clientPromise;
-  const db = client.db().collection<ClipManualWithUserId>('TwitchClip');
-  let bulk_ops_arr = [];
+  // TODO:: when change to postgress use skipDuplicates
+  // await prisma.twitchClip.createMany({ data: [], skipDuplicates: true });
+  // const bulk_ops_arr = [];
 
-  for (let clip of clips) {
-    let update_op = {
-      updateOne: {
-        filter: { userId: clip.userId, twitch_id: clip.twitch_id },
-        update: { $set: clip },
-        upsert: true
-      }
-    };
-    bulk_ops_arr.push(update_op);
-  }
+  // for (const clip of clips) {
+  //   //check to see if clip is in db
 
-  const updatedAccounts = await db.bulkWrite(bulk_ops_arr);
-  log('info', 'clips updated', updatedAccounts, 'bulkSaveTwitchClips');
-  return updatedAccounts;
+  //   //if not create
+  //   const update = prisma.twitchClip.upsert({
+  //     where: { userId_twitch_id: { userId: clip.userId, twitch_id: clip.twitch_id } },
+  //     update: clip,
+  //     create: clip,
+  //   });
+  //   bulk_ops_arr.push(update);
+  // }
+
+  const bulked = await prisma.twitchClip.createMany({ data: clips });
+
+  log('info', 'clips updated', bulked, 'bulkSaveTwitchClips');
+  return bulked;
 };

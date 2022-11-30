@@ -1,45 +1,45 @@
-import clientPromise from '../db/conn';
-import { TSettings } from '../interfaces/Settings';
-import { ObjectId } from 'mongodb';
+import { Setting } from '@prisma/client';
+import prisma from '../db/conn';
+import log from '../utils/logger';
 
 export const updateLastUploadDate = async (
   userId: string,
-  lastUpload: Date,
+  lastUploaded: Date,
   lastUploadedId: string
 ) => {
-  if (!userId || !lastUpload) return;
-  const client = await clientPromise;
-  const db = client.db().collection<TSettings>('Setting');
+  try {
+    const updatedUserSettings = await prisma.setting.update({
+      where: { userId },
+      data: { lastUploaded, lastUploadedId },
+    });
 
-  const updatedUserSettings = await db.updateOne(
-    { userId: new ObjectId(userId) },
-    { $set: { lastUploaded: lastUpload, lastUploadedId: lastUploadedId } }
-  );
-
-  return updatedUserSettings;
+    return updatedUserSettings;
+  } catch (error) {
+    log('error', 'updateLastUploadDate Error', { error, userId, lastUploadedId });
+    return {} as Setting;
+  }
 };
 
 export const getUsersSettingsById = async (userId: string) => {
-  const client = await clientPromise;
-  const db = client.db().collection<TSettings>('Setting');
+  try {
+    const userSettings = await prisma.setting.findUniqueOrThrow({
+      where: { userId },
+    });
 
-  const userSettings = await db
-    .find({
-      userId: new ObjectId(userId)
-    })
-    .toArray();
-
-  return userSettings[0];
+    return userSettings;
+  } catch (error) {
+    log('error', 'getUsersSettingsById Error', { error, userId });
+  }
 };
-export const updateScheduledEnabled = async (userId: string) => {
-  if (!userId) return;
-  const client = await clientPromise;
-  const db = client.db().collection<TSettings>('Setting');
+export const updateScheduledEnabled = async (userId: string, uploadEnabled = false) => {
+  try {
+    const updatedUserSettings = await prisma.setting.update({
+      where: { userId },
+      data: { uploadEnabled },
+    });
 
-  const updatedUserSettings = await db.updateOne(
-    { userId: new ObjectId(userId) },
-    { $set: { uploadEnabled: false } }
-  );
-
-  return updatedUserSettings;
+    return updatedUserSettings;
+  } catch (error) {
+    log('error', 'updateScheduledEnabled Error', { error, userId });
+  }
 };

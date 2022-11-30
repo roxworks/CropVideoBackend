@@ -1,10 +1,6 @@
-import { RefreshingAuthProvider } from '@twurple/auth';
-import { ClientCredentialsAuthProvider } from '@twurple/auth';
+import { RefreshingAuthProvider, ClientCredentialsAuthProvider } from '@twurple/auth';
 import { ApiClient } from '@twurple/api';
-import {
-  UserWithAccountsAndSettingsWithId,
-  UserWithAccountsWithId
-} from '../../api/user/user.model';
+import { UserWithAccountsAndSettingsWithId } from '../../api/user/user.model';
 import { getUsersTwitchAccount, updateAccount } from '../../service/Account';
 
 const clientId = process.env.TWITCH_CLIENT_ID;
@@ -15,12 +11,13 @@ if (!clientId || !clientSecret) {
     'Please define TWITCH_CLIENT_ID AND TWITCH_CLIENT_SECRET vairables inside .env.local'
   );
 }
-//@ts-ignore
-let api = global.api;
+// @ts-ignore
+let { api } = global;
 
 if (!api) {
-  //@ts-ignore
-  api = global.api = { conn: null, promise: null };
+  api = { conn: null, promise: null };
+  // @ts-ignore
+  global.api = { conn: null, promise: null };
 }
 async function tokenData(userId: string) {
   const account = await getUsersTwitchAccount(userId);
@@ -29,7 +26,7 @@ async function tokenData(userId: string) {
     refreshToken: account?.refresh_token || null,
     scope: account?.scope?.split(' ') || [],
     expiresIn: account?.expires_at || 0,
-    obtainmentTimestamp: account?.obtainment_timestamp || 0
+    obtainmentTimestamp: account?.obtainment_timestamp || 0,
   };
 }
 
@@ -42,24 +39,23 @@ async function authProvider(user: UserWithAccountsAndSettingsWithId) {
         onRefresh: async (newTokenData) => {
           await updateAccount({
             type: 'bearer',
-            userId: user._id.toString(),
+            userId: user.id,
             provider: 'twitch',
             access_token: newTokenData.accessToken,
             refresh_token: newTokenData.refreshToken!,
             scope: newTokenData.scope.join(' '),
             expires_at: newTokenData.expiresIn!,
-            obtainment_timestamp: newTokenData.obtainmentTimestamp
+            obtainment_timestamp: newTokenData.obtainmentTimestamp,
           });
-        }
+        },
       },
-      await tokenData(user._id.toString())
+      await tokenData(user.id)
     );
-  } else {
-    return new ClientCredentialsAuthProvider(clientId!, clientSecret!);
   }
+  return new ClientCredentialsAuthProvider(clientId!, clientSecret!);
 }
 
-export async function apiClientConnect(user: UserWithAccountsAndSettingsWithId) {
+export default async function apiClientConnect(user: UserWithAccountsAndSettingsWithId) {
   const provider = await authProvider(user);
   if (api.conn) {
     return api.conn;
@@ -70,5 +66,3 @@ export async function apiClientConnect(user: UserWithAccountsAndSettingsWithId) 
   api.conn = await api.promise;
   return api.conn;
 }
-
-module.exports = { apiClientConnect };
