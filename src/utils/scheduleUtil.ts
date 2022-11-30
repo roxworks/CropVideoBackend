@@ -109,7 +109,7 @@ export const autoScheduleClips = async () => {
 
     const cropType = userSettings.cropType as TCropType;
 
-    const cropTemplate = await getCropTemplateByType(settings.id.toString(), cropType);
+    const cropTemplate = await getCropTemplateByType(settings.user.id.toString(), cropType);
     if (!cropTemplate) continue;
 
     log('info', 'auto schedule - got user templates', cropTemplate);
@@ -132,7 +132,7 @@ export const autoScheduleClips = async () => {
     if (!hasSchuldeDays) continue;
 
     // check if user has approved clips
-    const approvedClips = await getUsersApprovedClips(settings.id.toString());
+    const approvedClips = await getUsersApprovedClips(settings.user.id.toString());
 
     const approvedClipsCount = approvedClips.length;
 
@@ -157,7 +157,10 @@ export const autoScheduleClips = async () => {
       const isGreaterThanNow = scheduleTime > today.toISOString();
       if (!isGreaterThanNow) continue;
 
-      const scheduledClips = await scheduledClipsFromTime(settings.id.toString(), scheduleTime);
+      const scheduledClips = await scheduledClipsFromTime(
+        settings.user.id.toString(),
+        scheduleTime
+      );
       if (scheduledClips.count > 0) continue;
       // if not a scheduled clip, add one
 

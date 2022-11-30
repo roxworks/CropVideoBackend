@@ -179,7 +179,7 @@ const uploadToYoutube = async (clip: ClipWithRenderedUrl, accounts: Account[]) =
   };
 
   const updatedAccount = await updateAccount({
-    userId: clip.userId.toString(),
+    userId: clip.userId,
     ...accountData,
   });
   if (!updatedAccount) {
@@ -275,7 +275,7 @@ const uploadToTiktok = async (clip: ClipWithRenderedUrl, accounts: Account[]) =>
   };
 
   const updatedAccount = await updateAccount({
-    userId: clip.userId.toString(),
+    userId: clip.userId,
     ...accountData,
   });
 

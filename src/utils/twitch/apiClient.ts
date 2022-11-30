@@ -39,7 +39,7 @@ async function authProvider(user: UserWithAccountsAndSettingsWithId) {
         onRefresh: async (newTokenData) => {
           await updateAccount({
             type: 'bearer',
-            userId: user.id.toString(),
+            userId: user.id,
             provider: 'twitch',
             access_token: newTokenData.accessToken,
             refresh_token: newTokenData.refreshToken!,
@@ -49,7 +49,7 @@ async function authProvider(user: UserWithAccountsAndSettingsWithId) {
           });
         },
       },
-      await tokenData(user.id.toString())
+      await tokenData(user.id)
     );
   }
   return new ClientCredentialsAuthProvider(clientId!, clientSecret!);

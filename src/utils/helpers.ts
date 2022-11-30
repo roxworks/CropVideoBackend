@@ -4,10 +4,11 @@ import { CropTemplate } from '../interfaces/CropTemplate';
 import { TSettings } from '../interfaces/Settings';
 
 export function exclude<T, Key extends keyof T>(list: T, ...keys: Key[]): Omit<T, Key> {
-  for (let key of keys) {
-    delete list[key];
+  const newList = { ...list };
+  for (const key of keys) {
+    delete newList[key];
   }
-  return list;
+  return newList;
 }
 
 export const convertTags = (tags: string[]) => tags.map((tag) => `%23${tag}`).join(' ');
