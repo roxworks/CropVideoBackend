@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-redeclare */
-import {  z } from 'zod';
+/* eslint-disable no-redeclare */
+import { z } from 'zod';
 import { Decimal } from '@prisma/client/runtime';
 
 export const JobId = z.object({
-  id: z.string()
+  id: z.string(),
 });
 
 export const platformsSchema = z.enum(['TikTok', 'YouTube', 'Instagram', 'Facebook']);
@@ -16,7 +16,7 @@ export const ClipStatuses = z.enum([
   'FAILED_SCHEDULED_UPLOAD',
   'SUCCESS_SCHEDULED_UPLOAD',
   'SUCCESS_MANUAL_UPLOAD',
-  'FAILED_MANUAL_UPLOAD'
+  'FAILED_MANUAL_UPLOAD',
 ]);
 
 export const cropSettingsSchema = z.object({
@@ -24,9 +24,9 @@ export const cropSettingsSchema = z.object({
   y: z.number(),
   width: z.number(),
   height: z.number(),
-  scaleX: z.number().nullable(),
-  scaleY: z.number().nullable(),
-  isNormalized: z.boolean().default(true)
+  scaleX: z.number().nullable().optional(),
+  scaleY: z.number().nullable().optional(),
+  isNormalized: z.boolean().default(true),
 });
 export const cropSettingsSchemaOutput = z.object({
   x: z.number(),
@@ -35,7 +35,7 @@ export const cropSettingsSchemaOutput = z.object({
   height: z.number(),
   scaleX: z.number().nullable(),
   scaleY: z.number().nullable(),
-  isNormalized: z.boolean().default(true)
+  isNormalized: z.boolean().default(true),
 });
 
 export const CropData = z.object({
@@ -43,14 +43,14 @@ export const CropData = z.object({
   screenCrop: cropSettingsSchema,
   cropType: z.enum(['no-cam', 'cam-top', 'cam-freeform', 'freeform']),
   startTime: z.number().nullable(),
-  endTime: z.number().nullable()
+  endTime: z.number().nullable(),
 });
 export const CropDataInput = z.object({
   camCrop: cropSettingsSchema.nullable().optional(),
   screenCrop: cropSettingsSchema,
   cropType: z.enum(['no-cam', 'cam-top', 'cam-freeform', 'freeform']),
   startTime: z.instanceof(Decimal).or(z.number()).optional().nullable(),
-  endTime: z.instanceof(Decimal).or(z.number()).optional().nullable()
+  endTime: z.instanceof(Decimal).or(z.number()).optional().nullable(),
 });
 
 export const ClipManual = z.object({
@@ -68,7 +68,7 @@ export const ClipManual = z.object({
   title: z.string(),
   url: z.string(),
   video_id: z.string().default(''),
-  view_count: z.number()
+  view_count: z.number(),
 });
 
 export const Clip = z.object({
@@ -112,7 +112,7 @@ export const Clip = z.object({
   youtubeTitle: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
   renderedUrl: z.string().optional(),
-  facebookDescription: z.string().optional().nullable()
+  facebookDescription: z.string().optional().nullable(),
 });
 
 export const CurrentClip = z.object({
@@ -123,7 +123,7 @@ export const CurrentClip = z.object({
   youtubePrivacy: z.string().optional(),
   youtubeCategory: z.string().optional(),
   youtubeDescription: z.string().optional(),
-  clipURL: z.string().optional()
+  clipURL: z.string().optional(),
 });
 
 export const ClipWithId = Clip.extend({ id: z.string() });
@@ -143,7 +143,7 @@ export const categories = z.enum([
   'Howto & Style',
   'Education',
   'Science & Technology',
-  'Nonprofits & Activism'
+  'Nonprofits & Activism',
 ]);
 
 export const ClipManualWithUserId = ClipManual.extend({
@@ -163,16 +163,16 @@ export const ClipManualWithUserId = ClipManual.extend({
   instagramHashtags: z.array(z.string()).optional(),
   facebookDescription: z.string().optional().nullable(),
   startTime: z.number().optional().nullable(),
-  endTime: z.number().optional().nullable()
+  endTime: z.number().optional().nullable(),
 });
 
 export const ScheduledClipsArray = z.object({
-  scheduledClips: z.array(ClipWithId)
+  scheduledClips: z.array(ClipWithId),
 });
 
 export const RenderClipReq = z.object({
   clip: ClipManual,
-  cropData: CropData
+  cropData: CropData,
 });
 
 export type JobId = z.infer<typeof JobId>;

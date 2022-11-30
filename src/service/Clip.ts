@@ -13,7 +13,8 @@ export const getClipsReadyToUploaded = async () => {
       where: {
         uploaded: false,
         status: 'RENDERED',
-        NOT: [{ scheduledUploadTime: null }, { renderedUrl: null }],
+        scheduledUploadTime: { not: null },
+        renderedUrl: { not: null },
         AND: [{ scheduledUploadTime: { lte: new Date(new Date().toUTCString()) } }],
       },
     });
@@ -26,13 +27,12 @@ export const getClipsReadyToUploaded = async () => {
 };
 
 export const scheduledClipsFromTime = async (userId: string, time: string) => {
-  // TODO:: make sure userId is converted to object for mongodb
-
   try {
     const clips = await prisma.clip.findMany({
       where: {
         userId,
         scheduledUploadTime: new Date(time),
+        // status: 'CANCELED',
       },
     });
 

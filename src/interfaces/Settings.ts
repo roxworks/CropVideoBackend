@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-redeclare */
+/* eslint-disable no-redeclare */
 import { z } from 'zod';
 import { cropSettingsSchema } from '../api/crop/crop.model';
 import { TUser } from '../api/user/user.model';

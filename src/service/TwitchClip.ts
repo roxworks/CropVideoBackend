@@ -29,6 +29,19 @@ export const bulkSaveTwitchClips = async (clips: ClipManualWithUserId[]) => {
   }
   // TODO:: when change to postgress use skipDuplicates
   // await prisma.twitchClip.createMany({ data: [], skipDuplicates: true });
+  // const bulk_ops_arr = [];
+
+  // for (const clip of clips) {
+  //   //check to see if clip is in db
+
+  //   //if not create
+  //   const update = prisma.twitchClip.upsert({
+  //     where: { userId_twitch_id: { userId: clip.userId, twitch_id: clip.twitch_id } },
+  //     update: clip,
+  //     create: clip,
+  //   });
+  //   bulk_ops_arr.push(update);
+  // }
 
   const bulked = await prisma.twitchClip.createMany({ data: clips });
 

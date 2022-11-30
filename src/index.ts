@@ -27,7 +27,7 @@ const PORT = process.env.PORT || 5000;
 const serverAdapter = new ExpressAdapter();
 serverAdapter.setBasePath('/admin/queues');
 
-const { addQueue, removeQueue, setQueues, replaceQueues } = createBullBoard({
+createBullBoard({
   queues: [
     new BullMQAdapter(clipQueue, { readOnlyMode: true }),
     new BullMQAdapter(clipLatestQueue, { readOnlyMode: true }),
