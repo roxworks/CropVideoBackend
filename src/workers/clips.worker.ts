@@ -8,7 +8,7 @@ import log from '../utils/logger';
 const clipsProducer = async (job: Job<{ userId: string; providerAccountId: string }, any, any>) => {
   log('info', 'clip-producer start ', job.data, 'clips.worker');
   const { userId } = job.data;
-  
+
   // throw new Error('whoops');
   // TODO:: gets users clips - add to clips handler
 
@@ -60,6 +60,7 @@ const clipsProducer = async (job: Job<{ userId: string; providerAccountId: strin
     log('error', 'clips-producer failed to get clips', err, 'clips.worker');
     if (err instanceof Error) {
       log('error', 'clips=producer', err.message);
+      log('error', 'clips=producer', err);
     }
     throw new Error('somethiing went wrong getting all clips');
   }
