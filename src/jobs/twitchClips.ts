@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 
-import { EVERY_MINUTE, EVERY_10_MINUTES } from './cronConstants';
+import { EVERY_MINUTE, EVERY_30_MINUTES } from './cronConstants';
 import { addToGetAllClipsQueue, addToGetLatestClipsQueue } from '../utils/twitch/clips.handler';
 import {
   getUsersLatestsClips,
@@ -32,7 +32,7 @@ export default () => {
       }
     }
   });
-  cron.schedule(EVERY_10_MINUTES, async () => {
+  cron.schedule(EVERY_30_MINUTES, async () => {
     try {
       // get list of users with lastUploaded date to fetch new clips
       const users = await getUsersLatestsClips();
