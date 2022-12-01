@@ -10,14 +10,19 @@ export const updateUserDefaultClipsById = async (id: string, defaultClip: Defaul
   prisma.user.update({ where: { id }, data: { defaultClips: defaultClip } });
 
 export const getUserByIdWithAccountsAndSettings = async (id: string) => {
-  const user = prisma.user.findUnique({
-    where: { id },
-    include: {
-      settings: true,
-      accounts: true,
-    },
-  });
-  return user;
+  try {
+    const user = prisma.user.findUnique({
+      where: { id },
+      include: {
+        settings: true,
+        accounts: true,
+      },
+    });
+    return user;
+  } catch (error) {
+    log('error', 'getUserByIdWithAccountsAndSettings', error);
+    return undefined;
+  }
 };
 
 export const getUsersWithoutClips = async () => {
