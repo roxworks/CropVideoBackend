@@ -31,8 +31,7 @@ const clipsProducer = async (job: Job<{ userId: string; providerAccountId: strin
     }
 
     let clips = await getClipsStartingAtCertainDateFromTwitchAPI(
-      // twitchProvider.providerAccountId,
-      '514076328',
+      twitchProvider.providerAccountId,
       user
     );
 
