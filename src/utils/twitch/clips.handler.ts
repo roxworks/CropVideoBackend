@@ -3,6 +3,7 @@ import { ClipManualWithUserId } from '../../api/crop/crop.model';
 import { UserWithAccountsAndSettingsWithId } from '../../api/user/user.model';
 import { clipLatestQueue, clipQueue } from '../../queues/clip.queue';
 import log from '../logger';
+import { updateUserDefaultClipsById } from '../../service/User';
 
 type TwurpleClip = {
   id: string;
@@ -23,6 +24,7 @@ type TwurpleClip = {
 
 export const addToGetAllClipsQueue = async (userId: string, broadcasterId: string) => {
   try {
+    await updateUserDefaultClipsById(userId, 'inqueue');
     await clipQueue.add('getAll', { userId, broadcasterId });
   } catch (error) {
     log('error', 'failed to add user to clips queue', error);

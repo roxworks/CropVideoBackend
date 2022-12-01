@@ -24,27 +24,27 @@ export const autoApproveClips = async (settings: TSettings | SettingsOutput) => 
 
 export const bulkSaveTwitchClips = async (clips: ClipManualWithUserId[]) => {
   if (!clips) {
-    log('warn', 'unable to save clips - not found', undefined, 'bulkSaveTwitchClips');
     return;
   }
   // TODO:: when change to postgress use skipDuplicates
   // await prisma.twitchClip.createMany({ data: [], skipDuplicates: true });
-  // const bulk_ops_arr = [];
-
-  // for (const clip of clips) {
-  //   //check to see if clip is in db
-
-  //   //if not create
-  //   const update = prisma.twitchClip.upsert({
-  //     where: { userId_twitch_id: { userId: clip.userId, twitch_id: clip.twitch_id } },
-  //     update: clip,
-  //     create: clip,
-  //   });
-  //   bulk_ops_arr.push(update);
-  // }
-
   const bulked = await prisma.twitchClip.createMany({ data: clips });
 
   log('info', 'clips updated', bulked, 'bulkSaveTwitchClips');
   return bulked;
+};
+
+export const isClipInDB = async <T extends { userId: string; twitch_id: string }>(clip: T) => {
+  const hasClip = await prisma.twitchClip.findUnique({
+    where: {
+      userId_twitch_id: {
+        userId: clip.userId,
+        twitch_id: clip.twitch_id,
+      },
+    },
+  });
+  if (hasClip) {
+    return true;
+  }
+  return false;
 };
