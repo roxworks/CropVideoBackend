@@ -1,7 +1,7 @@
 import apiClientConnect from './apiClient';
 import { ClipManualWithUserId } from '../../api/crop/crop.model';
 import { UserWithAccountsAndSettingsWithId } from '../../api/user/user.model';
-import { clipLatestQueue, clipQueue } from '../../queues/clip.queue';
+import { clipLatestQueue, clipQueue, MAX_RETRIES, RETRY_DELAY } from '../../queues/clip.queue';
 import log from '../logger';
 import { updateUserDefaultClipsById } from '../../service/User';
 
@@ -25,7 +25,17 @@ type TwurpleClip = {
 export const addToGetAllClipsQueue = async (userId: string, broadcasterId: string) => {
   try {
     await updateUserDefaultClipsById(userId, 'inqueue');
-    await clipQueue.add('getAll', { userId, broadcasterId });
+    await clipQueue.add(
+      'getAll',
+      { userId, broadcasterId },
+      {
+        attempts: MAX_RETRIES,
+        backoff: {
+          type: 'exponential',
+          delay: RETRY_DELAY,
+        },
+      }
+    );
   } catch (error) {
     log('error', 'failed to add user to clips queue', error);
   }
@@ -33,7 +43,17 @@ export const addToGetAllClipsQueue = async (userId: string, broadcasterId: strin
 
 export const addToGetLatestClipsQueue = async (userId: string, broadcasterId: string) => {
   try {
-    await clipLatestQueue.add('getLatest', { userId, broadcasterId });
+    await clipLatestQueue.add(
+      'getLatest',
+      { userId, broadcasterId },
+      {
+        attempts: MAX_RETRIES,
+        backoff: {
+          type: 'exponential',
+          delay: RETRY_DELAY,
+        },
+      }
+    );
   } catch (error) {
     log('error', 'failed to add user to clips queue', error);
   }
