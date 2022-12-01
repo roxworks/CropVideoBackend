@@ -1,10 +1,12 @@
-import { Queue, Worker } from 'bullmq';
+import { Queue, Worker, Job } from 'bullmq';
 import Redis from 'ioredis';
 import clipsProducer from '../workers/clips.worker';
 import { updateUserDefaultClipsById } from '../service/User';
 import log from '../utils/logger';
 
 const isDev = process.env.NODE_ENV === 'development';
+const RETRY_DELAY = 1000;
+const MAX_RETRIES = 3;
 
 const connectionURL = String(process.env.REDIS_URL!);
 
@@ -15,6 +17,13 @@ const connection = {
 
 export const clipQueue = new Queue('clips-all', {
   connection: isDev ? connection : new Redis(connectionURL, { maxRetriesPerRequest: null }),
+  defaultJobOptions: {
+    attempts: MAX_RETRIES,
+    backoff: {
+      type: 'exponential',
+      delay: RETRY_DELAY,
+    },
+  },
 });
 
 const myWroker = new Worker('clips-all', clipsProducer, {
@@ -35,6 +44,13 @@ myWroker.on('failed', async (job, err) => {
 
 export const clipLatestQueue = new Queue('clips-latest', {
   connection: isDev ? connection : new Redis(connectionURL, { maxRetriesPerRequest: null }),
+  defaultJobOptions: {
+    attempts: MAX_RETRIES,
+    backoff: {
+      type: 'exponential',
+      delay: RETRY_DELAY,
+    },
+  },
 });
 
 const clipLatestWroker = new Worker('clips-latest', clipsProducer, {
@@ -48,7 +64,14 @@ clipLatestWroker.on('completed', async (job) => {
   log('info', 'clip-queue-complete', { id: job.id, user: job.data.userId });
 });
 
-clipLatestWroker.on('failed', async (job, err) => {
-  // await updateUserDefaultClipsById(job.data.userId, 'failed');
+clipLatestWroker.on('failed', async (job: Job, err) => {
+  if (job.opts.attempts === MAX_RETRIES) {
+    log('error', 'clip-queue-failed-max-retries', {
+      id: job.id,
+      user: job.data.userId,
+      error: err,
+    });
+    // await updateUserDefaultClipsById(job.data.userId, 'failed');
+  }
   log('error', 'clip-queue-failed', { id: job.id, user: job.data.userId, error: err });
 });

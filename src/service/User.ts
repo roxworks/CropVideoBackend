@@ -21,7 +21,7 @@ export const getUserByIdWithAccountsAndSettings = async (id: string) => {
     return user;
   } catch (error) {
     log('error', 'getUserByIdWithAccountsAndSettings', error);
-    return undefined;
+    throw new Error(`failed getUserByIdWithAccountsAndSettings ${id} `);
   }
 };
 
