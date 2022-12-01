@@ -5,8 +5,8 @@ import { updateUserDefaultClipsById } from '../service/User';
 import log from '../utils/logger';
 
 const isDev = process.env.NODE_ENV === 'development';
-const RETRY_DELAY = 1000;
-const MAX_RETRIES = 3;
+export const RETRY_DELAY = 1000;
+export const MAX_RETRIES = 3;
 
 const connectionURL = String(process.env.REDIS_URL!);
 
