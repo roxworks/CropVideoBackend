@@ -1,15 +1,15 @@
 import prisma from '../db/conn';
-import { CropTemplate } from '../interfaces/CropTemplate';
+import { CropTemplateOutput } from '../interfaces/CropTemplate';
 import log from '../utils/logger';
 
-export type TCropType = 'no-cam' | 'cam-top' | 'cam-freeform' | 'freeform';
+export type TCropType = 'NO_CAM' | 'CAM_TOP' | 'CAM_FREEFORM' | 'FREEFORM';
 export const getCropTemplateByType = async (userId: string, cropType: TCropType) => {
   try {
     return (await prisma.cropTemplate.findFirst({
       where: { userId, cropType, name: 'default' },
-    })) as CropTemplate;
+    })) as CropTemplateOutput;
   } catch (error) {
     log('error', 'getCropTemplateByType Error', error);
-    return {} as CropTemplate;
+    return {} as CropTemplateOutput;
   }
 };

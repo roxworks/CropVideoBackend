@@ -11,7 +11,7 @@ export const updateUserDefaultClipsById = async (id: string, defaultClip: Defaul
 
 export const getUserByIdWithAccountsAndSettings = async (id: string) => {
   try {
-    const user = prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id },
       include: {
         settings: true,
@@ -26,9 +26,8 @@ export const getUserByIdWithAccountsAndSettings = async (id: string) => {
 };
 
 export const getUsersWithoutClips = async () => {
-  // TODO:: does this include accounts correctly
   const users = await prisma.user.findMany({
-    where: { OR: [{ defaultClips: 'pending' }, { defaultClips: { isSet: false } }] },
+    where: { defaultClips: 'pending' },
     include: { accounts: true },
   });
   return users;
@@ -38,7 +37,7 @@ export const getUsersLatestsClips = async () => {
   try {
     return await prisma.user.findMany({
       where: {
-        OR: [{ defaultClips: { in: ['complete', 'failed'] } }, { defaultClips: { isSet: false } }],
+        defaultClips: { in: ['complete', 'failed'] },
         settings: { lastUploaded: { not: null } },
       },
       include: { accounts: true, settings: true },
@@ -53,10 +52,9 @@ export const getSettingsWithUploadEnabled = async () => {
     const user = await prisma.setting.findMany({
       where: {
         uploadEnabled: true,
-        scheduleDays: { isSet: true },
-        timeOffset: { isSet: true },
+        timeOffset: { not: null },
       },
-      include: { user: true },
+      include: { user: true, ScheduledDays: true },
     });
 
     return user;

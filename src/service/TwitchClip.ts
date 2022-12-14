@@ -12,8 +12,8 @@ export const autoApproveClips = async (settings: TSettings | SettingsOutput) => 
       view_count: { gte: settings.minViewCount },
       created_at: { gte: settings.approveDate.toISOString() },
       AND: [
-        { OR: [{ approved: false }, { approved: { isSet: false } }] },
-        { OR: [{ approvedStatus: { not: 'CANCELED' } }, { approvedStatus: { isSet: false } }] },
+        { approved: false },
+        { OR: [{ approvedStatus: { not: 'CANCELED' } }, { approvedStatus: 'NOT_APPROVED' }] },
       ],
     },
     data: { approved: true, approvedStatus: 'AUTO_APPROVE' },
@@ -26,9 +26,7 @@ export const bulkSaveTwitchClips = async (clips: ClipManualWithUserId[]) => {
   if (!clips) {
     return;
   }
-  // TODO:: when change to postgress use skipDuplicates
-  // await prisma.twitchClip.createMany({ data: [], skipDuplicates: true });
-  const bulked = await prisma.twitchClip.createMany({ data: clips });
+  const bulked = await prisma.twitchClip.createMany({ data: clips, skipDuplicates: true });
 
   log('info', 'clips updated', bulked, 'bulkSaveTwitchClips');
   return bulked;

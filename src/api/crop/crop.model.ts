@@ -6,6 +6,7 @@ export const JobId = z.object({
   id: z.string(),
 });
 
+export const cropTypeEnum = z.enum(['NO_CAM', 'CAM_TOP', 'CAM_FREEFORM', 'FREEFORM']);
 export const platformsSchema = z.enum(['TikTok', 'YouTube', 'Instagram', 'Facebook']);
 export const YoutubePrivacy = z.enum(['Public', 'Unlisted', 'Private']);
 export const ClipStatuses = z.enum([
@@ -41,14 +42,14 @@ export const cropSettingsSchemaOutput = z.object({
 export const CropData = z.object({
   camCrop: cropSettingsSchema.nullable(),
   screenCrop: cropSettingsSchema,
-  cropType: z.enum(['no-cam', 'cam-top', 'cam-freeform', 'freeform']),
+  cropType: cropTypeEnum,
   startTime: z.number().nullable(),
   endTime: z.number().nullable(),
 });
 export const CropDataInput = z.object({
   camCrop: cropSettingsSchema.nullable().optional(),
   screenCrop: cropSettingsSchema,
-  cropType: z.enum(['no-cam', 'cam-top', 'cam-freeform', 'freeform']),
+  cropType: cropTypeEnum,
   startTime: z.instanceof(Decimal).or(z.number()).optional().nullable(),
   endTime: z.instanceof(Decimal).or(z.number()).optional().nullable(),
 });
@@ -83,6 +84,7 @@ export const Clip = z.object({
   title: z.string(),
   url: z.string(),
   videoId: z.string(),
+  twitch_id: z.string(),
   viewCount: z.number(),
   thumbnailUrl: z.string(),
   createdAt: z.date(),
@@ -113,6 +115,7 @@ export const Clip = z.object({
   description: z.string().optional().nullable(),
   renderedUrl: z.string().optional(),
   facebookDescription: z.string().optional().nullable(),
+  updatedAt: z.date().optional(),
 });
 
 export const CurrentClip = z.object({
@@ -148,12 +151,12 @@ export const categories = z.enum([
 
 export const ClipManualWithUserId = ClipManual.extend({
   userId: z.string(),
-  uploaded: z.boolean().optional().nullish(),
+  uploaded: z.boolean().optional(),
   uploadPlatforms: z.array(z.enum(['tiktok', 'youtube', 'instagram'])).optional(),
-  approved: z.boolean().optional().nullish(),
+  approved: z.boolean().optional(),
   approvedStatus: z.enum(['AUTO_APPROVE', 'MANUAL_APPROVE', 'CANCELED']).optional(),
-  scheduled: z.boolean().optional().nullish(),
-  cropType: z.enum(['no-cam', 'cam-top', 'cam-freeform', 'freeform']).optional(),
+  scheduled: z.boolean().optional(),
+  cropType: cropTypeEnum.optional(),
   youtubeHashtags: z.array(z.string()).optional(),
   youtubeDescription: z.string().optional().nullable(),
   youtubePrivacy: z.enum(['public', 'unlisted', 'private']).optional(),

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-redeclare */
+/* eslint-disable no-redeclare */
 import { z } from 'zod';
 import { SettingsOutput } from '../../interfaces/Settings';
 import { TAccount, TAccountOutput } from '../../interfaces/Accounts';

@@ -4,9 +4,11 @@ import { getUsersApprovedClips, scheduleClips, scheduledClipsFromTime } from '..
 import { updateScheduledEnabled } from '../service/Settings';
 import { getSettingsWithUploadEnabled } from '../service/User';
 import log from './logger';
-import { SettingsWithUser } from '../interfaces/Settings';
+import { ScheduleDaysOutput, SettingsWithUser } from '../interfaces/Settings';
+import { exclude } from '../utils//helpers';
+import { CropTemplate } from '../interfaces/CropTemplate';
 
-export type ScheduleDays = {
+export type ScheduleDaysKey = {
   [key: string]: string[];
 };
 
@@ -33,9 +35,9 @@ export type ScheduleDays = {
 //   sat: ['23:15']
 // }
 
-export const scheduleByUTCDay = (scheduleDays: ScheduleDays, UTCoffset: number) => {
+export const scheduleByUTCDay = (scheduleDays: ScheduleDaysKey, UTCoffset: number) => {
   const LOOKUP_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-  const newDays: ScheduleDays = {
+  const newDays: ScheduleDaysKey = {
     sun: [],
     mon: [],
     tue: [],
@@ -88,6 +90,7 @@ export const convertTime = (time: string, offset: number) => {
 export const autoScheduleClips = async () => {
   const LOOKUP_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
   const settingsWithUploadEnabled = await getSettingsWithUploadEnabled();
+  console.log({ settingsWithUploadEnabled });
   if (!settingsWithUploadEnabled) return;
 
   for (const settings of settingsWithUploadEnabled) {
@@ -108,12 +111,23 @@ export const autoScheduleClips = async () => {
 
     const cropType = userSettings.cropType as TCropType;
 
-    const cropTemplate = await getCropTemplateByType(settings.user.id.toString(), cropType);
+    const cropTemplate = (await getCropTemplateByType(
+      settings.user.id.toString(),
+      cropType
+    )) as CropTemplate;
     if (!cropTemplate) continue;
 
     log('info', 'auto schedule - got user templates', cropTemplate);
 
-    const scheduleDays = userSettings.scheduleDays as ScheduleDays;
+    const scheduleDaysOutput = userSettings.ScheduledDays as ScheduleDaysOutput;
+    if (!scheduleDaysOutput) continue;
+
+    const scheduleDays = exclude(
+      scheduleDaysOutput,
+      'id',
+      'userId',
+      'settingId'
+    ) as ScheduleDaysKey;
     const { timeOffset } = userSettings;
 
     if (!scheduleDays || timeOffset === null || timeOffset === undefined) continue;

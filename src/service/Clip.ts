@@ -32,7 +32,6 @@ export const scheduledClipsFromTime = async (userId: string, time: string) => {
       where: {
         userId,
         scheduledUploadTime: new Date(time),
-        // status: 'CANCELED',
       },
     });
 
@@ -87,10 +86,10 @@ export const getUsersApprovedClips = async (userId: string) => {
         userId,
         AND: [
           {
-            OR: [{ scheduled: false }, { scheduled: { isSet: false } }],
+            scheduled: false,
           },
           {
-            OR: [{ uploaded: false }, { uploaded: { isSet: false } }],
+            uploaded: false,
           },
         ],
         approved: true,
@@ -111,7 +110,10 @@ export const scheduleClips = async (
 ) => {
   let clipCropData: CropTemplate | undefined;
   if (clip.cropType) {
-    clipCropData = await getCropTemplateByType(clip.userId, clip.cropType as TCropType);
+    clipCropData = (await getCropTemplateByType(
+      clip.userId,
+      clip.cropType as TCropType
+    )) as CropTemplate;
   }
 
   const caption = `${clip.caption || clip.title} ${convertTags(clip.instagramHashtags)}`;
