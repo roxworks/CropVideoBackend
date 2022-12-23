@@ -350,7 +350,6 @@ const convertCropType = (type: oldCropTypes) => {
 };
 async function main() {
   const users = await getPaidUsersFromMongo();
-
   for (const user of users) {
     const accounts = user.accounts;
     const settings = user.settings;
@@ -376,106 +375,109 @@ async function main() {
     );
     const cropTemplatesData: Omit<TCropTemplateWithId, '_id' | 'userId' | 'settingId'>[] =
       cropTemplates.map((template) => exclude(template, '_id', 'userId', 'settingId'));
-    // 1. Create new user and settings
-    const newUser = await prisma.user.upsert({
-      include: { settings: true },
-      where: { email: userData.email },
-      update: {},
-      create: {
-        ...userData,
-        settings: {
-          create: {
-            ...settingData,
-            cropType: settingData.cropType
-              ? convertCropType(settingData.cropType as oldCropTypes)
-              : null,
-          },
-        },
-      },
-    });
-    // 2. Verify user created
-    if (!newUser) {
-      throw new Error('Failed to create user and settings');
-    }
-
-    if (scheduleDays && newUser?.settings?.id) {
-      await prisma.scheduledDays.upsert({
-        where: { userId: newUser.id },
-        update: { ...scheduleDays },
+    await prisma.$transaction(async (tx) => {
+      // 1. Create new user and settings
+      const newUser = await tx.user.upsert({
+        include: { settings: true },
+        where: { email: userData.email },
+        update: {},
         create: {
-          ...scheduleDays,
-          user: { connect: { id: newUser.id } },
-          setting: { connect: { id: newUser.settings.id } },
-        },
-      });
-    }
-    if (cropTemplatesData?.length > 0 && newUser?.settings?.id) {
-      for (const template of cropTemplatesData) {
-        await prisma.cropTemplate.upsert({
-          where: {
-            name_cropType_settingId: {
-              name: template.name,
-              cropType: convertCropType(template.cropType as oldCropTypes),
-              settingId: newUser.settings.id,
+          ...userData,
+          settings: {
+            create: {
+              ...settingData,
+              cropType: settingData.cropType
+                ? convertCropType(settingData.cropType as oldCropTypes)
+                : null,
             },
           },
-          update: { ...template, cropType: convertCropType(template.cropType as oldCropTypes) },
+        },
+      });
+
+      // 2. Verify user created
+      if (!newUser) {
+        throw new Error('Failed to create user and settings');
+      }
+
+      if (scheduleDays && newUser?.settings?.id) {
+        await tx.scheduledDays.upsert({
+          where: { userId: newUser.id },
+          update: { ...scheduleDays },
           create: {
-            ...template,
-            cropType: convertCropType(template.cropType as oldCropTypes),
+            ...scheduleDays,
             user: { connect: { id: newUser.id } },
             setting: { connect: { id: newUser.settings.id } },
           },
         });
       }
-    }
-
-    for (const account of accountData) {
-      if (account.provider === 'youtube' && account.expires_at) {
-        const expiresTimeToSeconds = parseInt(String(account.expires_at / 1000));
-        account.expires_at = expiresTimeToSeconds;
+      if (cropTemplatesData?.length > 0 && newUser?.settings?.id) {
+        for (const template of cropTemplatesData) {
+          await tx.cropTemplate.upsert({
+            where: {
+              name_cropType_settingId: {
+                name: template.name,
+                cropType: convertCropType(template.cropType as oldCropTypes),
+                settingId: newUser.settings.id,
+              },
+            },
+            update: { ...template, cropType: convertCropType(template.cropType as oldCropTypes) },
+            create: {
+              ...template,
+              cropType: convertCropType(template.cropType as oldCropTypes),
+              user: { connect: { id: newUser.id } },
+              setting: { connect: { id: newUser.settings.id } },
+            },
+          });
+        }
       }
-      account.obtainment_timestamp =
-        account.obtainment_timestamp && account.obtainment_timestamp > 0
-          ? parseInt(String(account.obtainment_timestamp / 1000))
-          : 0;
-      await prisma.account.upsert({
-        where: { userId_provider: { userId: newUser.id, provider: account.provider } },
-        update: {},
-        create: { ...account, userId: newUser.id },
+
+      for (const account of accountData) {
+        if (account.provider === 'youtube' && account.expires_at) {
+          const expiresTimeToSeconds = parseInt(String(account.expires_at / 1000));
+          account.expires_at = expiresTimeToSeconds;
+        }
+        account.obtainment_timestamp =
+          account.obtainment_timestamp && account.obtainment_timestamp > 0
+            ? parseInt(String(account.obtainment_timestamp / 1000))
+            : 0;
+        await tx.account.upsert({
+          where: { userId_provider: { userId: newUser.id, provider: account.provider } },
+          update: {},
+          create: { ...account, userId: newUser.id },
+        });
+      }
+
+      const twitchClipsData: Omit<TClipManualWithUserId, '_id'>[] = twitchClips.map((clip) => {
+        const data = exclude(clip, '_id', 'userId');
+        const cropType = data.cropType ? convertCropType(data.cropType as oldCropTypes) : undefined;
+        return { ...data, userId: newUser.id, cropType };
       });
-    }
 
-    const twitchClipsData: Omit<TClipManualWithUserId, '_id'>[] = twitchClips.map((clip) => {
-      const data = exclude(clip, '_id', 'userId');
-      const cropType = data.cropType ? convertCropType(data.cropType as oldCropTypes) : undefined;
-      return { ...data, userId: newUser.id, cropType };
-    });
+      if (twitchClipsData?.length > 0) {
+        await tx.twitchClip.createMany({
+          data: twitchClipsData,
+          skipDuplicates: true,
+        });
+      }
 
-    if (twitchClipsData?.length > 0) {
-      await prisma.twitchClip.createMany({
-        data: twitchClipsData,
-        skipDuplicates: true,
+      const uploadedClipsData: Omit<TClipWithIdMongo, '_id'>[] = uploadedClips.map((clip) => {
+        const data = exclude(clip, '_id', 'userId');
+        return {
+          ...data,
+          userId: newUser.id,
+          twitch_id: data.videoId,
+          cropData: {
+            ...data.cropData,
+            cropType: convertCropType(data.cropData.cropType as oldCropTypes),
+          },
+        };
       });
-    }
 
-    const uploadedClipsData: Omit<TClipWithIdMongo, '_id'>[] = uploadedClips.map((clip) => {
-      const data = exclude(clip, '_id', 'userId');
-      return {
-        ...data,
-        userId: newUser.id,
-        twitch_id: data.videoId,
-        cropData: {
-          ...data.cropData,
-          cropType: convertCropType(data.cropData.cropType as oldCropTypes),
-        },
-      };
+      if (uploadedClipsData?.length > 0) {
+        await tx.clip.createMany({ data: uploadedClipsData, skipDuplicates: true });
+      }
+      console.log(`${newUser.name} done`);
     });
-
-    if (uploadedClipsData?.length > 0) {
-      await prisma.clip.createMany({ data: uploadedClipsData, skipDuplicates: true });
-    }
-    console.log(`${newUser.name} done`);
   }
   return;
 }
