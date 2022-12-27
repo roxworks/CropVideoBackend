@@ -8,7 +8,7 @@ export const TAccount = z.object({
   providerAccountId: z.string().optional(),
   refresh_token: z.string().optional(),
   access_token: z.string(),
-  expires_at: z.number().or(z.bigint()),
+  expires_at: z.number(),
   refresh_expires_at: z.number().optional(),
   obtainment_timestamp: z.number().optional(),
   token_type: z.string().optional(),
