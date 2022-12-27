@@ -21,7 +21,7 @@ model Account {
   access_token         String? @db.Text
   expires_at           Int?
   refresh_expires_at   Int?
-  obtainment_timestamp Int     @default(0)
+  obtainment_timestamp Int?    @default(0)
   token_type           String?
   scope                String?
   id_token             String?
@@ -70,6 +70,7 @@ model User {
   TwitchClip        TwitchClip[]
   Role              Role                @default(USER)
   ScheduledDays     ScheduledDays?
+  Clip              Clip[]
 }
 
 model VerificationToken {
@@ -172,6 +173,8 @@ model Clip {
   renderedUrl         String?
   updatedAt           DateTime  @updatedAt()
   twitch_id           String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, twitch_id])
 }

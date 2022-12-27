@@ -47,14 +47,12 @@
       "always"
     ],
     "import/no-cycle": "off",
-    // "indent": ["error", 2],
     "@typescript-eslint/naming-convention": "off",
     "radix": "off",
     "consistent-return": "off",
     "no-continue": "off",
     "no-use-before-define": "off",
     "@typescript-eslint/no-use-before-define": "off",
-    // "no-restricted-syntax": "off",
     "prefer-const": [
       "error",
       {
