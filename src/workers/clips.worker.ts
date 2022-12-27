@@ -4,6 +4,7 @@ import { getUserByIdWithAccountsAndSettings } from '../service/User';
 import { getClipsStartingAtCertainDateFromTwitchAPI } from '../utils/twitch/clips.handler';
 import { autoApproveClips, bulkSaveTwitchClips, isClipInDB } from '../service/TwitchClip';
 import log from '../utils/logger';
+import { UserWithAccountsAndSettingsWithId } from '../api/user/user.model';
 
 const clipsProducer = async (job: Job<{ userId: string; providerAccountId: string }, any, any>) => {
   log('info', 'clip-producer start ', job.data, 'clips.worker');
@@ -12,12 +13,15 @@ const clipsProducer = async (job: Job<{ userId: string; providerAccountId: strin
   // throw new Error('whoops');
 
   try {
-    const user = await getUserByIdWithAccountsAndSettings(userId);
-    const userSettings = user?.settings;
-    if (!user && !userSettings) {
+    const user = (await getUserByIdWithAccountsAndSettings(
+      userId
+    )) as UserWithAccountsAndSettingsWithId;
+
+    if (!user || !user?.settings) {
       log('error', 'getUserByIdWithAccountsAndSettings - user', userId);
       throw Error(`unable to find user ${userId}`);
     }
+    const userSettings = user?.settings;
     // get twitch account
     const twitchProvider = user.accounts?.filter((acc) => acc.provider === 'twitch')[0];
 

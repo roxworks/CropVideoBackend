@@ -1,6 +1,6 @@
 /* eslint-disable no-redeclare */
 import { z } from 'zod';
-import { cropSettingsSchema } from '../api/crop/crop.model';
+import { cropSettingsSchema, cropTypeEnum } from '../api/crop/crop.model';
 import { TUser } from '../api/user/user.model';
 
 const scheduleDays = z
@@ -16,6 +16,20 @@ const scheduleDays = z
   .optional()
   .nullable();
 
+const scheduleDaysOutput = z
+  .object({
+    id: z.string(),
+    userId: z.string(),
+    settingId: z.string(),
+    sun: z.array(z.string()),
+    mon: z.array(z.string()),
+    tue: z.array(z.string()),
+    wed: z.array(z.string()),
+    thu: z.array(z.string()),
+    fri: z.array(z.string()),
+    sat: z.array(z.string()),
+  })
+  .nullable();
 export const TSettings = z.object({
   userId: z.string(),
   delay: z.number().optional().default(24),
@@ -24,7 +38,7 @@ export const TSettings = z.object({
   license: z.string().optional().nullable(),
   camCrop: cropSettingsSchema.optional().nullable(),
   screenCrop: cropSettingsSchema.optional().nullable(),
-  cropType: z.enum(['no-cam', 'cam-top', 'cam-freeform', 'freeform']).optional().nullable(),
+  cropType: cropTypeEnum.optional().nullable(),
   verticalVideoEnabled: z.boolean().optional().default(true),
   uploadEnabled: z.boolean().optional().default(false),
   defaultApprove: z.boolean().optional().default(false),
@@ -55,7 +69,6 @@ export const TSettings = z.object({
   instagramCount: z.number().optional().default(0),
   approveDate: z.date().optional().nullable(),
   timeOffset: z.number().optional().nullable(),
-  scheduleDays,
 });
 
 export const SettingsOutput = z.object({
@@ -96,15 +109,25 @@ export const SettingsOutput = z.object({
   tiktokCount: z.number().default(0),
   instagramCount: z.number().default(0),
   timeOffset: z.number().nullable(),
-  scheduleDays: scheduleDays.nullable(),
   instagramHashtags: z.array(z.string()),
 });
 
 export const SettingsWithUser = TSettings.extend({
   user: TUser,
+  ScheduledDays: scheduleDaysOutput.nullable(),
 });
 
-type scheduleDays = z.TypeOf<typeof scheduleDays>;
+export const SettingsOutputWithScheduleDays = SettingsOutput.extend({
+  scheduleDays,
+});
+export const SettingsWithScheduleDays = TSettings.extend({
+  scheduleDays,
+});
+
+export type ScheduleDays = z.TypeOf<typeof scheduleDays>;
+export type ScheduleDaysOutput = z.TypeOf<typeof scheduleDaysOutput>;
 export type TSettings = z.TypeOf<typeof TSettings>;
+export type SettingsWithScheduleDays = z.TypeOf<typeof SettingsWithScheduleDays>;
 export type SettingsWithUser = z.TypeOf<typeof SettingsWithUser>;
 export type SettingsOutput = z.TypeOf<typeof SettingsOutput>;
+export type SettingsOutputWithScheduleDays = z.TypeOf<typeof SettingsOutputWithScheduleDays>;

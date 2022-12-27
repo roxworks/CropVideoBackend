@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-redeclare */
+/* eslint-disable no-redeclare */
 import { z } from 'zod';
 
 export const TAccount = z.object({
@@ -8,7 +8,7 @@ export const TAccount = z.object({
   providerAccountId: z.string().optional(),
   refresh_token: z.string().optional(),
   access_token: z.string(),
-  expires_at: z.number(),
+  expires_at: z.number().or(z.bigint()),
   refresh_expires_at: z.number().optional(),
   obtainment_timestamp: z.number().optional(),
   token_type: z.string().optional(),
@@ -19,7 +19,7 @@ export const TAccount = z.object({
   oauth_token: z.string().optional(),
   pageName: z.string().optional().nullable(),
   pageId: z.string().optional().nullable(),
-  pageAccessToken: z.string().optional().nullable()
+  pageAccessToken: z.string().optional().nullable(),
 });
 
 export const TAccountOutput = TAccount.extend({
@@ -36,7 +36,7 @@ export const TAccountOutput = TAccount.extend({
   oauth_token: z.string().nullable(),
   pageName: z.string().nullable(),
   pageId: z.string().nullable(),
-  pageAccessToken: z.string().nullable()
+  pageAccessToken: z.string().nullable(),
 });
 export const TAccountWithId = TAccount.extend({ id: z.string() });
 

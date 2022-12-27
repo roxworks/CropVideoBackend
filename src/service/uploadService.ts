@@ -173,7 +173,7 @@ const uploadToYoutube = async (clip: ClipWithRenderedUrl, accounts: Account[]) =
     provider: 'youtube',
     refresh_token: refreshToken.refresh_token,
     access_token: refreshToken.access_token,
-    expires_at: refreshToken.expiry_date,
+    expires_at: parseInt(String(refreshToken.expiry_date / 1000)),
     token_type: 'Bearer',
     scope: refreshToken.scope,
   };

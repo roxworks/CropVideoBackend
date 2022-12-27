@@ -1,6 +1,6 @@
 import ffmpeg from 'fluent-ffmpeg';
 import axios from 'axios';
-import { Clip, CropData} from './crop.model';
+import { Clip, CropData } from './crop.model';
 import log from '../../utils/logger';
 
 export const fileioUpload = (formData: any) => {
@@ -13,33 +13,35 @@ export const fileioUpload = (formData: any) => {
   tempFormData.append('autoDelete', 'true');
   return axios.post('https://file.io', tempFormData, {
     headers: {
-      Authorization: `Bearer ${  process.env.FILE_IO_KEY}`
+      Authorization: `Bearer ${process.env.FILE_IO_KEY}`,
     },
     maxContentLength: Infinity,
-    maxBodyLength: Infinity
+    maxBodyLength: Infinity,
   });
 };
 
-export const getVideoDetails = (fileName: string) => new Promise((resolve, reject) => {
+export const getVideoDetails = (fileName: string) =>
+  new Promise((resolve, reject) => {
     ffmpeg.ffprobe(fileName, (err, metadata) => {
       if (err) {
         log('error', 'ffmpeg-ffprobe', err, 'crop.service');
         reject(err);
       } else {
         log('info', 'ffmpeg-ffprobe video details', { metadata, fileName }, 'crop.service');
-        const {size} = metadata.format;
+        const { size } = metadata.format;
         resolve(size);
       }
     });
   });
 
 // return a number rounded to the nearest multiple of 4
-const roundTo4 = (number: number, dontConvert?: boolean) => dontConvert ? number : Math.ceil(number / 4) * 4;
+const roundTo4 = (number: number, dontConvert?: boolean) =>
+  dontConvert ? number : Math.ceil(number / 4) * 4;
 
 export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, fileName: string) => {
   log('info', 'make-video-vertical clip', { clip, clipSettings }, 'crop.service');
 
-  const {cropType} = clipSettings;
+  const { cropType } = clipSettings;
 
   const inputFilePath = `./${fileName}`;
   const outputFilePath = `./rendered_${fileName}`;
@@ -54,8 +56,8 @@ export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, file
     OUTPUT_WIDTH = 720;
   }
 
-  const {camCrop} = clipSettings;
-  const {screenCrop} = clipSettings;
+  const { camCrop } = clipSettings;
+  const { screenCrop } = clipSettings;
   const isNormalized = camCrop?.isNormalized || screenCrop?.isNormalized || false;
 
   // top (cam)
@@ -84,7 +86,7 @@ export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, file
   let SWB = OUTPUT_WIDTH;
   // const HB = SHB;
 
-  if (cropType === 'freeform') {
+  if (cropType === 'FREEFORM') {
     if (CHB / CWB > 16 / 9) {
       log('info', 'crop-freeform', `Crop is too tall, forcing to ${OUTPUT_HEIGHT} height`);
       SHB = OUTPUT_HEIGHT;
@@ -95,7 +97,7 @@ export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, file
       SHB = roundTo4(Math.ceil(((SWB * CHB) / CWB) * multiplier));
     }
   }
-  if (cropType === 'cam-freeform') {
+  if (cropType === 'CAM_FREEFORM') {
     if (CHB / CWB > 16 / 9) {
       log('info', 'crop-cam-freeform', `Crop is too tall, forcing to ${OUTPUT_HEIGHT} height`);
       // SHB = 1920 - SHA;
@@ -128,26 +130,24 @@ export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, file
   if (isNormalized) {
     switch (cropType) {
       // Math.ceil(number / 4) * 4
-      case 'cam-top':
+      case 'CAM_TOP':
         filter = `[0:v]split=2[a][b];
         [a]crop=w=min(ceil(${CWA}*iw/4)*4\\, iw):h=min(ceil(${CHA}*ih/4)*4\\, ih):x=min(ceil(${CXA}*iw/4)*4\\, iw):y=min(ceil(${CYA}*ih/4)*4\\, ih),scale=w=min(${OUTPUT_WIDTH}\\, ceil(${SWA}/4)*4):h=min(${OUTPUT_HEIGHT}\\, ceil(${SHA}/4)*4)[a];
-        [b]crop=w=min(ceil(${CWB}*iw/4)*4\\, iw):h=min(ceil(${CHB}*ih/4)*4\\, ih):x=min(ceil(${CXB}*iw/4)*4\\, iw):y=min(ceil(${CYB}*ih/4)*4\\, ih),scale=w=min(${OUTPUT_WIDTH}\\, ceil(${SWB}/4)*4):h=min(${OUTPUT_HEIGHT}\\, ceil(${SHB}/4)*4),pad=w=${OUTPUT_WIDTH}:h=${
-          OUTPUT_HEIGHT - SHA
-        }:x=(ow-iw)/2:y=0:color=black[b];
+        [b]crop=w=min(ceil(${CWB}*iw/4)*4\\, iw):h=min(ceil(${CHB}*ih/4)*4\\, ih):x=min(ceil(${CXB}*iw/4)*4\\, iw):y=min(ceil(${CYB}*ih/4)*4\\, ih),scale=w=min(${OUTPUT_WIDTH}\\, ceil(${SWB}/4)*4):h=min(${OUTPUT_HEIGHT}\\, ceil(${SHB}/4)*4),pad=w=${OUTPUT_WIDTH}:h=${OUTPUT_HEIGHT - SHA
+          }:x=(ow-iw)/2:y=0:color=black[b];
         [a][b]vstack`;
         break;
-      case 'cam-freeform':
+      case 'CAM_FREEFORM':
         filter = `[0:v]split=2[a][b];
         [a]crop=w=min(ceil(${CWA}*iw/4)*4\\, iw):h=min(ceil(${CHA}*ih/4)*4\\, ih):x=min(ceil(${CXA}*iw/4)*4\\, iw):y=min(ceil(${CYA}*ih/4)*4\\, ih),scale=w=min(${OUTPUT_WIDTH}\\, ceil(${SWA}/4)*4):h=min(${OUTPUT_HEIGHT}\\, ceil(${SHA}/4)*4)[a];
-        [b]crop=w=min(ceil(${CWB}*iw)\\, iw):h=min(ceil(${CHB}*ih)\\, ih):x=min(ceil(${CXB}*iw)\\, iw):y=min(ceil(${CYB}*ih)\\, ih),scale=w=min(${OUTPUT_WIDTH}\\, ${SWB}):h=min(${OUTPUT_HEIGHT}\\, ${SHB}),pad=w=${OUTPUT_WIDTH}:h=${
-          OUTPUT_HEIGHT - SHA
-        }:x=(ow-iw)/2:y=0:color=black[b];
+        [b]crop=w=min(ceil(${CWB}*iw)\\, iw):h=min(ceil(${CHB}*ih)\\, ih):x=min(ceil(${CXB}*iw)\\, iw):y=min(ceil(${CYB}*ih)\\, ih),scale=w=min(${OUTPUT_WIDTH}\\, ${SWB}):h=min(${OUTPUT_HEIGHT}\\, ${SHB}),pad=w=${OUTPUT_WIDTH}:h=${OUTPUT_HEIGHT - SHA
+          }:x=(ow-iw)/2:y=0:color=black[b];
         [a][b]vstack`;
         break;
-      case 'no-cam':
+      case 'NO_CAM':
         filter = `crop=w=min(ceil(${CWB}*iw/4)*4\\, iw):h=min(ceil(${CHB}*ih/4)*4\\, ih):x=min(ceil(${CXB}*iw/4)*4\\, iw):y=min(ceil(${CYB}*ih/4)*4\\, ih),scale=w=${OUTPUT_WIDTH}:h=${OUTPUT_HEIGHT}`;
         break;
-      case 'freeform':
+      case 'FREEFORM':
         filter = `crop=w=min(ceil(${CWB}*iw/4)*4\\, iw):h=min(ceil(${CHB}*ih/4)*4\\, ih):x=min(ceil(${CXB}*iw/4)*4\\, iw):y=min(ceil(${CYB}*ih/4)*4\\, ih),scale=w=${SWB}:h=${SHB},pad=w=${OUTPUT_WIDTH}:h=${OUTPUT_HEIGHT}:x=(ow-iw)/2:y=(oh-ih)/2`;
         break;
       default:
@@ -155,13 +155,13 @@ export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, file
     }
   } else {
     switch (cropType) {
-      case 'cam-top':
+      case 'CAM_TOP':
         filter = `[0:v]split=2[a][b]; 
         [a]crop=w=${CWB}:h=${CHB}:x=${CXB}:y=${CYB},scale=w=${SWB}:h=${SHB}[d];
         [b]crop=w=${CWA}:h=${CHA}:x=${CXA}:y=${CYA},scale=w=${SWA}:h=${SHA}[c];
         [c][d]vstack`;
         break;
-      case 'no-cam':
+      case 'NO_CAM':
         filter = `crop=${CWB}:${CHB}:${CXB}:${CYB},scale=w=${OUTPUT_WIDTH}:h=${OUTPUT_HEIGHT}`;
         break;
       default:
@@ -174,7 +174,7 @@ export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, file
   const command = new Promise((resolve, reject) => {
     let commandToRunInternal = ffmpeg(inputFilePath)
       .videoCodec('libx265')
-      .on('error', (err ) => {
+      .on('error', (err) => {
         log('error', 'command error', err);
         reject(err);
       })
@@ -183,7 +183,7 @@ export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, file
       })
       .autopad(true, 'pink')
       .outputOptions(['-loglevel debug'])
-      .videoFilter(`${filter  },fps=30`) // omega filter extra
+      .videoFilter(`${filter},fps=30`) // omega filter extra
       .toFormat('mp4');
 
     if (clipSettings.startTime) {
@@ -194,7 +194,7 @@ export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, file
     if (clipSettings.endTime) {
       commandToRunInternal = commandToRunInternal.setDuration(
         Math.min(parseInt(String(clipSettings.endTime) || '1000'), maxEndTime) -
-          parseInt(String(clipSettings.startTime) || '0')
+        parseInt(String(clipSettings.startTime) || '0')
       );
     }
 
