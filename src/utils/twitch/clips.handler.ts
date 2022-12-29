@@ -22,6 +22,14 @@ type TwurpleClip = {
   creationDate: Date;
 };
 
+export const previousXDays = (days = 14, startDate?: string) => {
+  const start = startDate ? new Date(startDate) : new Date();
+  const priorDate = start.setDate(start.getDate() - days);
+  const ISO = new Date(priorDate).toISOString();
+
+  return ISO;
+};
+
 export const addToGetAllClipsQueue = async (userId: string, broadcasterId: string) => {
   try {
     await updateUserDefaultClipsById(userId, 'inqueue');
@@ -119,11 +127,14 @@ export const getClipsStartingAtCertainDateFromTwitchAPI = async (
   date?: string,
   doSort: boolean = true
 ) => {
+  const daysAgo = previousXDays(3);
+  const oldestClipDate =
+    user?.settings?.lastUploaded && daysAgo > new Date(user.settings.lastUploaded).toISOString()
+      ? new Date(user.settings.lastUploaded).toISOString()
+      : daysAgo;
+
   const mostRecentClipPostedCreatedAtTime =
-    date ||
-    (user?.settings?.lastUploaded
-      ? new Date(user?.settings.lastUploaded).toISOString()
-      : new Date(2010, 0, 1).toISOString());
+    date || (user?.settings?.lastUploaded ? oldestClipDate : new Date(2010, 0, 1).toISOString());
 
   const daysOfYear = daysOfYearArray(mostRecentClipPostedCreatedAtTime);
 

@@ -32,6 +32,29 @@ export const bulkSaveTwitchClips = async (clips: ClipManualWithUserId[]) => {
   return bulked;
 };
 
+export const upsertLatestClips = async (clips: ClipManualWithUserId[], userId: string) => {
+  if (!clips) return;
+
+  const upsertClips = [];
+
+  for (const clip of clips) {
+    upsertClips.push(
+      prisma.twitchClip.upsert({
+        where: {
+          userId_twitch_id: {
+            userId,
+            twitch_id: clip.twitch_id,
+          },
+        },
+        update: clip,
+        create: clip,
+      })
+    );
+  }
+
+  return await prisma.$transaction(upsertClips);
+};
+
 export const isClipInDB = async <T extends { userId: string; twitch_id: string }>(clip: T) => {
   const hasClip = await prisma.twitchClip.findUnique({
     where: {
