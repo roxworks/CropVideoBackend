@@ -37,6 +37,11 @@ export const uploadVideoToYoutube = async (auth: Auth.OAuth2Client, currentClip:
 
   return new Promise((resolve, reject) => {
     log('info', 'upload-to-youtube attempt');
+    google.options({
+      headers: {
+        Slug: `${adjustedTitle}.mp4`,
+      },
+    });
     service.videos.insert(
       {
         auth: auth,
