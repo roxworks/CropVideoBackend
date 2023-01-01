@@ -175,7 +175,7 @@ export const ScheduledClipsArray = z.object({
 
 export const RenderClipReq = z.object({
   clip: ClipManual,
-  cropData: CropData,
+  cropData: CropDataInput,
 });
 
 export type JobId = z.infer<typeof JobId>;
