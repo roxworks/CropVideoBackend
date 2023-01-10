@@ -95,3 +95,5 @@ export const convertPlatformString = (platforms: LowerPlatforms): platformsSchem
 
   return updatedArray;
 };
+
+export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

@@ -70,6 +70,7 @@ export const ClipManual = z.object({
   url: z.string(),
   video_id: z.string().default(''),
   view_count: z.number(),
+  autoCaption: z.boolean().optional(),
 });
 
 export const Clip = z.object({
@@ -174,7 +175,11 @@ export const ScheduledClipsArray = z.object({
 });
 
 export const RenderClipReq = z.object({
-  clip: ClipManual,
+  clip: ClipManual.extend({
+    userId: z.string(),
+    id: z.string().optional(),
+    downloadUrl: z.string().optional(),
+  }),
   cropData: CropDataInput,
 });
 

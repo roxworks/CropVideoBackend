@@ -5,8 +5,9 @@ import FormData from 'form-data';
 import { performance } from 'universal-perf-hooks';
 
 import { fileioUpload, makeVideoVertical } from './crop.service';
-import { JobId } from './crop.model';
+import { JobId, RenderClipReq } from './crop.model';
 import log from '../../utils/logger';
+import { getOrCreateSrtJson, convertTranscriptToSrtFile } from '../../service/Transcription';
 
 type JobStatus = {
   fileURL?: string;
@@ -15,7 +16,7 @@ type JobStatus = {
 };
 const currentJobStatus: { [key: string]: JobStatus } = {};
 
-export const createCropVideo = async (req: Request, res: Response) => {
+export const createCropVideo = async (req: Request<{}, {}, RenderClipReq>, res: Response) => {
   if (!req.headers.authorization) return res.status(400).send();
   const { APP_KEY } = process.env;
   if (!APP_KEY) return res.status(500).send('internal server error');
@@ -24,14 +25,27 @@ export const createCropVideo = async (req: Request, res: Response) => {
 
   const { clip, cropData } = req.body;
 
+  const randomNumber = Math.random().toString(36).substring(2, 15);
+
   if (!clip || !cropData) return res.status(400).send('please provide both clip and crop data');
 
   const downStart = performance.now();
 
   const { id, twitch_id } = clip;
   const downloadUrl = clip.download_url || clip.downloadUrl;
-  const fileStream = got.stream(downloadUrl);
-  const fileName: string = `${Math.random().toString(36).substring(2, 15)}_${twitch_id || id}.mp4`;
+  const fileStream = got.stream(downloadUrl!);
+  const fileName: string = `${randomNumber}_${twitch_id || id}.mp4`;
+
+  if (clip.autoCaption) {
+    const srt = await getOrCreateSrtJson(clip.download_url, clip.twitch_id, clip.userId);
+    if (!srt) return;
+    const srtFilename = convertTranscriptToSrtFile(srt, `${randomNumber}_${twitch_id || id}.srt`);
+    console.log(srtFilename);
+    //get srt
+    // if does not exist fetch
+  }
+
+  return;
 
   const downEnd = performance.now();
   log('info', 'download-clip', `DOWNLOAD call took ${downEnd - downStart} ms`, 'crop.handler');
