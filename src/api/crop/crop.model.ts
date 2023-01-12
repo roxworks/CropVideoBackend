@@ -117,6 +117,7 @@ export const Clip = z.object({
   renderedUrl: z.string().optional(),
   facebookDescription: z.string().optional().nullable(),
   updatedAt: z.date().optional(),
+  autoCaption: z.boolean().optional(),
 });
 
 export const CurrentClip = z.object({
@@ -196,5 +197,6 @@ export type platformsSchema = z.infer<typeof platformsSchema>;
 export type ClipStatuses = z.infer<typeof ClipStatuses>;
 export type CropSettingsSchema = z.infer<typeof cropSettingsSchema>;
 export type cropSettingsSchemaOutput = z.infer<typeof cropSettingsSchemaOutput>;
+export type CropDataInput = z.infer<typeof CropDataInput>;
 
 export type ClipWithRenderedUrl = ClipWithId & { renderedUrl: string };

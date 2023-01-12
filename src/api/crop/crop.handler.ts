@@ -35,23 +35,21 @@ export const createCropVideo = async (req: Request<{}, {}, RenderClipReq>, res: 
   const downloadUrl = clip.download_url || clip.downloadUrl;
   const fileStream = got.stream(downloadUrl!);
   const fileName: string = `${randomNumber}_${twitch_id || id}.mp4`;
-
-  if (clip.autoCaption) {
-    const srt = await getOrCreateSrtJson(clip.download_url, clip.twitch_id, clip.userId);
-    if (!srt) return;
-    const srtFilename = convertTranscriptToSrtFile(srt, `${randomNumber}_${twitch_id || id}.srt`);
-    console.log(srtFilename);
-    //get srt
-    // if does not exist fetch
-  }
-
-  return;
+  const srtFileName = clip.autoCaption ? `${randomNumber}_${twitch_id || id}.srt` : undefined;
 
   const downEnd = performance.now();
   log('info', 'download-clip', `DOWNLOAD call took ${downEnd - downStart} ms`, 'crop.handler');
 
   currentJobStatus[fileName] = { status: 'processing' };
   res.status(200).send({ id: fileName, ...currentJobStatus[fileName] });
+
+  // check if autoCaption is enabled and fetch the srtJson or create if does not exist
+
+  if (clip.autoCaption) {
+    const srt = await getOrCreateSrtJson(clip.download_url, clip.twitch_id, clip.userId);
+    if (!srt || !srtFileName) return;
+    await convertTranscriptToSrtFile(srt, srtFileName);
+  }
 
   // wait for filestream to end
   log('info', 'streaming');
@@ -67,7 +65,7 @@ export const createCropVideo = async (req: Request<{}, {}, RenderClipReq>, res: 
   });
 
   const verticalStart = performance.now();
-  const editVideo = await makeVideoVertical(clip, cropData, fileName);
+  const editVideo = await makeVideoVertical(clip, cropData, fileName, srtFileName);
   const verticalEnd = performance.now();
   log(
     'info',
@@ -97,7 +95,8 @@ export const createCropVideo = async (req: Request<{}, {}, RenderClipReq>, res: 
   try {
     fs.unlinkSync(`./${editVideo}`);
     fs.unlinkSync(`./${fileName}`);
-    log('warn', 'files-deleted: ', { editVideo, fileName }, 'crop.handler');
+    fs.unlinkSync(`./${srtFileName}`);
+    log('warn', 'files-deleted: ', { editVideo, fileName, srtFileName }, 'crop.handler');
   } catch (error) {
     log('error', 'delete-local-files', error, 'crop.handler');
   }

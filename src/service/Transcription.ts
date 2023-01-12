@@ -16,8 +16,8 @@ export const convertTranscriptToSrtFile = async (
 ) => {
   const split = srtJson.subtitles.split('\n').join('\n');
 
-  await fs.writeFileSync(fileName, split, 'utf8');
-  return srtJson.subtitles;
+  await fs.promises.writeFile(fileName, split, 'utf8');
+  return fileName;
 };
 
 export const createSrtRequest = async (downloadUrl: string) => {
