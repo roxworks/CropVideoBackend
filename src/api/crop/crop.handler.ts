@@ -8,6 +8,7 @@ import { fileioUpload, makeVideoVertical } from './crop.service';
 import { JobId, RenderClipReq } from './crop.model';
 import log from '../../utils/logger';
 import { getOrCreateSrtJson, convertTranscriptToSrtFile } from '../../service/Transcription';
+import { isUserSubbed } from '../../service/User';
 
 type JobStatus = {
   fileURL?: string;
@@ -36,6 +37,7 @@ export const createCropVideo = async (req: Request<{}, {}, RenderClipReq>, res: 
   const fileStream = got.stream(downloadUrl!);
   const fileName: string = `${randomNumber}_${twitch_id || id}.mp4`;
   const srtFileName = clip.autoCaption ? `${randomNumber}_${twitch_id || id}.srt` : undefined;
+  const isSubbed = await isUserSubbed(clip.userId);
 
   const downEnd = performance.now();
   log('info', 'download-clip', `DOWNLOAD call took ${downEnd - downStart} ms`, 'crop.handler');
@@ -45,7 +47,7 @@ export const createCropVideo = async (req: Request<{}, {}, RenderClipReq>, res: 
 
   // check if autoCaption is enabled and fetch the srtJson or create if does not exist
 
-  if (clip.autoCaption) {
+  if (clip.autoCaption && isSubbed) {
     const srt = await getOrCreateSrtJson(clip.download_url, clip.twitch_id, clip.userId);
     if (!srt || !srtFileName) return;
     await convertTranscriptToSrtFile(srt, srtFileName);
@@ -65,7 +67,7 @@ export const createCropVideo = async (req: Request<{}, {}, RenderClipReq>, res: 
   });
 
   const verticalStart = performance.now();
-  const editVideo = await makeVideoVertical(clip, cropData, fileName, srtFileName);
+  const editVideo = await makeVideoVertical(clip, cropData, fileName, srtFileName, isSubbed);
   const verticalEnd = performance.now();
   log(
     'info',

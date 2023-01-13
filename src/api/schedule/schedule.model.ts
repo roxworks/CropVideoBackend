@@ -61,6 +61,8 @@ export const Clip = z.object({
   youtubeTitle: z.string().optional().nullable(),
   description: z.string().optional().nullable(),
   renderedUrl: z.string().optional().nullable(),
+  autoCaption: z.boolean().default(false),
+  twitch_id: z.string(),
 });
 
 export const ClipWithId = Clip.extend({ id: z.string() });

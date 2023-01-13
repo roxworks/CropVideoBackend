@@ -2,6 +2,7 @@ import ffmpeg from 'fluent-ffmpeg';
 import axios from 'axios';
 import { Clip, ClipManual, CropDataInput } from './crop.model';
 import log from '../../utils/logger';
+import { isUserSubbed } from '../../service/User';
 
 export const fileioUpload = (formData: any) => {
   const tempFormData = formData;
@@ -39,15 +40,16 @@ const roundTo4 = (number: number, dontConvert?: boolean) =>
   dontConvert ? number : Math.ceil(number / 4) * 4;
 
 export const makeVideoVertical = async (
-  clip: ClipManual | Clip,
+  clip: Clip | ClipManual,
   clipSettings: CropDataInput,
   fileName: string,
-  srtFileName?: string
+  srtFileName?: string,
+  isSubbed: boolean = false
 ) => {
   log('info', 'make-video-vertical clip', { clip, clipSettings }, 'crop.service');
 
   const { cropType } = clipSettings;
-  const autoCaptionEnabled = clip.autoCaption;
+  const autoCaptionEnabled = clip.autoCaption && isSubbed;
 
   const inputFilePath = `./${fileName}`;
   const outputFilePath = `./rendered_${fileName}`;

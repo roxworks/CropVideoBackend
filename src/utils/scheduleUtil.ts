@@ -90,7 +90,6 @@ export const convertTime = (time: string, offset: number) => {
 export const autoScheduleClips = async () => {
   const LOOKUP_DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
   const settingsWithUploadEnabled = await getSettingsWithUploadEnabled();
-  console.log({ settingsWithUploadEnabled });
   if (!settingsWithUploadEnabled) return;
 
   for (const settings of settingsWithUploadEnabled) {

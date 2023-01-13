@@ -120,6 +120,7 @@ model Setting {
   instagramCount            Int       @default(0)
   timeOffset                Int?
   instagramHashtags         String[]
+  autoCaption               Boolean   @default(false)
 
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId        String         @unique
@@ -173,6 +174,7 @@ model Clip {
   renderedUrl         String?
   updatedAt           DateTime  @updatedAt()
   twitch_id           String
+  autoCaption         Boolean   @default(false)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

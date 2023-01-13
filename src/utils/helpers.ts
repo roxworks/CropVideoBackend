@@ -80,6 +80,7 @@ export const convertToClipFromTwitchClip = ({
   cropData,
   youtubePrivacy: clip.youtubePrivacy || settings.youtubePrivacy,
   facebookDescription: clip.facebookDescription || clip.title,
+  autoCaption: settings.autoCaption || false,
 });
 
 type LowerPlatforms = ('tiktok' | 'youtube' | 'instagram' | 'facebook')[];

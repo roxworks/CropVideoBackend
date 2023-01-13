@@ -18,7 +18,6 @@ import dayjs from 'dayjs';
 const clipsProducer = async (job: Job<{ userId: string; providerAccountId: string }, any, any>) => {
   log('info', 'clip-producer start ', job.data, 'clips.worker');
   const { userId } = job.data;
-  console.log({ jobName: job.name });
 
   try {
     const user = (await getUserByIdWithAccountsAndSettings(

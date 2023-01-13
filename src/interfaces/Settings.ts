@@ -69,6 +69,7 @@ export const TSettings = z.object({
   instagramCount: z.number().optional().default(0),
   approveDate: z.date().optional().nullable(),
   timeOffset: z.number().optional().nullable(),
+  autoCaption: z.boolean().default(false),
 });
 
 export const SettingsOutput = z.object({

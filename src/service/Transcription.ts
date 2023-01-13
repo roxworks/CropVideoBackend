@@ -46,7 +46,7 @@ export const createSrtRequest = async (downloadUrl: string) => {
 
   const transcribe: TypeTranscriptionResponse = response.data;
   console.log('srt created');
-  console.log({ transcribe });
+
   return transcribe;
 };
 
