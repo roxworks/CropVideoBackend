@@ -10,10 +10,11 @@ import { fileioUpload, makeVideoVertical } from '../crop/crop.service';
 import { ClipWithId, ScheduledClipsArray } from '../crop/crop.model';
 import MessageResponse from '../../interfaces/MessageResponse';
 import log from '../../utils/logger';
+import { getOrCreateSrtJson, convertTranscriptToSrtFile } from '../../service/Transcription';
+import { isUserSubbed } from '../../service/User';
 
 let jobs: ClipWithId[] = [];
 let currentJobId: string | undefined;
-
 
 const renderClips = async () => {
   const successfulJobs = [];
@@ -21,13 +22,15 @@ const renderClips = async () => {
   // eslint-disable-next-line no-restricted-syntax
   for (const job of jobs) {
     const clip = job;
+    const randomNumber = Math.random().toString(36).substring(2, 15);
     try {
-      currentJobId = clip.videoId;
+      currentJobId = clip.twitch_id;
       const downStart = performance.now();
-      const { id } = clip;
-      const {downloadUrl} = clip;
+      const { id, twitch_id } = clip;
+      const { downloadUrl } = clip;
       const fileStream = got.stream(downloadUrl);
-      const fileName = `${Math.random().toString(36).substring(2, 15)}_${id}.mp4`;
+      const fileName: string = `${randomNumber}_${twitch_id || id}.mp4`;
+      const srtFileName = clip.autoCaption ? `${randomNumber}_${twitch_id || id}.srt` : undefined;
       const downEnd = performance.now();
       log(
         'info',
@@ -35,13 +38,19 @@ const renderClips = async () => {
         `JOB DOWNLOAD call took ${downEnd - downStart} ms`,
         'schedule.handler'
       );
+      const isSubbed = await isUserSubbed(clip.userId);
+      if (clip.autoCaption && isSubbed) {
+        const srt = await getOrCreateSrtJson(clip.downloadUrl, clip.twitch_id, clip.userId);
+        if (!srt || !srtFileName) return;
+        await convertTranscriptToSrtFile(srt, srtFileName);
+      }
 
       // wait for filestream to end
       log('info', 'render-clips', 'streaming');
       const streamStart = performance.now();
 
-      await new Promise((resolve ) => {
-        const file = fs.createWriteStream(`./${  fileName}`);
+      await new Promise((resolve) => {
+        const file = fs.createWriteStream(`./${fileName}`);
         fileStream.pipe(file);
         file.on('finish', () => {
           resolve('stream done -schedule');
@@ -54,7 +63,13 @@ const renderClips = async () => {
       log('info', 'stream-timer', `JOB Stream call took ${streamEnd - streamStart} ms`);
 
       const verticalStart = performance.now();
-      const editVideo = await makeVideoVertical(clip, clip.cropData, fileName);
+      const editVideo = await makeVideoVertical(
+        clip,
+        clip.cropData,
+        fileName,
+        srtFileName,
+        isSubbed
+      );
       const verticalEnd = performance.now();
       log(
         'info',
@@ -83,14 +98,15 @@ const renderClips = async () => {
         `${process.env.CLIPBOT_URL}/api/clips/renderScheduledClips`,
         { clip: job },
         {
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer: ${clipbotKey}` }
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer: ${clipbotKey}` },
         }
       );
       successfulJobs.push(job);
 
       // delete local files
       fs.unlinkSync(`./${editVideo}`);
-      fs.unlinkSync(`./${  fileName}`);
+      fs.unlinkSync(`./${fileName}`);
+      fs.unlinkSync(`./${srtFileName}`);
       log('info', 'render-files-deleted', { editVideo, fileName }, 'schedule.handler');
     } catch (error) {
       if (error instanceof Error) {
@@ -105,10 +121,9 @@ const renderClips = async () => {
   jobs = [];
 };
 
-
 export const scheduleJobs = async (
   req: Request<{}, {}, ScheduledClipsArray>,
-  res: Response<MessageResponse>,
+  res: Response<MessageResponse>
 ) => {
   if (!req.headers.authorization) return res.status(400).send();
   const { APP_KEY } = process.env;
@@ -125,7 +140,7 @@ export const scheduleJobs = async (
   clips.forEach((clip: ClipWithId) => {
     const isFound = jobs.some((job) => job.id === clip.id);
     if (!isFound) {
-      count +=1;
+      count += 1;
       jobs.push(clip);
     }
   });
@@ -133,7 +148,7 @@ export const scheduleJobs = async (
     renderClips();
   }
 
-return res.status(200).json({ message: 'jobs scheduled' });
+  return res.status(200).json({ message: 'jobs scheduled' });
 };
 
 export const jobsList = async (_: Request, res: Response) => {

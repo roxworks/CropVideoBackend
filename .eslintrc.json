@@ -1,12 +1,6 @@
 {
-  "extends": [
-    "eslint:recommended",
-    "plugin:import/recommended",
-    "prettier"
-  ],
-  "plugins": [
-    "import"
-  ],
+  "extends": ["eslint:recommended", "plugin:import/recommended", "prettier"],
+  "plugins": ["import"],
   "env": {
     "node": true,
     "es2021": true
@@ -14,20 +8,13 @@
   "settings": {
     "import/resolver": {
       "node": {
-        "extensions": [
-          ".js",
-          ".jsx",
-          ".ts",
-          ".tsx"
-        ]
+        "extensions": [".js", ".jsx", ".ts", ".tsx"]
       }
     }
   },
   "overrides": [
     {
-      "files": [
-        "src/**/*.d.ts"
-      ],
+      "files": ["src/**/*.d.ts"],
       "rules": {
         "no-unused-vars": "off",
         "@typescript-eslint/no-unused-vars": "off"
@@ -42,10 +29,7 @@
         "allowTemplateLiterals": true
       }
     ],
-    "semi": [
-      "error",
-      "always"
-    ],
+    "semi": ["error", "always"],
     "import/no-cycle": "off",
     "@typescript-eslint/naming-convention": "off",
     "radix": "off",
@@ -54,12 +38,13 @@
     "no-use-before-define": "off",
     "@typescript-eslint/no-use-before-define": "off",
     "prefer-const": [
-      "error",
+      "warn",
       {
         "destructuring": "any",
         "ignoreReadBeforeAssign": false
       }
-    ]
+    ],
+    "no-unused-vars": ["warn", { "vars": "all", "args": "after-used", "ignoreRestSiblings": false }]
   },
   "parserOptions": {
     "project": "./tsconfig.json"

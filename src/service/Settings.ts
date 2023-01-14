@@ -31,11 +31,15 @@ export const getUsersSettingsById = async (userId: string) => {
     log('error', 'getUsersSettingsById Error', { error, userId });
   }
 };
-export const updateScheduledEnabled = async (userId: string, uploadEnabled = false) => {
+export const updateScheduledEnabled = async (
+  userId: string,
+  uploadEnabled = false,
+  autoCaption = false
+) => {
   try {
     const updatedUserSettings = await prisma.setting.update({
       where: { userId },
-      data: { uploadEnabled },
+      data: { uploadEnabled, autoCaption },
     });
 
     return updatedUserSettings;

@@ -21,7 +21,7 @@ model Account {
   access_token         String? @db.Text
   expires_at           Int?
   refresh_expires_at   Int?
-  obtainment_timestamp Int?    @default(0)
+  obtainment_timestamp Int     @default(0)
   token_type           String?
   scope                String?
   id_token             String?
@@ -120,6 +120,7 @@ model Setting {
   instagramCount            Int       @default(0)
   timeOffset                Int?
   instagramHashtags         String[]
+  autoCaption               Boolean   @default(false)
 
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId        String         @unique
@@ -173,6 +174,7 @@ model Clip {
   renderedUrl         String?
   updatedAt           DateTime  @updatedAt()
   twitch_id           String
+  autoCaption         Boolean   @default(false)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -212,6 +214,8 @@ model TwitchClip {
   facebookDescription String?
   startTime           Float?
   endTime             Float?
+  autoCaption         Boolean       @default(false)
+  transcribeComplete  Boolean       @default(false)
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
@@ -247,6 +251,31 @@ model ScheduledDays {
   userId    String   @unique
   setting   Setting  @relation(fields: [settingId], references: [id], onDelete: Cascade)
   settingId String   @unique
+}
+
+model Transcription {
+  id String @id @default(cuid())
+
+  completedAt DateTime
+  createdAt   DateTime
+  startedAt   DateTime
+  status      TranscribeStatus
+  jobId       String
+  format      String
+  audioPath   String
+  textOutput  String           @db.Text
+  subtitles   String           @db.Text
+  language    String
+  version     String
+  twitchId    String           @unique
+}
+
+enum TranscribeStatus {
+  starting
+  processing
+  succeeded
+  failed
+  canceled
 }
 
 enum ApproveStatus {

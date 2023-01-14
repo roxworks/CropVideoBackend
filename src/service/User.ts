@@ -62,3 +62,17 @@ export const getSettingsWithUploadEnabled = async () => {
     log('error', 'getUsersWithUploadEnabled Error', { error });
   }
 };
+
+export const isUserSubbed = async (userId: string): Promise<boolean> => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return false;
+
+    const isSubbed = user.sub_status === 'active';
+
+    return isSubbed;
+  } catch (error) {
+    log('error', 'isUserSubbed Error', { error });
+    return false;
+  }
+};

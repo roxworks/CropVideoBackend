@@ -70,6 +70,7 @@ export const ClipManual = z.object({
   url: z.string(),
   video_id: z.string().default(''),
   view_count: z.number(),
+  autoCaption: z.boolean().optional(),
 });
 
 export const Clip = z.object({
@@ -116,6 +117,7 @@ export const Clip = z.object({
   renderedUrl: z.string().optional(),
   facebookDescription: z.string().optional().nullable(),
   updatedAt: z.date().optional(),
+  autoCaption: z.boolean().optional(),
 });
 
 export const CurrentClip = z.object({
@@ -174,7 +176,11 @@ export const ScheduledClipsArray = z.object({
 });
 
 export const RenderClipReq = z.object({
-  clip: ClipManual,
+  clip: ClipManual.extend({
+    userId: z.string(),
+    id: z.string().optional(),
+    downloadUrl: z.string().optional(),
+  }),
   cropData: CropDataInput,
 });
 
@@ -191,5 +197,6 @@ export type platformsSchema = z.infer<typeof platformsSchema>;
 export type ClipStatuses = z.infer<typeof ClipStatuses>;
 export type CropSettingsSchema = z.infer<typeof cropSettingsSchema>;
 export type cropSettingsSchemaOutput = z.infer<typeof cropSettingsSchemaOutput>;
+export type CropDataInput = z.infer<typeof CropDataInput>;
 
 export type ClipWithRenderedUrl = ClipWithId & { renderedUrl: string };

@@ -1,7 +1,8 @@
 import ffmpeg from 'fluent-ffmpeg';
 import axios from 'axios';
-import { Clip, CropData } from './crop.model';
+import { Clip, ClipManual, CropDataInput } from './crop.model';
 import log from '../../utils/logger';
+import { isUserSubbed } from '../../service/User';
 
 export const fileioUpload = (formData: any) => {
   const tempFormData = formData;
@@ -38,13 +39,21 @@ export const getVideoDetails = (fileName: string) =>
 const roundTo4 = (number: number, dontConvert?: boolean) =>
   dontConvert ? number : Math.ceil(number / 4) * 4;
 
-export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, fileName: string) => {
+export const makeVideoVertical = async (
+  clip: Clip | ClipManual,
+  clipSettings: CropDataInput,
+  fileName: string,
+  srtFileName?: string,
+  isSubbed: boolean = false
+) => {
   log('info', 'make-video-vertical clip', { clip, clipSettings }, 'crop.service');
 
   const { cropType } = clipSettings;
+  const autoCaptionEnabled = clip.autoCaption && isSubbed;
 
   const inputFilePath = `./${fileName}`;
   const outputFilePath = `./rendered_${fileName}`;
+  const srtFilePath = `./${srtFileName}`;
 
   const MAX_SIZE = 50000000;
   const size = (await getVideoDetails(inputFilePath)) as number;
@@ -126,6 +135,8 @@ export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, file
   // console.log(`HA: ${  HA}`);
   // console.log(`HB: ${  HB}`);
 
+  // ffmpeg -i './video2.mp4' -vf "subtitles='./athano.srt':force_style='Alignment=0,Fontsize=18,MarginL=0,MarginV=50'" -c:v h264 -crf 0 -preset slow -c:a copy ./athano-burn.mp4
+
   let filter = '';
   if (isNormalized) {
     switch (cropType) {
@@ -133,22 +144,29 @@ export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, file
       case 'CAM_TOP':
         filter = `[0:v]split=2[a][b];
         [a]crop=w=min(ceil(${CWA}*iw/4)*4\\, iw):h=min(ceil(${CHA}*ih/4)*4\\, ih):x=min(ceil(${CXA}*iw/4)*4\\, iw):y=min(ceil(${CYA}*ih/4)*4\\, ih),scale=w=min(${OUTPUT_WIDTH}\\, ceil(${SWA}/4)*4):h=min(${OUTPUT_HEIGHT}\\, ceil(${SHA}/4)*4)[a];
-        [b]crop=w=min(ceil(${CWB}*iw/4)*4\\, iw):h=min(ceil(${CHB}*ih/4)*4\\, ih):x=min(ceil(${CXB}*iw/4)*4\\, iw):y=min(ceil(${CYB}*ih/4)*4\\, ih),scale=w=min(${OUTPUT_WIDTH}\\, ceil(${SWB}/4)*4):h=min(${OUTPUT_HEIGHT}\\, ceil(${SHB}/4)*4),pad=w=${OUTPUT_WIDTH}:h=${OUTPUT_HEIGHT - SHA
-          }:x=(ow-iw)/2:y=0:color=black[b];
+        [b]crop=w=min(ceil(${CWB}*iw/4)*4\\, iw):h=min(ceil(${CHB}*ih/4)*4\\, ih):x=min(ceil(${CXB}*iw/4)*4\\, iw):y=min(ceil(${CYB}*ih/4)*4\\, ih),scale=w=min(${OUTPUT_WIDTH}\\, ceil(${SWB}/4)*4):h=min(${OUTPUT_HEIGHT}\\, ceil(${SHB}/4)*4),pad=w=${OUTPUT_WIDTH}:h=${
+          OUTPUT_HEIGHT - SHA
+        }:x=(ow-iw)/2:y=0:color=black${autoCaptionEnabled ? `,subtitles=${srtFilePath}` : ''}[b];
         [a][b]vstack`;
+
         break;
       case 'CAM_FREEFORM':
         filter = `[0:v]split=2[a][b];
         [a]crop=w=min(ceil(${CWA}*iw/4)*4\\, iw):h=min(ceil(${CHA}*ih/4)*4\\, ih):x=min(ceil(${CXA}*iw/4)*4\\, iw):y=min(ceil(${CYA}*ih/4)*4\\, ih),scale=w=min(${OUTPUT_WIDTH}\\, ceil(${SWA}/4)*4):h=min(${OUTPUT_HEIGHT}\\, ceil(${SHA}/4)*4)[a];
-        [b]crop=w=min(ceil(${CWB}*iw)\\, iw):h=min(ceil(${CHB}*ih)\\, ih):x=min(ceil(${CXB}*iw)\\, iw):y=min(ceil(${CYB}*ih)\\, ih),scale=w=min(${OUTPUT_WIDTH}\\, ${SWB}):h=min(${OUTPUT_HEIGHT}\\, ${SHB}),pad=w=${OUTPUT_WIDTH}:h=${OUTPUT_HEIGHT - SHA
-          }:x=(ow-iw)/2:y=0:color=black[b];
+        [b]crop=w=min(ceil(${CWB}*iw)\\, iw):h=min(ceil(${CHB}*ih)\\, ih):x=min(ceil(${CXB}*iw)\\, iw):y=min(ceil(${CYB}*ih)\\, ih),scale=w=min(${OUTPUT_WIDTH}\\, ${SWB}):h=min(${OUTPUT_HEIGHT}\\, ${SHB}),pad=w=${OUTPUT_WIDTH}:h=${
+          OUTPUT_HEIGHT - SHA
+        }:x=(ow-iw)/2:y=0:color=black${autoCaptionEnabled ? `,subtitles=${srtFilePath}` : ''}[b];
         [a][b]vstack`;
         break;
       case 'NO_CAM':
-        filter = `crop=w=min(ceil(${CWB}*iw/4)*4\\, iw):h=min(ceil(${CHB}*ih/4)*4\\, ih):x=min(ceil(${CXB}*iw/4)*4\\, iw):y=min(ceil(${CYB}*ih/4)*4\\, ih),scale=w=${OUTPUT_WIDTH}:h=${OUTPUT_HEIGHT}`;
+        filter = `crop=w=min(ceil(${CWB}*iw/4)*4\\, iw):h=min(ceil(${CHB}*ih/4)*4\\, ih):x=min(ceil(${CXB}*iw/4)*4\\, iw):y=min(ceil(${CYB}*ih/4)*4\\, ih),scale=w=${OUTPUT_WIDTH}:h=${OUTPUT_HEIGHT}${
+          autoCaptionEnabled ? `,subtitles=${srtFilePath}` : ''
+        }`;
         break;
       case 'FREEFORM':
-        filter = `crop=w=min(ceil(${CWB}*iw/4)*4\\, iw):h=min(ceil(${CHB}*ih/4)*4\\, ih):x=min(ceil(${CXB}*iw/4)*4\\, iw):y=min(ceil(${CYB}*ih/4)*4\\, ih),scale=w=${SWB}:h=${SHB},pad=w=${OUTPUT_WIDTH}:h=${OUTPUT_HEIGHT}:x=(ow-iw)/2:y=(oh-ih)/2`;
+        filter = `crop=w=min(ceil(${CWB}*iw/4)*4\\, iw):h=min(ceil(${CHB}*ih/4)*4\\, ih):x=min(ceil(${CXB}*iw/4)*4\\, iw):y=min(ceil(${CYB}*ih/4)*4\\, ih),scale=w=${SWB}:h=${SHB}${
+          autoCaptionEnabled ? `,subtitles=${srtFilePath}` : ''
+        },pad=w=${OUTPUT_WIDTH}:h=${OUTPUT_HEIGHT}:x=(ow-iw)/2:y=(oh-ih)/2`;
         break;
       default:
         break;
@@ -171,12 +189,21 @@ export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, file
 
   log('info', 'running command', filter);
   const maxEndTime = 59;
+  const initialFfmpeg =
+    autoCaptionEnabled && srtFileName ? ffmpeg(inputFilePath) : ffmpeg(inputFilePath);
   const command = new Promise((resolve, reject) => {
-    let commandToRunInternal = ffmpeg(inputFilePath)
+    let commandToRunInternal = initialFfmpeg
       .videoCodec('libx265')
-      .on('error', (err) => {
-        log('error', 'command error', err);
+      .on('error', (err, stdout, stderr) => {
+        console.log('error', 'command error', err);
+        console.log('ffmpeg stdout:\n' + stdout);
+        console.log('ffmpeg stderr:\n' + stderr);
         reject(err);
+      })
+      .on('start', function (commandLine) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Spawned Ffmpeg with command: ' + commandLine);
+        }
       })
       .on('end', () => {
         resolve(outputFilePath);
@@ -194,7 +221,7 @@ export const makeVideoVertical = async (clip: Clip, clipSettings: CropData, file
     if (clipSettings.endTime) {
       commandToRunInternal = commandToRunInternal.setDuration(
         Math.min(parseInt(String(clipSettings.endTime) || '1000'), maxEndTime) -
-        parseInt(String(clipSettings.startTime) || '0')
+          parseInt(String(clipSettings.startTime) || '0')
       );
     }
 
