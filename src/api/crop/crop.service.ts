@@ -2,7 +2,6 @@ import ffmpeg from 'fluent-ffmpeg';
 import axios from 'axios';
 import { Clip, ClipManual, CropDataInput } from './crop.model';
 import log from '../../utils/logger';
-import { isUserSubbed } from '../../service/User';
 
 export const fileioUpload = (formData: any) => {
   const tempFormData = formData;
@@ -50,6 +49,8 @@ export const makeVideoVertical = async (
 
   const { cropType } = clipSettings;
   const autoCaptionEnabled = clip.autoCaption && isSubbed;
+
+  log('info', 'autoCaption data', { isSubbed, autoCaption: clip.autoCaption, autoCaptionEnabled });
 
   const inputFilePath = `./${fileName}`;
   const outputFilePath = `./rendered_${fileName}`;
