@@ -44,7 +44,10 @@ async function authProvider(user: UserWithAccountsAndSettingsWithId) {
             access_token: newTokenData.accessToken,
             refresh_token: newTokenData.refreshToken!,
             scope: newTokenData.scope.join(' '),
-            expires_at: parseInt(String(newTokenData.expiresIn! / 1000)),
+            expires_at:
+              newTokenData.expiresIn?.toString.length === 13
+                ? parseInt(String(newTokenData.expiresIn! / 1000))
+                : newTokenData.expiresIn!,
             obtainment_timestamp: parseInt(String(newTokenData.obtainmentTimestamp / 1000)),
           });
         },
