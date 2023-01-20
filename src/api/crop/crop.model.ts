@@ -169,6 +169,7 @@ export const ClipManualWithUserId = ClipManual.extend({
   facebookDescription: z.string().optional().nullable(),
   startTime: z.number().optional().nullable(),
   endTime: z.number().optional().nullable(),
+  duration: z.number().default(0),
 });
 
 export const ScheduledClipsArray = z.object({

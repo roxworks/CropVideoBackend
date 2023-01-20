@@ -18,6 +18,7 @@ type TwurpleClip = {
   url: string;
   videoId: string;
   views: number;
+  duration: number;
   thumbnailUrl: string;
   creationDate: Date;
 };
@@ -107,6 +108,7 @@ const fixTheFreakingNames = (clips: TwurpleClip[], userId: string): ClipManualWi
     thumbnail_url: clip.thumbnailUrl,
     created_at: clip.creationDate.toISOString(),
     download_url: `${clip.thumbnailUrl.split('-preview-')[0]}.mp4`,
+    duration: clip.duration,
   }));
 
 const sortClipsByCreationDate = (clips: ClipManualWithUserId[]) =>
