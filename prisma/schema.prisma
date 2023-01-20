@@ -216,6 +216,7 @@ model TwitchClip {
   endTime             Float?
   autoCaption         Boolean       @default(false)
   transcribeComplete  Boolean       @default(false)
+  duration            Float         @default(0)
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
