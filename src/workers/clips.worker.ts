@@ -1,6 +1,9 @@
 import { Job } from 'bullmq';
 import { updateLastUploadDate } from '../service/Settings';
-import { getUserByIdWithAccountsAndSettings } from '../service/User';
+import {
+  getUserByIdWithAccountsAndSettings,
+  updateBroadcasterFollowerCount,
+} from '../service/User';
 import {
   getClipsStartingAtCertainDateFromTwitchAPI,
   previousXDays,
@@ -28,6 +31,10 @@ const clipsProducer = async (job: Job<{ userId: string; providerAccountId: strin
       log('error', 'getUserByIdWithAccountsAndSettings - user', userId);
       throw Error(`unable to find user ${userId}`);
     }
+
+    // get users latests followers
+    await updateBroadcasterFollowerCount(user);
+
     const userSettings = user?.settings;
     // get twitch account
     const twitchProvider = user.accounts?.filter((acc) => acc.provider === 'twitch')[0];

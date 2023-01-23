@@ -66,11 +66,13 @@ model User {
   settings          Setting?
   sessions          Session[]
   createdAt         DateTime            @default(now())
-  CropType          CropTemplate[]
-  TwitchClip        TwitchClip[]
-  Role              Role                @default(USER)
-  ScheduledDays     ScheduledDays?
-  Clip              Clip[]
+  followerCount     Int                 @default(0)
+
+  CropType      CropTemplate[]
+  TwitchClip    TwitchClip[]
+  Role          Role           @default(USER)
+  ScheduledDays ScheduledDays?
+  Clip          Clip[]
 }
 
 model VerificationToken {

@@ -1,6 +1,7 @@
-import { DefaultClips } from '../api/user/user.model';
+import { DefaultClips, UserWithAccountsAndSettingsWithId } from '../api/user/user.model';
 import prisma from '../db/conn';
 import log from '../utils/logger';
+import { getUserFollowerCount } from '../utils/twitch/user.handler';
 
 export const getAllUsers = async () => prisma.user.findMany();
 
@@ -74,5 +75,24 @@ export const isUserSubbed = async (userId: string): Promise<boolean> => {
   } catch (error) {
     log('error', 'isUserSubbed Error', { error });
     return false;
+  }
+};
+
+export const updateBroadcasterFollowerCount = async (user: UserWithAccountsAndSettingsWithId) => {
+  try {
+    const followerCount = await getUserFollowerCount(user);
+
+    if (followerCount && followerCount > user.followerCount) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          followerCount: followerCount,
+        },
+      });
+    }
+
+    return followerCount;
+  } catch (error) {
+    log('error', 'updateBroadcasterFollowerCount', { userId: user.id, username: user.name });
   }
 };
