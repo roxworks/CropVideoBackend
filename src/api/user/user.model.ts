@@ -18,6 +18,7 @@ export const TUser = z.object({
   sub_current_end: z.number().nullable(),
   sub_status: z.string().nullable(),
   defaultClips: DefaultClips.nullable(),
+  followerCount: z.number().default(0),
 });
 
 export const UserWithAccounts = TUser.extend({
