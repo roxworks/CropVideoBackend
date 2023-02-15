@@ -1,6 +1,6 @@
 {
   "name": "cropvideobackend",
-  "version": "1.8.5",
+  "version": "1.8.6",
   "description": "Crop videos for clipbot",
   "main": "src/index.ts",
   "scripts": {
