@@ -16,7 +16,11 @@ export const autoApproveClips = async (settings: TSettings | SettingsOutput) => 
         { OR: [{ approvedStatus: { not: 'CANCELED' } }, { approvedStatus: 'NOT_APPROVED' }] },
       ],
     },
-    data: { approved: true, approvedStatus: 'AUTO_APPROVE' },
+    data: {
+      approved: true,
+      approvedStatus: 'AUTO_APPROVE',
+      youtubePrivacy: settings.youtubePrivacy || 'private',
+    },
   });
 
   return updatedClips;
