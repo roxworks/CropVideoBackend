@@ -16,7 +16,7 @@ export default () => {
       });
       log('info', 'schedule-cron', res.data);
     } catch (error) {
-      log('error', 'Error getting clips to render');
+      log('error', 'Error getting clips to render', error);
       if (error instanceof Error) {
         log('error', 'render-clips', error.message);
       }
