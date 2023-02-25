@@ -36,7 +36,7 @@ export const createCropVideo = async (req: Request<{}, {}, RenderClipReq>, res: 
   const downloadUrl = clip.download_url || clip.downloadUrl;
   const fileStream = got.stream(downloadUrl!);
   const fileName: string = `${randomNumber}_${twitch_id || id}.mp4`;
-  const srtFileName = clip.autoCaption ? `${randomNumber}_${twitch_id || id}.srt` : undefined;
+  let srtFileName = clip.autoCaption ? `${randomNumber}_${twitch_id || id}.srt` : undefined;
   let editVideo: string | undefined;
   const isSubbed = await isUserSubbed(clip.userId);
 
@@ -51,7 +51,7 @@ export const createCropVideo = async (req: Request<{}, {}, RenderClipReq>, res: 
   if (clip.autoCaption && isSubbed) {
     const srt = await getOrCreateSrtJson(clip.download_url, clip.twitch_id, clip.userId);
     if (!srt || !srtFileName) return;
-    await convertTranscriptToSrtFile(srt, srtFileName);
+    srtFileName = await convertTranscriptToSrtFile(srt, srtFileName);
   }
 
   // wait for filestream to end
@@ -123,8 +123,8 @@ export const createCropVideo = async (req: Request<{}, {}, RenderClipReq>, res: 
     if (srtFileName) {
       fs.unlinkSync(`./${srtFileName}`);
     }
-    if (editVideo) {
-      fs.unlinkSync(`./${editVideo}`);
+    if (fs.existsSync(`./rendered_${fileName}`)) {
+      fs.unlinkSync(`./rendered_${fileName}`);
     }
     return { message: 'failed' };
   }

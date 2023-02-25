@@ -45,7 +45,7 @@ const renderClips = async () => {
       if (clip.autoCaption && isSubbed) {
         const srt = await getOrCreateSrtJson(clip.downloadUrl, clip.twitch_id, clip.userId);
         if (!srt || !srtFileName) return;
-        await convertTranscriptToSrtFile(srt, srtFileName);
+        srtFileName = await convertTranscriptToSrtFile(srt, srtFileName);
       }
 
       // wait for filestream to end
@@ -128,8 +128,8 @@ const renderClips = async () => {
       if (srtFileName) {
         fs.unlinkSync(`./${srtFileName}`);
       }
-      if (editVideo) {
-        fs.unlinkSync(`./${editVideo}`);
+      if (fs.existsSync(`./rendered_${fileName}`)) {
+        fs.unlinkSync(`./rendered_${fileName}`);
       }
       continue;
     }

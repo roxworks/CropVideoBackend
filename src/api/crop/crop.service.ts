@@ -49,7 +49,7 @@ export const makeVideoVertical = async (
 
   try {
     const { cropType } = clipSettings;
-    const autoCaptionEnabled = clip.autoCaption && isSubbed;
+    const autoCaptionEnabled = clip.autoCaption && isSubbed && srtFileName;
 
     log('info', 'autoCaption data', {
       isSubbed,
