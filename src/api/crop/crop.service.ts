@@ -219,7 +219,9 @@ export const makeVideoVertical = async (
 
     return outputFile as string;
   } catch (error) {
-    log('error', 'make-video-vertical', error, 'crop.service');
+    if (error instanceof Error) {
+      log('error', 'make-video-vertical', error.message, 'crop.service');
+    }
     // throw error with message
     throw new Error('Error in make-video-vertical');
   }

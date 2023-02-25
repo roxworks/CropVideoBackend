@@ -109,7 +109,7 @@ const renderClips = async () => {
       log('info', 'render-files-deleted', { editVideo, fileName }, 'schedule.handler');
     } catch (error) {
       if (error instanceof Error) {
-        log('error', 'schedule-error', error.message);
+        log('error', 'schedule-error', { clip: job, error: error.message });
       }
       failedJobs.push(job);
       if (fileName) {
@@ -121,6 +121,7 @@ const renderClips = async () => {
       if (editVideo) {
         fs.unlinkSync(`./${editVideo}`);
       }
+      continue;
     }
   }
   log('info', 'schedule-jobs-finsihed');
