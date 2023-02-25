@@ -93,7 +93,7 @@ const renderClips = async () => {
       // eslint-disable-next-line no-await-in-loop
       await axios.post(
         `${process.env.CLIPBOT_URL}/api/clips/renderScheduledClips`,
-        { clip: job },
+        { clip: job, failed: false },
         {
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer: ${clipbotKey}` },
         }
@@ -114,6 +114,14 @@ const renderClips = async () => {
       failedJobs.push(job);
       //remove job from array
       jobs = jobs.filter((j) => j.twitch_id !== job.twitch_id);
+      const clipbotKey = process.env.APP_KEY;
+      axios.post(
+        `${process.env.CLIPBOT_URL}/api/clips/renderScheduledClips`,
+        { clip: job, failed: true },
+        {
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer: ${clipbotKey}` },
+        }
+      );
       if (fileName) {
         fs.unlinkSync(`./${fileName}`);
       }
