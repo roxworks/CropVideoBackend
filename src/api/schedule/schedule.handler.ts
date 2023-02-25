@@ -112,6 +112,8 @@ const renderClips = async () => {
         log('error', 'schedule-error', { clip: job, error: error.message });
       }
       failedJobs.push(job);
+      //remove job from array
+      jobs = jobs.filter((j) => j.twitch_id !== job.twitch_id);
       if (fileName) {
         fs.unlinkSync(`./${fileName}`);
       }
