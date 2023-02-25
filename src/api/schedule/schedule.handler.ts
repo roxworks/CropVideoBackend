@@ -23,14 +23,17 @@ const renderClips = async () => {
   for (const job of jobs) {
     const clip = job;
     const randomNumber = Math.random().toString(36).substring(2, 15);
+    let editVideo: string | undefined;
+    let fileName: string | undefined;
+    let srtFileName: string | undefined;
     try {
       currentJobId = clip.twitch_id;
       const downStart = performance.now();
       const { id, twitch_id } = clip;
       const { downloadUrl } = clip;
       const fileStream = got.stream(downloadUrl);
-      const fileName: string = `${randomNumber}_${twitch_id || id}.mp4`;
-      const srtFileName = clip.autoCaption ? `${randomNumber}_${twitch_id || id}.srt` : undefined;
+      fileName = `${randomNumber}_${twitch_id || id}.mp4`;
+      srtFileName = clip.autoCaption ? `${randomNumber}_${twitch_id || id}.srt` : undefined;
       const downEnd = performance.now();
       log(
         'info',
@@ -63,13 +66,7 @@ const renderClips = async () => {
       log('info', 'stream-timer', `JOB Stream call took ${streamEnd - streamStart} ms`);
 
       const verticalStart = performance.now();
-      const editVideo = await makeVideoVertical(
-        clip,
-        clip.cropData,
-        fileName,
-        srtFileName,
-        isSubbed
-      );
+      editVideo = await makeVideoVertical(clip, clip.cropData, fileName, srtFileName, isSubbed);
       const verticalEnd = performance.now();
       log(
         'info',
@@ -106,13 +103,24 @@ const renderClips = async () => {
       // delete local files
       fs.unlinkSync(`./${editVideo}`);
       fs.unlinkSync(`./${fileName}`);
-      fs.unlinkSync(`./${srtFileName}`);
+      if (srtFileName) {
+        fs.unlinkSync(`./${srtFileName}`);
+      }
       log('info', 'render-files-deleted', { editVideo, fileName }, 'schedule.handler');
     } catch (error) {
       if (error instanceof Error) {
         log('error', 'schedule-error', error.message);
       }
       failedJobs.push(job);
+      if (fileName) {
+        fs.unlinkSync(`./${fileName}`);
+      }
+      if (srtFileName) {
+        fs.unlinkSync(`./${srtFileName}`);
+      }
+      if (editVideo) {
+        fs.unlinkSync(`./${editVideo}`);
+      }
     }
   }
   log('info', 'schedule-jobs-finsihed');

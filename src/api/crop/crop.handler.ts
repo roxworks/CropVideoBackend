@@ -37,6 +37,7 @@ export const createCropVideo = async (req: Request<{}, {}, RenderClipReq>, res: 
   const fileStream = got.stream(downloadUrl!);
   const fileName: string = `${randomNumber}_${twitch_id || id}.mp4`;
   const srtFileName = clip.autoCaption ? `${randomNumber}_${twitch_id || id}.srt` : undefined;
+  let editVideo: string | undefined;
   const isSubbed = await isUserSubbed(clip.userId);
 
   const downEnd = performance.now();
@@ -65,45 +66,68 @@ export const createCropVideo = async (req: Request<{}, {}, RenderClipReq>, res: 
       log('error', 'create-write-stream', err, 'crop.handler');
     });
   });
-
-  const verticalStart = performance.now();
-  const editVideo = await makeVideoVertical(clip, cropData, fileName, srtFileName, isSubbed);
-  const verticalEnd = performance.now();
-  log(
-    'info',
-    'make-vertical-video',
-    `makeVideoVertical call took ${verticalEnd - verticalStart} ms`,
-    'crop.handler'
-  );
-
-  log('info', 'video-edited', editVideo);
-
-  // fileIo
-  const form = new FormData();
-  const fileStart = performance.now();
-  form.append('file', fs.createReadStream(`./${editVideo}`));
-  const fileIOResponse = await fileioUpload(form);
-
-  const fileEnd = performance.now();
-  log('info', 'fileio-upload', `Fileio upload call took ${fileEnd - fileStart} ms`, 'crop.handler');
-
-  currentJobStatus[fileName] = {
-    fileURL: fileIOResponse.data.link,
-    key: fileIOResponse.data.key,
-    status: 'done',
-  };
-
-  // delete local files
   try {
-    fs.unlinkSync(`./${editVideo}`);
-    fs.unlinkSync(`./${fileName}`);
-    fs.unlinkSync(`./${srtFileName}`);
-    log('warn', 'files-deleted: ', { editVideo, fileName, srtFileName }, 'crop.handler');
-  } catch (error) {
-    log('error', 'delete-local-files', error, 'crop.handler');
-  }
+    const verticalStart = performance.now();
+    editVideo = await makeVideoVertical(clip, cropData, fileName, srtFileName, isSubbed);
+    const verticalEnd = performance.now();
+    log(
+      'info',
+      'make-vertical-video',
+      `makeVideoVertical call took ${verticalEnd - verticalStart} ms`,
+      'crop.handler'
+    );
 
-  return { message: 'done' };
+    log('info', 'video-edited', editVideo);
+
+    // fileIo
+    const form = new FormData();
+    const fileStart = performance.now();
+    form.append('file', fs.createReadStream(`./${editVideo}`));
+    const fileIOResponse = await fileioUpload(form);
+
+    const fileEnd = performance.now();
+    log(
+      'info',
+      'fileio-upload',
+      `Fileio upload call took ${fileEnd - fileStart} ms`,
+      'crop.handler'
+    );
+
+    currentJobStatus[fileName] = {
+      fileURL: fileIOResponse.data.link,
+      key: fileIOResponse.data.key,
+      status: 'done',
+    };
+
+    // delete local files
+    try {
+      fs.unlinkSync(`./${editVideo}`);
+      fs.unlinkSync(`./${fileName}`);
+      if (srtFileName) {
+        fs.unlinkSync(`./${srtFileName}`);
+      }
+      log('warn', 'files-deleted: ', { editVideo, fileName, srtFileName }, 'crop.handler');
+    } catch (error) {
+      log('error', 'delete-local-files', error, 'crop.handler');
+    }
+
+    return { message: 'done' };
+  } catch (error) {
+    console.log(error);
+    currentJobStatus[fileName] = {
+      status: 'failed',
+    };
+    if (fileName) {
+      fs.unlinkSync(`./${fileName}`);
+    }
+    if (srtFileName) {
+      fs.unlinkSync(`./${srtFileName}`);
+    }
+    if (editVideo) {
+      fs.unlinkSync(`./${editVideo}`);
+    }
+    return { message: 'failed' };
+  }
 };
 
 export const videoStatus = async (req: Request<{}, {}, JobId>, res: Response<JobStatus>) => {
