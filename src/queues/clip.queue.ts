@@ -56,7 +56,7 @@ export const clipLatestQueue = new Queue('clips-latest', {
 const clipLatestWroker = new Worker('clips-latest', clipsProducer, {
   // connection: new Redis(connectionURL),
   connection: isDev ? connection : new Redis(connectionURL, { maxRetriesPerRequest: null }),
-  concurrency: 2,
+  concurrency: 4,
 });
 
 clipLatestWroker.on('completed', async (job) => {
