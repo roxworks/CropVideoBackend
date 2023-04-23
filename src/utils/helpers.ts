@@ -2,6 +2,7 @@ import { TwitchClip } from '@prisma/client';
 import { Clip, ClipStatuses, CropData, platformsSchema } from '../api/crop/crop.model';
 import { CropTemplate } from '../interfaces/CropTemplate';
 import { TSettings } from '../interfaces/Settings';
+import emojiRegex from 'emoji-regex';
 
 export function exclude<T, Key extends keyof T>(list: T, ...keys: Key[]): Omit<T, Key> {
   const newList = { ...list };
@@ -98,3 +99,11 @@ export const convertPlatformString = (platforms: LowerPlatforms): platformsSchem
 };
 
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+export function removeEmojis(text: string): string {
+  // Get the regular expression to match emojis
+  const regex = emojiRegex();
+
+  // Replace all matches with an empty string
+  return text.replace(regex, '');
+}

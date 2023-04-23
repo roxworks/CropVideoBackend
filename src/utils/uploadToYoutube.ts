@@ -4,6 +4,7 @@ import got from 'got';
 import { CurrentClip } from '../api/crop/crop.model';
 import log from './logger';
 import { bufferToStream, stream2buffer } from './streamUtils';
+import { removeEmojis } from './helpers';
 
 const youtubeCategoriesToIds: { [key: string]: number } = {
   'Film & Animation': 1,
@@ -39,7 +40,7 @@ export const uploadVideoToYoutube = async (auth: Auth.OAuth2Client, currentClip:
     log('info', 'upload-to-youtube attempt');
     google.options({
       headers: {
-        Slug: `${adjustedTitle}.mp4`,
+        Slug: `${removeEmojis(adjustedTitle)}.mp4`,
       },
     });
     service.videos.insert(
