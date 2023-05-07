@@ -41,7 +41,6 @@ type convertTwitchClipToClip = {
   approved?: boolean;
   status?: ClipStatuses;
   uploaded?: boolean;
-  autoSchedule?: boolean;
 };
 
 export const convertToClipFromTwitchClip = ({
@@ -53,7 +52,6 @@ export const convertToClipFromTwitchClip = ({
   approved = false,
   status = 'SCHEDULED',
   uploaded = false,
-  autoSchedule = false,
 }: convertTwitchClipToClip): Clip => ({
   userId: clip.userId,
   broadcasterName: clip.broadcaster_name,
@@ -81,8 +79,7 @@ export const convertToClipFromTwitchClip = ({
   youtubeCategory: clip.youtubeCategory || settings.youtubeCategory || 'Gaming',
   description: (clip.youtubeDescription || settings.youtubeDescription) ?? null,
   cropData,
-  youtubePrivacy: !autoSchedule ? 
-      (clip.youtubePrivacy || settings.youtubePrivacy) : (settings.youtubePrivacy || clip.youtubePrivacy),
+  youtubePrivacy: clip.youtubePrivacy || settings.youtubePrivacy,
   facebookDescription: clip.facebookDescription || clip.title,
   autoCaption: settings.autoCaption || false,
 });

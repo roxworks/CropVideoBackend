@@ -132,7 +132,6 @@ export const scheduleClips = async (
     caption,
     cropData,
     approved: true,
-    autoSchedule: true,
   });
 
   const insertedClip = await prisma.clip.create({ data: clipData });
