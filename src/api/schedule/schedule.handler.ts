@@ -109,7 +109,7 @@ const renderClips = async () => {
       log('info', 'render-files-deleted', { editVideo, fileName }, 'schedule.handler');
     } catch (error) {
       if (error instanceof Error) {
-        log('error', 'schedule-error', { clip: job, error: error.message });
+        log('error', 'schedule-error', { clip: job, error: error });
       }
       failedJobs.push(job);
       //remove job from array
