@@ -31,10 +31,21 @@ const renderClips = async () => {
       const downStart = performance.now();
       const { id, twitch_id } = clip;
       const { downloadUrl } = clip;
+
       const fileStream = got.stream(downloadUrl);
+      fileStream.on('error', () =>
+        log(
+          'error',
+          'render-download',
+          `Failed MP4 - download for Job ID: ${job.id}`,
+          'schedule.handler'
+        )
+      );
+
       fileName = `${randomNumber}_${twitch_id || id}.mp4`;
       srtFileName = clip.autoCaption ? `${randomNumber}_${twitch_id || id}.srt` : undefined;
       const downEnd = performance.now();
+
       log(
         'info',
         'render-download',
@@ -43,17 +54,10 @@ const renderClips = async () => {
       );
 
       const isSubbed = await isUserSubbed(clip.userId);
-      log('info', 'render-pre-transcribe', 'talked to postgres!', 'schedule.handler');
-
       if (clip.autoCaption && isSubbed) {
-        try {
-          const srt = await getOrCreateSrtJson(clip.downloadUrl, clip.twitch_id, clip.userId);
-          if (!srt || !srtFileName) return;
-          srtFileName = await convertTranscriptToSrtFile(srt, srtFileName);
-        } catch (error: any) {
-          const errorInfo = error.response ? error.response : error;
-          log('error', 'render-transcribe', errorInfo, 'schedule.handler');
-        }
+        const srt = await getOrCreateSrtJson(clip.downloadUrl, clip.twitch_id, clip.userId);
+        if (!srt || !srtFileName) return;
+        srtFileName = await convertTranscriptToSrtFile(srt, srtFileName);
       }
 
       // wait for filestream to end
