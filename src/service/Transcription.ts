@@ -2,6 +2,8 @@ import axios from 'axios';
 import prisma from '../db/conn';
 import { TypeTranscriptionInput, TypeTranscriptionResponse } from '../interfaces/Transcription';
 import { sleep } from '../utils/helpers';
+import log from '../utils/logger';
+
 import fs from 'fs';
 
 export const getTranscriptionByTwitchIdFromDB = async (twitchId: string) => {
@@ -44,6 +46,7 @@ export const createSrtRequest = async (downloadUrl: string) => {
     const error = response.data;
     console.log(error.detail);
     //TODO handle error
+    log('error', 'Creating SRT Request', error.response.data, 'schedule.handler');
   }
 
   const transcribe: TypeTranscriptionResponse = response.data;
@@ -63,6 +66,7 @@ export const checkTranscribeStatus = async (jobId: string) => {
   if (response.status !== 200) {
     const error = response.data;
     console.log(error.detail);
+    log('error', 'Checking transcribe status', error.response.data, 'schedule.handler');
   }
 
   const transcribe: TypeTranscriptionResponse = response.data;
@@ -80,6 +84,12 @@ export const cancelTranscribeJob = async (jobId: string) => {
       },
     }
   );
+
+  if (response.status !== 200) {
+    const error = response.data;
+    console.log(error.detail);
+    log('error', 'Cancelling transcribe job', error.response.data, 'schedule.handler');
+  }
 
   return response;
 };
