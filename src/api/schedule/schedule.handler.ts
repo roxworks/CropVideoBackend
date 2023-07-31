@@ -43,6 +43,8 @@ const renderClips = async () => {
       );
 
       const isSubbed = await isUserSubbed(clip.userId);
+      log('info', 'render-pre-transcribe', 'talked to postgres!', 'schedule.handler');
+
       if (clip.autoCaption && isSubbed) {
         try {
           const srt = await getOrCreateSrtJson(clip.downloadUrl, clip.twitch_id, clip.userId);
