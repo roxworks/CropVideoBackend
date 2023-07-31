@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import { Response, Request } from 'express';
-import got from 'got';
+import got, { HTTPError } from 'got';
 import fs from 'fs';
 import FormData from 'form-data';
 import { performance } from 'universal-perf-hooks';
@@ -41,11 +41,17 @@ const renderClips = async () => {
         `JOB DOWNLOAD call took ${downEnd - downStart} ms`,
         'schedule.handler'
       );
+
       const isSubbed = await isUserSubbed(clip.userId);
       if (clip.autoCaption && isSubbed) {
-        const srt = await getOrCreateSrtJson(clip.downloadUrl, clip.twitch_id, clip.userId);
-        if (!srt || !srtFileName) return;
-        srtFileName = await convertTranscriptToSrtFile(srt, srtFileName);
+        try {
+          const srt = await getOrCreateSrtJson(clip.downloadUrl, clip.twitch_id, clip.userId);
+          if (!srt || !srtFileName) return;
+          srtFileName = await convertTranscriptToSrtFile(srt, srtFileName);
+        } catch (error: any) {
+          const errorInfo = error.response ? error.response : error;
+          log('error', 'render-transcribe', errorInfo, 'schedule.handler');
+        }
       }
 
       // wait for filestream to end
